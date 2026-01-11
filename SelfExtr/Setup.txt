@@ -1,0 +1,56 @@
+BnB Installation Instructions
+-----------------------------
+
+NOTE: The BnB setup program will determine if required system files
+are up to date before proceeding with installation. If files are
+missing or out of date, BnB Setup will prompt the user with a message
+box, update the files if user agrees, then advise user to restart
+computer and rerun the setup program.
+
+A. Non-Network Installations:
+  STEP 1.  Close all open applications.
+
+  STEP 2.  Run (double-click) the self-extracting BNBSETUP.EXE file.
+
+  STEP 3.  Follow the prompts on the displayed dialog boxes, selecting the 
+           'Install as Database Server' option when prompted in the 'Set 
+           Database Location' dialog box.
+
+  STEP 4.  After installation is complete, run the BnB application by 
+           selecting the BnB program icon in the 'Start' > 'Programs' menu. 
+
+B. Network Installations:
+  STEP 1. Setup the server:
+    A.  Select the network computer that will function as the database
+        'server' (the computer on which the BnB database file (BNB1.MDB)
+        will reside).
+
+    B.  Close all open applications.
+
+    C.  Run (double-click) the self-extracting BNBSETUP.EXE file.
+
+    D.  Follow the prompts on the displayed dialog boxes, selecting the 
+        'Install as Database Server' option when prompted in the 'Set 
+        Database Location' dialog box.
+   
+  STEP 2. Setup the workstation(s):
+    After the installation has been completed on the database server 
+    computer, other computers attached to the network can be setup (in
+    any order) as follows:
+
+    A.  Close all open applications.
+
+    B.  Run (double-click) the self-extracting BNBSETUP.EXE file.
+
+    C.  Follow the prompts on the displayed dialog boxes, selecting the 
+        'Install as Workstation' option when prompted. To fill in the 
+        Database path, click the 'Browse' button, click the dropdown 
+        for the 'Look in' field at the top of the 'Database Location'
+        screen, select 'Network Neighborhood' and locate the BnB database
+        file (BNB1.MDB) on the previously setup database server computer
+        (typically, \\<ServerComputerName>\Program Files\BNB\BNB1.MDB).
+
+  STEP 3. Run BnB:
+    After installation is complete, run the BnB application by 
+    selecting the BnB program icon in the 'Start' > 'Programs' menu.   
+         

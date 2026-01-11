@@ -1,0 +1,129 @@
+WinZip(R) Self-Extractor 2.1
+Copyright (C) 1995-1996 by Nico Mak Computing, Inc. All Rights Reserved
+Web: http://www.winzip.com
+E-Mail: support@winzip.com
+Postal Mail: P.O. Box 540, Mansfield CT 06268 USA
+
+See WHATSNEW.TXT for a list of changes in this version
+
+*** What is WinZip Self-Extractor?
+
+WinZip Self-Extractor is a utility program that creates native
+Windows self-extracting ZIP files.  These self-extracting ZIP
+files are ideal for electronic file distribution because they:
+(1) can contain multiple compressed files, ensuring that important
+files do not become separated from the rest of the package;
+(2) allow the receiver to use a familiar Windows interface to
+decompress files, without owning or knowing how to use a separate
+unzip utility; and (3) optionally run a "setup" or "installation"
+program, which may be included by the developer when the files are
+decompressed.
+
+WinZip Self-Extractor is an optional add-on to WinZip, an award
+winning utility to manipulate ZIP files.
+
+This portion of the documentation describes ZIP files and self-
+extracting ZIP files, discusses the benefits of self-extracting
+ZIP files, and summarizes WinZip Self-Extractor features.
+
+*** What is a ZIP file?
+
+The ZIP file format is an industry standard for compressing and
+grouping files.  One ZIP file can contain multiple files.  Files
+contained in a ZIP are usually compressed.
+
+Typical uses for ZIP files include:
+
+- Most files available in "file areas" on bulletin boards and
+  electronic services like CompuServe and the Internet are
+  distributed as ZIP files.  Two benefits of using ZIP files for
+  electronic file distribution are that only one file transfer
+  operation ("download") is required to obtain all related files,
+  and file transfer time is minimized because the files in a ZIP
+  are compressed.
+
+- It is often useful to send a group of related files to an
+  associate.  Rather than distributing individual files it is
+  often easier to distribute the files as a ZIP file to benefit
+  from the file grouping and compression.
+
+ZIP files are created using a ZIP utility like WinZip(R) or the
+PKZIP(R) utility from PKWARE(R).
+
+*** What is a Self-Extracting ZIP File?
+
+A self-extracting ZIP file is an executable program file (.EXE
+file) that includes a ZIP file and software to extract or "unzip"
+the contents of the ZIP file.  Users can run (execute) a
+self-extracting ZIP file just as they run any other program.
+
+When a self-extracting ZIP file created by WinZip Self-Extractor
+is run, a dialog box is displayed.  This dialog box makes it easy
+for the user to change the "unzip to" folder and change other
+options before extracting or "unzipping" the files in the
+self-extracting ZIP file.  Self-extracting ZIP files created by
+WinZip Self-Extractor are
+
+- 100% compatible with the PKZIP 2.04g file format, so they can be
+  unzipped by standard unzip utilities like WinZip and PKUNZIP.
+
+- As little as 12k larger than a regular (not self-extracting) ZIP
+  file.
+
+*** What are the advantages to Self-Extracting ZIP Files?
+
+Users can extract or "unzip" files from a self-extracting ZIP file
+without running a separate unzip utility or knowing how to use an
+unzip utility.  Thus self-extracting ZIP files are particularly
+suited for distribution of software to beginning users who are not
+familiar with the concept of ZIP files.
+
+Self-extracting ZIP files created by WinZip Self-Extractor are
+native Windows programs so they are easy to use even for users
+with no MS-DOS experience.
+
+*** How Does it Work?
+
+There are two parts to WinZip Self-Extractor:
+
+1) The WinZip Self-Extractor program creates self-extracting ZIP
+   files.
+
+2) When WinZip Self-Extractor creates a self-extracting ZIP file
+   it includes part of itself in the self-extracting ZIP file.
+
+The part of WinZip Self-Extractor included in the self-extracting
+ZIP file is what makes it possible to unzip the files by simply
+running the self-extracting ZIP file.
+
+The person who creates the self-extracting ZIP file runs WinZip
+Self-Extractor once, specifying the name of the ZIP file and
+options, including the default "unzip to" folder and a program
+to be run automatically when the unzip operation completes.
+WinZip Self-Extractor stores this information in the self-
+extracting ZIP file so it is available when the self-extracting
+ZIP file is run.  See the online help section titled "Creating
+Self-Extracting ZIP Files" for details on the procedure, and the
+file license.txt for information on licensing.
+
+*** Summary Of Key Features
+
+- Easy distribution of one or more compressed files.
+
+- Low overhead (as little as 12kb, depending on selected options)
+
+- Options to create 16-bit or 32-bit Windows self-extractors, or
+  MS-DOS+Windows self-extractors (one EXE works on either MS-DOS
+  or Windows).
+
+- An optional command is run when the unzip operation completes,
+  making it easy to run a SETUP program included in a
+  self-extracting ZIP file.
+
+- A Wizard to simplify the process of building self-extracting
+  files.
+
+- Any folder information in the ZIP is automatically restored.
+
+- 100% compatible with the PKZIP 2.04g standard.
+

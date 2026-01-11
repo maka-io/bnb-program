@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(powershell -Command \"Get-Content ''C:\\\\Users\\\\mjc\\\\Desktop\\\\BnB\\\\BnBCode\\\\MODERNIZATION_PLAN.md'' | Out-Printer\")",
+      "Bash(powershell -Command \"Get-Content ''C:\\\\Users\\\\mjc\\\\Desktop\\\\BnB\\\\BnBCode\\\\SYNOPSIS.txt'' | Out-Printer\")",
+      "Bash(git init:*)",
+      "Bash(dotnet:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

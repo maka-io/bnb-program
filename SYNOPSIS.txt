@@ -1,0 +1,45 @@
+BnB Modernization Project - Synopsis
+=====================================
+
+I've created two files for you:
+
+1. CLAUDE.md
+-----------
+A guide for future Claude Code instances working with this repository. It documents:
+- Technology stack (VB5, Access/DAO, Crystal Reports, Sheridan controls)
+- Directory structure
+- Build instructions
+- Core module architecture (BNB1.BAS, BNBMODE.BAS)
+- The form mode system (Browse/Insert/Update/Delete/Find)
+- Data access patterns
+- Modernization challenges
+
+2. MODERNIZATION_PLAN.md
+------------------------
+A comprehensive plan for upgrading to Windows 10/11. Key highlights:
+
+Recommended Approach: C# with .NET 8 WinForms
+- Closest to original UX
+- Fastest development path
+- Direct database migration via Entity Framework Core
+
+Migration Phases:
+1. Foundation - New solution structure, database migration (Access -> SQL Server LocalDB or SQLite)
+2. Core Modules - Convert BNB1.BAS utilities to services, implement FormStateManager
+3. Form Migration - 45 forms prioritized by criticality (Guest, Accommodations, Payment first)
+4. Reports - 27 Crystal Reports -> RDLC or modern alternative
+5. Data Migration - One-time tool to move existing Access data
+6. Testing & Deployment - MSI installer with migration wizard
+
+Key Replacements:
+-----------------
+Old                     New
+---                     ---
+Crystal Reports         RDLC Reports
+Sheridan SSDBGrid       DataGridView
+DAO 2.5                 Entity Framework Core
+Graphs32                LiveCharts2
+WinHelp (.HLP)          HTML Help (.CHM)
+
+The estimated effort is roughly 20,000-25,000 lines of C# code
+to replace the ~25,000 lines of VB5 code.

@@ -1,0 +1,64 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+*.DotSettings.user
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+[Bb]in/
+[Oo]bj/
+
+# NuGet
+*.nupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+
+# Visual Studio
+.vs/
+*.csproj.user
+*.resharper
+_ReSharper*/
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Rider
+.idea/
+
+# User-specific files
+*.rsuser
+*.log
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+
+# VB5/Legacy (keep these in repo for reference but ignore compiled outputs)
+*.exe
+*.dll
+*.ocx
+*.ex_
+*.dl_
+*.md_
+!Distrib/**
+
+# Access lock files
+*.ldb
+*.laccdb

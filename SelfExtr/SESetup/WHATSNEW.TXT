@@ -1,0 +1,67 @@
+WinZip(R) Self-Extractor 2.1
+Copyright (C) 1995-1997 by Nico Mak Computing, Inc.
+All Rights Reserved
+
+Changes in version 2.1:
+
+ * All 32-bit self-extracting Zip files support Microsoft(R)
+   Authenticode(tm) technology.  In earlier versions, the
+   self-extracting Zip file's integrity check conflicted with
+   Authenticode.  (For information on Authenticode, visit the Microsoft
+   home page, click the "Search" button and search for "authenticode
+   code signing".)
+
+ * User-specified icons:  you can use an icon of your choice for all
+   types of self-extractors except "Compact" and "MS-DOS + Windows".
+   These icons are displayed in the Explorer (in version 2.0,
+   user-specified icons were only used in the dialog box of
+   self-extractors for software installation).
+
+ * While version 2.0 made it possible to build 32-bit self-extracting
+   Zip files, the program that created these 32-bit files was actually a
+   16-bit program.  A 32-bit version (wzipse32.exe) is now included.
+
+ * You can now create self-extracting Zip files that unzip
+   automatically.  (In version 2.0 the end-user had to specify /auto on
+   the command line while running the self-extracting file to unzip
+   automatically.)  Use this new feature with caution:  if you are
+   planning to post this file on the Internet or an online service like
+   CompuServe or AOL, you should be aware that some sysops refuse to
+   accept files that unzip without a prompt.
+
+ * The "Mail Self-Extracting Zip File:  button in the final wizard panel
+   makes it easy to send a self-extractor to another user by e-mail
+   (this feature is available only if your system supports MAPI, the
+   standard Mail Application Program Interface).
+
+ * Password support for all types of self-extractors except "Compact"
+   and "MS-DOS + Windows".
+
+Changes in version 2.0:
+
+WinZip Self-Extractor 2.0 is a superset of version 1.0.  Everything that
+worked with version 1.0 works the same way with 2.0, but new features
+are available, including:
+
+ * Options to create self-extracting ZIP files with new headers:
+   * 32-bit Win32 headers
+   * 16-bit Windows headers with Windows 95 long filename support
+   * MS-DOS support (one EXE works on either MS-DOS or Windows)
+
+ * Improved automation and customization for software installation,
+   such as the ability to specify an icon and text for the main dialog
+   box, and to delete temporary files after running a setup program.
+   Includes support for Sterling Software's InstallShield SETUP program.
+
+ * All versions can be created with English or German messages.
+
+ * Ability to automatically extract files when EXE file is run.
+
+ * An optional progress meter while unzipping.
+
+ * An uninstall facility for the WinZip Self-Extractor package.
+
+ * Command lines options can be included in a file using the @filename
+   syntax, e.g. "winzipse <some options> @"continued_options.inp".
+
+ * A Wizard to simplify the process of building self-extracting files.

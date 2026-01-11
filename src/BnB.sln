@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BnB.Core", "BnB.Core\BnB.Core.csproj", "{6FC894DD-1E53-49B3-ACAB-E0FA8A3E1C86}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BnB.Data", "BnB.Data\BnB.Data.csproj", "{C6EFB246-7648-422D-A9B7-0C732E770507}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BnB.WinForms", "BnB.WinForms\BnB.WinForms.csproj", "{E8AC870D-459B-4A27-8382-EB787EC8F183}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6FC894DD-1E53-49B3-ACAB-E0FA8A3E1C86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FC894DD-1E53-49B3-ACAB-E0FA8A3E1C86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FC894DD-1E53-49B3-ACAB-E0FA8A3E1C86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FC894DD-1E53-49B3-ACAB-E0FA8A3E1C86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6EFB246-7648-422D-A9B7-0C732E770507}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6EFB246-7648-422D-A9B7-0C732E770507}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6EFB246-7648-422D-A9B7-0C732E770507}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6EFB246-7648-422D-A9B7-0C732E770507}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E8AC870D-459B-4A27-8382-EB787EC8F183}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8AC870D-459B-4A27-8382-EB787EC8F183}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8AC870D-459B-4A27-8382-EB787EC8F183}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8AC870D-459B-4A27-8382-EB787EC8F183}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

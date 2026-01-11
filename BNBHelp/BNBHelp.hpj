@@ -1,0 +1,61 @@
+; This file is maintained by HCW. Do not modify this file directly.
+
+[OPTIONS]
+NOTES=0
+LCID=0x409 0x0 0x0 ; English (United States)
+REPORT=No
+CONTENTS=StartOverview
+TITLE=BnB Help
+CNT=bnbhelp.cnt
+HLP=BNBHelp.hlp
+
+[FILES]
+BNBHelp.rtf
+
+[MAP]
+Accommodations=101
+ArrivalDepartureReport=136
+AuditTrail=141              ; No form for this one
+Availability=139
+BackingUpDatabase=131
+CarRentalActivityReport=138
+CarRentalAgencies=110
+CheckingAccountInfo=104
+CheckLedgerReport=115
+CheckPrinting=129
+ClientTrustReconciliationReport=128
+CommissionReport=118
+CommonText=102
+CompanyInformation=103
+ConfirmationReport=113
+DailyArrivalsReport=123
+DailyBookingReport=122
+DailyDeparturesReport=124
+DailyHostNotificationReport=125
+EditingPrintedChecks=130
+GeneralGuestInfo=100
+GuestCarRental=106
+GuestPaymentHistory=107
+GuestTravelAgency=105
+Host1099TaxReport=120
+HostProperties=108
+ListingReports=132
+MailingLabelDialog=137
+ManualCheckEntryScreen=134
+MasterPropertyFacts=143
+NetSummaryReport=116
+OverpaymentsReport=145
+PaymentsReceivable=144
+PaymentsReceivedReport=127
+PaymentsReceivedScreen=133
+PropertyFacts=142
+RefundByCC=135
+RefundReport=119
+RoomTypes=140
+TaxPlans=112
+TaxRates=111
+TravelAgencies=109
+TrendsReport=121
+
+[WINDOWS]
+W_BNB="BNB Help",,28933,,(r12632256),1
