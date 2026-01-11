@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using BnB.Data.Context;
+using BnB.WinForms.Forms;
 
 namespace BnB.WinForms;
 
@@ -25,10 +26,12 @@ static class Program
         using (var scope = ServiceProvider.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<BnBDbContext>();
-            dbContext.Database.EnsureCreated();
+            dbContext.Database.Migrate();
         }
 
-        Application.Run(new Form1());
+        // Run the main form
+        var mainForm = ServiceProvider.GetRequiredService<MainForm>();
+        Application.Run(mainForm);
     }
 
     private static void ConfigureServices(IServiceCollection services)
@@ -40,8 +43,8 @@ static class Program
         services.AddDbContext<BnBDbContext>(options =>
             options.UseSqlite($"Data Source={dbPath}"));
 
-        // Register forms (can add more as we migrate them)
-        services.AddTransient<Form1>();
+        // Register forms
+        services.AddTransient<MainForm>(sp => new MainForm(sp));
     }
 
     private static string GetDatabasePath()
