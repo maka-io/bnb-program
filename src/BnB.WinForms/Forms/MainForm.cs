@@ -124,6 +124,28 @@ public partial class MainForm : Form
 
     #endregion
 
+    #region Taxes Menu Handlers
+
+    private void mnuSetTaxRates_Click(object sender, EventArgs e)
+    {
+        OpenOrActivateForm<TaxRateForm>(() =>
+        {
+            var dbContext = _serviceProvider.GetRequiredService<BnBDbContext>();
+            return new TaxRateForm(dbContext);
+        });
+    }
+
+    private void mnuSetTaxPlans_Click(object sender, EventArgs e)
+    {
+        OpenOrActivateForm<TaxPlanForm>(() =>
+        {
+            var dbContext = _serviceProvider.GetRequiredService<BnBDbContext>();
+            return new TaxPlanForm(dbContext);
+        });
+    }
+
+    #endregion
+
     #region View Menu Handlers
 
     private void mnuCascade_Click(object sender, EventArgs e)

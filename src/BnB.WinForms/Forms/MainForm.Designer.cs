@@ -240,7 +240,9 @@ partial class MainForm
         });
         this.mnuTaxes.Text = "&Taxes";
         this.mnuSetTaxRates.Text = "Set Tax &Rates";
+        this.mnuSetTaxRates.Click += mnuSetTaxRates_Click;
         this.mnuSetTaxPlans.Text = "Set Tax &Plans";
+        this.mnuSetTaxPlans.Click += mnuSetTaxPlans_Click;
 
         // === View Menu ===
         this.mnuView.DropDownItems.AddRange(new ToolStripItem[] {
