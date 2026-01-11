@@ -5,7 +5,7 @@ namespace BnB.Core.Models;
 /// </summary>
 public class Property
 {
-    public int AccountNumber { get; set; }  // accountnum
+    public int PropertyId { get; set; }  // accountnum
     public string Location { get; set; } = string.Empty;  // location (property name)
     public string? FullName { get; set; }  // fullname
     public string? DBA { get; set; }  // dba (doing business as)
@@ -46,6 +46,7 @@ public class Property
     public string? ExceptionsDescription { get; set; }  // exceptions_desc
 
     // Status flags
+    public bool IsActive { get; set; } = true;
     public bool IsObsolete { get; set; }  // PropObsolete
     public bool SuppressFlag { get; set; }  // suppressflag
 

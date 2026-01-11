@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using BnB.Data.Context;
 using BnB.WinForms.Forms;
+using QuestPDF.Infrastructure;
 
 namespace BnB.WinForms;
 
@@ -15,6 +16,9 @@ static class Program
     [STAThread]
     static void Main()
     {
+        // Configure QuestPDF license (Community license for open source/small business)
+        QuestPDF.Settings.License = LicenseType.Community;
+
         ApplicationConfiguration.Initialize();
 
         // Configure services

@@ -320,6 +320,58 @@ namespace BnB.Data.Migrations
                     b.ToTable("Checks");
                 });
 
+            modelBuilder.Entity("BnB.Core.Models.CheckNumberConfig", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("HostCheckNum")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MiscCheckNum")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SharedAccounts")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TravelCheckNum")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CheckNumberConfigs");
+                });
+
+            modelBuilder.Entity("BnB.Core.Models.CommonText", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Title")
+                        .IsUnique();
+
+                    b.ToTable("CommonTexts");
+                });
+
             modelBuilder.Entity("BnB.Core.Models.CompanyInfo", b =>
                 {
                     b.Property<int>("Id")
@@ -804,6 +856,9 @@ namespace BnB.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AccountNumber")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Address")

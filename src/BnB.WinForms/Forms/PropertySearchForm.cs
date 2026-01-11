@@ -16,7 +16,7 @@ public partial class PropertySearchForm : Form
     {
         SearchCriteria = new PropertySearchCriteria
         {
-            AccountNumber = int.TryParse(txtAccountNumber.Text, out var accNum) ? accNum : null,
+            PropertyId = int.TryParse(txtAccountNumber.Text, out var accNum) ? accNum : null,
             PropertyName = string.IsNullOrWhiteSpace(txtPropertyName.Text) ? null : txtPropertyName.Text.Trim(),
             OwnerName = string.IsNullOrWhiteSpace(txtOwnerName.Text) ? null : txtOwnerName.Text.Trim(),
             IncludeObsolete = chkIncludeObsolete.Checked

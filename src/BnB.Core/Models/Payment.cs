@@ -5,8 +5,9 @@ namespace BnB.Core.Models;
 /// </summary>
 public class Payment
 {
-    public int Id { get; set; }
+    public int PaymentId { get; set; }
     public long ConfirmationNumber { get; set; }  // conf
+    public int? AccommodationId { get; set; }
 
     // Denormalized guest info
     public string? FirstName { get; set; }  // f_name
@@ -15,9 +16,11 @@ public class Payment
     // Payment details
     public decimal Amount { get; set; }  // AmountReceived
     public DateTime PaymentDate { get; set; }  // DateReceived
+    public string? PaymentMethod { get; set; }  // Cash, Check, Credit Card
     public string? CheckNumber { get; set; }  // CheckNumber
     public string? ReceivedFrom { get; set; }  // ReceivedFrom
     public string? AppliedTo { get; set; }  // AppliedTo
+    public string? Notes { get; set; }
 
     // Payment due tracking
     public decimal? DepositDue { get; set; }  // depdue
@@ -36,6 +39,7 @@ public class Payment
 
     public string? Comments { get; set; }  // Comments + cmmnts
 
-    // Navigation property
+    // Navigation properties
     public virtual Guest Guest { get; set; } = null!;
+    public virtual Accommodation? Accommodation { get; set; }
 }

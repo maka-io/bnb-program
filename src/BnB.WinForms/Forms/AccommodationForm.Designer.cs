@@ -38,8 +38,8 @@ partial class AccommodationForm
         this.lblGuestName = new Label();
         this.lblArrivalDate = new Label();
         this.lblDepartureDate = new Label();
-        this.lblNumberOfNights = new Label();
-        this.lblNumberInParty = new Label();
+        this.lblNights = new Label();
+        this.lblNumberOfGuests = new Label();
         this.lblUnitName = new Label();
         this.lblUnitNameDescription = new Label();
         this.lblDailyGrossRate = new Label();
@@ -62,8 +62,8 @@ partial class AccommodationForm
         this.txtConfirmationNumber = new TextBox();
         this.txtGuestName = new TextBox();
         this.txtLocation = new TextBox();
-        this.txtNumberOfNights = new TextBox();
-        this.txtNumberInParty = new TextBox();
+        this.txtNights = new TextBox();
+        this.txtNumberOfGuests = new TextBox();
         this.txtUnitName = new TextBox();
         this.txtUnitNameDescription = new TextBox();
         this.txtDailyGrossRate = new TextBox();
@@ -184,8 +184,8 @@ partial class AccommodationForm
         grpDates.Controls.Add(dtpDepartureDate);
 
         y += 28;
-        AddLabelAndField(grpDates, lblNumberOfNights, "# Nights:", txtNumberOfNights, 15, y, 100, 60);
-        AddLabelAndField(grpDates, lblNumberInParty, "# In Party:", txtNumberInParty, 200, y, 280, 60);
+        AddLabelAndField(grpDates, lblNights, "# Nights:", txtNights, 15, y, 100, 60);
+        AddLabelAndField(grpDates, lblNumberOfGuests, "# In Party:", txtNumberOfGuests, 200, y, 280, 60);
 
         y += 28;
         AddLabelAndField(grpDates, lblUnitName, "Unit:", txtUnitName, 15, y, 100, 60);
@@ -396,8 +396,8 @@ partial class AccommodationForm
     private Label lblGuestName;
     private Label lblArrivalDate;
     private Label lblDepartureDate;
-    private Label lblNumberOfNights;
-    private Label lblNumberInParty;
+    private Label lblNights;
+    private Label lblNumberOfGuests;
     private Label lblUnitName;
     private Label lblUnitNameDescription;
     private Label lblDailyGrossRate;
@@ -420,8 +420,8 @@ partial class AccommodationForm
     private TextBox txtConfirmationNumber;
     private TextBox txtGuestName;
     private TextBox txtLocation;
-    private TextBox txtNumberOfNights;
-    private TextBox txtNumberInParty;
+    private TextBox txtNights;
+    private TextBox txtNumberOfGuests;
     private TextBox txtUnitName;
     private TextBox txtUnitNameDescription;
     private TextBox txtDailyGrossRate;

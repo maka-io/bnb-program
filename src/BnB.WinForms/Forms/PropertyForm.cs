@@ -39,7 +39,7 @@ public partial class PropertyForm : Form
     private void SetupDataBindings()
     {
         // General Information
-        txtAccountNumber.DataBindings.Add("Text", _bindingSource, nameof(Property.AccountNumber), true);
+        txtAccountNumber.DataBindings.Add("Text", _bindingSource, nameof(Property.PropertyId), true);
         txtLocation.DataBindings.Add("Text", _bindingSource, nameof(Property.Location), true);
         txtFullName.DataBindings.Add("Text", _bindingSource, nameof(Property.FullName), true);
         txtCheckTo.DataBindings.Add("Text", _bindingSource, nameof(Property.CheckTo), true);
@@ -214,12 +214,12 @@ public partial class PropertyForm : Form
 
         // Generate next account number
         var maxAccountNum = _dbContext.Properties.Any()
-            ? _dbContext.Properties.Max(p => p.AccountNumber)
+            ? _dbContext.Properties.Max(p => p.PropertyId)
             : 0;
 
         _currentProperty = new Property
         {
-            AccountNumber = maxAccountNum + 1,
+            PropertyId = maxAccountNum + 1,
             Location = "",
             PercentToHost = 70  // Default percentage
         };
@@ -246,7 +246,7 @@ public partial class PropertyForm : Form
         {
             // Check if property has accommodations
             var hasAccommodations = _dbContext.Accommodations
-                .Any(a => a.PropertyAccountNumber == property.AccountNumber);
+                .Any(a => a.PropertyId == property.PropertyId);
 
             if (hasAccommodations)
             {
@@ -263,7 +263,7 @@ public partial class PropertyForm : Form
             SetMode(FormMode.Delete);
 
             var result = MessageBox.Show(
-                $"Are you sure you want to delete property '{property.Location}' (Account# {property.AccountNumber})?",
+                $"Are you sure you want to delete property '{property.Location}' (Account# {property.PropertyId})?",
                 "Confirm Delete",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning);
@@ -358,8 +358,8 @@ public partial class PropertyForm : Form
             var criteria = searchForm.SearchCriteria;
             var query = _dbContext.Properties.AsQueryable();
 
-            if (criteria.AccountNumber.HasValue)
-                query = query.Where(p => p.AccountNumber == criteria.AccountNumber);
+            if (criteria.PropertyId.HasValue)
+                query = query.Where(p => p.PropertyId == criteria.PropertyId);
 
             if (!string.IsNullOrEmpty(criteria.PropertyName))
                 query = query.Where(p => p.Location.Contains(criteria.PropertyName));
@@ -396,7 +396,7 @@ public partial class PropertyForm : Form
         if (_bindingSource.Current is Property property)
         {
             // TODO: Open Room Types form for this property
-            MessageBox.Show($"Room Types for Property #{property.AccountNumber}: {property.Location}",
+            MessageBox.Show($"Room Types for Property #{property.PropertyId}: {property.Location}",
                 "Room Types", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
@@ -476,7 +476,7 @@ public partial class PropertyForm : Form
 /// </summary>
 public class PropertySearchCriteria
 {
-    public int? AccountNumber { get; set; }
+    public int? PropertyId { get; set; }
     public string? PropertyName { get; set; }
     public string? OwnerName { get; set; }
     public bool IncludeObsolete { get; set; }

@@ -33,8 +33,14 @@ public class BnBDbContext : DbContext
     public DbSet<CarAgency> CarAgencies => Set<CarAgency>();
     public DbSet<CarRental> CarRentals => Set<CarRental>();
 
+    // Property facts
+    public DbSet<Fact> Facts => Set<Fact>();
+    public DbSet<PropertyFact> PropertyFacts => Set<PropertyFact>();
+
     // Configuration
     public DbSet<CompanyInfo> CompanyInfo => Set<CompanyInfo>();
+    public DbSet<CommonText> CommonTexts => Set<CommonText>();
+    public DbSet<CheckNumberConfig> CheckNumberConfigs => Set<CheckNumberConfig>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -68,7 +74,7 @@ public class BnBDbContext : DbContext
         // Property (Host) configuration (proptbl)
         modelBuilder.Entity<Property>(entity =>
         {
-            entity.HasKey(e => e.AccountNumber);
+            entity.HasKey(e => e.PropertyId);
             entity.Property(e => e.Location).HasMaxLength(100).IsRequired();
             entity.Property(e => e.FullName).HasMaxLength(100);
             entity.Property(e => e.DBA).HasMaxLength(100);
@@ -101,7 +107,7 @@ public class BnBDbContext : DbContext
         // Accommodation configuration (bbtbl)
         modelBuilder.Entity<Accommodation>(entity =>
         {
-            entity.HasKey(e => e.Id);
+            entity.HasKey(e => e.AccommodationId);
             entity.Property(e => e.FirstName).HasMaxLength(50);
             entity.Property(e => e.LastName).HasMaxLength(50);
             entity.Property(e => e.Location).HasMaxLength(100);
@@ -116,12 +122,18 @@ public class BnBDbContext : DbContext
             entity.Property(e => e.Tax2).HasPrecision(10, 2);
             entity.Property(e => e.Tax3).HasPrecision(10, 2);
             entity.Property(e => e.ServiceFee).HasPrecision(10, 2);
+            entity.Property(e => e.TotalCharges).HasPrecision(10, 2);
+            entity.Property(e => e.TotalPaid).HasPrecision(10, 2);
+            entity.Property(e => e.BalanceDue).HasPrecision(10, 2);
+            entity.Property(e => e.RefundOwed).HasPrecision(10, 2);
             entity.Property(e => e.Commission).HasPrecision(10, 2);
             entity.Property(e => e.CommissionPaid).HasPrecision(10, 2);
             entity.Property(e => e.CommissionReceived).HasPrecision(10, 2);
             entity.Property(e => e.PaymentType).HasMaxLength(20);
+            entity.Property(e => e.Status).HasMaxLength(20);
             entity.Property(e => e.OverridePercentToHost).HasPrecision(5, 2);
             entity.Property(e => e.OverrideTaxPlanCode).HasMaxLength(10);
+            entity.Property(e => e.SpecialRequests).HasMaxLength(500);
             entity.Property(e => e.EntryUser).HasMaxLength(50);
             entity.Property(e => e.UpdateUser).HasMaxLength(50);
 
@@ -131,19 +143,21 @@ public class BnBDbContext : DbContext
 
             entity.HasOne(e => e.Property)
                 .WithMany(p => p.Accommodations)
-                .HasForeignKey(e => e.PropertyAccountNumber);
+                .HasForeignKey(e => e.PropertyId);
         });
 
         // Payment configuration (paymentreceived)
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.Id);
+            entity.HasKey(e => e.PaymentId);
             entity.Property(e => e.FirstName).HasMaxLength(50);
             entity.Property(e => e.LastName).HasMaxLength(50);
             entity.Property(e => e.Amount).HasPrecision(10, 2);
+            entity.Property(e => e.PaymentMethod).HasMaxLength(30);
             entity.Property(e => e.CheckNumber).HasMaxLength(50);
             entity.Property(e => e.ReceivedFrom).HasMaxLength(100);
             entity.Property(e => e.AppliedTo).HasMaxLength(100);
+            entity.Property(e => e.Notes).HasMaxLength(500);
             entity.Property(e => e.DepositDue).HasPrecision(10, 2);
             entity.Property(e => e.PrepaymentDue).HasPrecision(10, 2);
             entity.Property(e => e.CancellationFee).HasPrecision(10, 2);
@@ -154,20 +168,29 @@ public class BnBDbContext : DbContext
             entity.HasOne(e => e.Guest)
                 .WithMany(g => g.Payments)
                 .HasForeignKey(e => e.ConfirmationNumber);
+
+            entity.HasOne(e => e.Accommodation)
+                .WithMany()
+                .HasForeignKey(e => e.AccommodationId);
         });
 
         // Check configuration (checktbl)
         modelBuilder.Entity<Check>(entity =>
         {
-            entity.HasKey(e => e.Id);
+            entity.HasKey(e => e.CheckId);
             entity.Property(e => e.CheckNumber).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Amount).HasPrecision(10, 2);
-            entity.Property(e => e.PayableTo).HasMaxLength(100);
+            entity.Property(e => e.PayTo).HasMaxLength(100);
             entity.Property(e => e.Memo).HasMaxLength(200);
+            entity.Property(e => e.Comments).HasMaxLength(500);
 
             entity.HasOne(e => e.Accommodation)
                 .WithMany()
                 .HasForeignKey(e => e.AccommodationId);
+
+            entity.HasOne(e => e.Property)
+                .WithMany()
+                .HasForeignKey(e => e.PropertyId);
         });
 
         // TaxRate configuration
@@ -198,14 +221,14 @@ public class BnBDbContext : DbContext
         // RoomType configuration (hostaccount_roomtype_link)
         modelBuilder.Entity<RoomType>(entity =>
         {
-            entity.HasKey(e => e.Id);
+            entity.HasKey(e => e.RoomTypeId);
             entity.Property(e => e.Name).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(200);
             entity.Property(e => e.DefaultRate).HasPrecision(10, 2);
 
             entity.HasOne(e => e.Property)
                 .WithMany(p => p.RoomTypes)
-                .HasForeignKey(e => e.PropertyAccountNumber);
+                .HasForeignKey(e => e.PropertyId);
         });
 
         // TravelAgency configuration (tamaster)
@@ -290,6 +313,45 @@ public class BnBDbContext : DbContext
             entity.Property(e => e.Fax).HasMaxLength(30);
             entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.WebUrl).HasMaxLength(200);
+        });
+
+        // CommonText configuration (commontext)
+        modelBuilder.Entity<CommonText>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).HasMaxLength(60).IsRequired();
+            entity.Property(e => e.Text).IsRequired();
+            entity.HasIndex(e => e.Title).IsUnique();
+        });
+
+        // CheckNumberConfig configuration (checknum)
+        modelBuilder.Entity<CheckNumberConfig>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+
+        // Fact configuration (facttbl)
+        modelBuilder.Entity<Fact>(entity =>
+        {
+            entity.HasKey(e => e.FactId);
+            entity.Property(e => e.Category).HasMaxLength(50);
+            entity.Property(e => e.Description).HasMaxLength(200).IsRequired();
+        });
+
+        // PropertyFact configuration (propfacttbl)
+        modelBuilder.Entity<PropertyFact>(entity =>
+        {
+            entity.HasKey(e => e.PropertyFactId);
+
+            entity.HasOne(e => e.Property)
+                .WithMany()
+                .HasForeignKey(e => e.PropertyId);
+
+            entity.HasOne(e => e.Fact)
+                .WithMany(f => f.PropertyFacts)
+                .HasForeignKey(e => e.FactId);
+
+            entity.HasIndex(e => new { e.PropertyId, e.FactId }).IsUnique();
         });
     }
 }

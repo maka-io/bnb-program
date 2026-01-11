@@ -5,9 +5,9 @@ namespace BnB.Core.Models;
 /// </summary>
 public class Accommodation
 {
-    public int Id { get; set; }
+    public int AccommodationId { get; set; }
     public long ConfirmationNumber { get; set; }  // conf
-    public int PropertyAccountNumber { get; set; }  // accountnum
+    public int PropertyId { get; set; }  // accountnum
 
     // Denormalized guest/property info (from legacy)
     public string? FirstName { get; set; }  // f_name
@@ -17,26 +17,33 @@ public class Accommodation
     // Dates and duration
     public DateTime ArrivalDate { get; set; }  // arrdate
     public DateTime DepartureDate { get; set; }  // depdate
-    public int NumberOfNights { get; set; }  // NumNites
-    public int? NumberInParty { get; set; }  // numpty
+    public int? Nights { get; set; }  // NumNites
+    public int? NumberOfGuests { get; set; }  // numpty
+    public DateTime? BookedDate { get; set; }
 
     // Room info
     public string? UnitName { get; set; }  // UnitName (room type code)
     public string? UnitNameDescription { get; set; }  // UnitNameDesc
 
     // Rates and amounts
-    public decimal DailyGrossRate { get; set; }  // grosrate
-    public decimal DailyNetRate { get; set; }  // netrate
-    public decimal TotalGrossWithTax { get; set; }  // gwtax
-    public decimal TotalNetWithTax { get; set; }  // nwtax
-    public decimal TotalTax { get; set; }  // tax
-    public decimal Tax1 { get; set; }  // tax1
-    public decimal Tax2 { get; set; }  // tax2
-    public decimal Tax3 { get; set; }  // tax3
-    public decimal ServiceFee { get; set; }  // svcharge
+    public decimal? DailyGrossRate { get; set; }  // grosrate
+    public decimal? DailyNetRate { get; set; }  // netrate
+    public decimal? TotalGrossWithTax { get; set; }  // gwtax
+    public decimal? TotalNetWithTax { get; set; }  // nwtax
+    public decimal? TotalTax { get; set; }  // tax
+    public decimal? Tax1 { get; set; }  // tax1
+    public decimal? Tax2 { get; set; }  // tax2
+    public decimal? Tax3 { get; set; }  // tax3
+    public decimal? ServiceFee { get; set; }  // svcharge
+
+    // Billing totals
+    public decimal? TotalCharges { get; set; }
+    public decimal? TotalPaid { get; set; }
+    public decimal? BalanceDue { get; set; }
+    public decimal? RefundOwed { get; set; }
 
     // Commission tracking
-    public decimal? Commission { get; set; }  // commish (commission due from host)
+    public decimal Commission { get; set; }  // commish (commission due from host)
     public decimal? CommissionPaid { get; set; }  // comm_paid
     public decimal? CommissionReceived { get; set; }  // com_rcvd
 
@@ -46,7 +53,8 @@ public class Accommodation
     public string? OverrideTaxPlanCode { get; set; }  // tax_plan_code
     public bool UseManualAmounts { get; set; }  // FillinCalcAmounts
 
-    // Status flags
+    // Status
+    public string? Status { get; set; }  // Active, Cancelled, etc.
     public bool Suppress { get; set; }  // suppress
     public bool Notified { get; set; }  // Notified
     public bool Forfeit { get; set; }  // Forfeit
@@ -54,6 +62,7 @@ public class Accommodation
     // Notes
     public string? Comments { get; set; }  // cmmnts
     public string? NightNotes { get; set; }  // nnotes
+    public string? SpecialRequests { get; set; }
 
     // Audit fields
     public DateTime? EntryDate { get; set; }

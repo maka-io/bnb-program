@@ -173,7 +173,16 @@ partial class MainForm
         this.mnuCarRentalAgencies.Click += mnuCarRentalAgencies_Click;
 
         // === Availability Menu ===
+        this.mnuRoomAvailability = new ToolStripMenuItem();
+        this.mnuCarAvailability = new ToolStripMenuItem();
+        this.mnuAvailability.DropDownItems.AddRange(new ToolStripItem[] {
+            this.mnuRoomAvailability, this.mnuCarAvailability
+        });
         this.mnuAvailability.Text = "A&vailability";
+        this.mnuRoomAvailability.Text = "&Room Availability";
+        this.mnuRoomAvailability.Click += mnuRoomAvailability_Click;
+        this.mnuCarAvailability.Text = "&Car Availability";
+        this.mnuCarAvailability.Click += mnuCarAvailability_Click;
 
         // === Reports Menu ===
         this.mnuReports.DropDownItems.AddRange(new ToolStripItem[] {
@@ -186,7 +195,9 @@ partial class MainForm
         this.mnuReports.Text = "&Reports";
 
         this.mnuConfirmations.Text = "C&onfirmation/Fee Summary Report";
+        this.mnuConfirmations.Click += mnuConfirmations_Click;
         this.mnuArrivalsDeparts.Text = "&Arrivals/Departures";
+        this.mnuArrivalsDeparts.Click += mnuArrivalsDeparts_Click;
 
         this.mnuDailyReports.DropDownItems.AddRange(new ToolStripItem[] {
             this.mnuDailyBooking, this.mnuArrivals, this.mnuDepartures, this.mnuHostNotification
@@ -194,29 +205,46 @@ partial class MainForm
         this.mnuDailyReports.Text = "&Daily Reports";
 
         this.mnuDailyBooking.Text = "Daily &Booking Report";
+        this.mnuDailyBooking.Click += mnuDailyBooking_Click;
         this.mnuArrivals.Text = "&Arrivals";
+        this.mnuArrivals.Click += mnuArrivals_Click;
         this.mnuDepartures.Text = "&Departures";
+        this.mnuDepartures.Click += mnuDepartures_Click;
         this.mnuHostNotification.Text = "&Host Notification Report";
+        this.mnuHostNotification.Click += mnuHostNotification_Click;
 
         this.mnuCheckLedger.Text = "&Check Ledger Summary Report";
+        this.mnuCheckLedger.Click += mnuCheckLedger_Click;
         this.mnuNetSummary.Text = "&Net Summary Report";
+        this.mnuNetSummary.Click += mnuNetSummary_Click;
         this.mnuServiceFeeSummary.Text = "&Service Fee Summary Report";
+        this.mnuServiceFeeSummary.Click += mnuServiceFeeSummary_Click;
         this.mnuCommission.Text = "Co&mmission Report";
+        this.mnuCommission.Click += mnuCommission_Click;
 
         this.mnuPaymentsReceived.DropDownItems.AddRange(new ToolStripItem[] {
             this.mnuPayRecSummary, this.mnuClientTrust
         });
         this.mnuPaymentsReceived.Text = "&Payments Received";
         this.mnuPayRecSummary.Text = "Payments &Received Report";
+        this.mnuPayRecSummary.Click += mnuPayRecSummary_Click;
         this.mnuClientTrust.Text = "&Client Trust Reconciliation";
+        this.mnuClientTrust.Click += mnuClientTrust_Click;
 
         this.mnuPayReceivable.Text = "Pa&yments Receivable";
+        this.mnuPayReceivable.Click += mnuPayReceivable_Click;
         this.mnuRefunds.Text = "&Refunds";
+        this.mnuRefunds.Click += mnuRefunds_Click;
         this.mnuOverpayments.Text = "O&verpayments To Host Properties";
+        this.mnuOverpayments.Click += mnuOverpayments_Click;
         this.mnuHost1099.Text = "&Host 1099 Tax Forms";
+        this.mnuHost1099.Click += mnuHost1099_Click;
         this.mnuHostAcctInfo.Text = "Host Account &Information";
+        this.mnuHostAcctInfo.Click += mnuHostAcctInfo_Click;
         this.mnuCarRentalActivity.Text = "Car R&ental Activity";
+        this.mnuCarRentalActivity.Click += mnuCarRentalActivity_Click;
         this.mnuTrends.Text = "&Trends";
+        this.mnuTrends.Click += mnuTrends_Click;
 
         // === Accounting Menu ===
         this.mnuAccounting.DropDownItems.AddRange(new ToolStripItem[] {
@@ -229,10 +257,14 @@ partial class MainForm
         });
         this.mnuChecks.Text = "&Checks";
         this.mnuPrintChecks.Text = "&Print Checks";
+        this.mnuPrintChecks.Click += mnuPrintChecks_Click;
         this.mnuViewEditChecks.Text = "&View/Edit Printed Checks";
+        this.mnuViewEditChecks.Click += mnuViewEditChecks_Click;
         this.mnuSetCheckNumbers.Text = "Set Check &Numbers";
+        this.mnuSetCheckNumbers.Click += mnuSetCheckNumbers_Click;
 
         this.mnuViewEditPayments.Text = "&View/Edit Payments Received";
+        this.mnuViewEditPayments.Click += mnuViewEditPayments_Click;
 
         // === Taxes Menu ===
         this.mnuTaxes.DropDownItems.AddRange(new ToolStripItem[] {
@@ -265,9 +297,11 @@ partial class MainForm
         });
         this.mnuAdmin.Text = "A&dmin";
         this.mnuPropertyFacts.Text = "&Property Facts Master List";
+        this.mnuPropertyFacts.Click += mnuPropertyFacts_Click;
         this.mnuCompanyInfo.Text = "Company &Information";
         this.mnuCompanyInfo.Click += mnuCompanyInfo_Click;
         this.mnuRestoreDatabase.Text = "&Restore Database";
+        this.mnuRestoreDatabase.Click += mnuRestoreDatabase_Click;
 
         // === Help Menu ===
         this.mnuHelp.DropDownItems.AddRange(new ToolStripItem[] {
@@ -275,6 +309,8 @@ partial class MainForm
         });
         this.mnuHelp.Text = "&Help";
         this.mnuHelpTopics.Text = "Help &Topics";
+        this.mnuHelpTopics.ShortcutKeys = Keys.F1;
+        this.mnuHelpTopics.Click += mnuHelpTopics_Click;
         this.mnuAbout.Text = "&About";
         this.mnuAbout.Click += mnuAbout_Click;
 
@@ -333,6 +369,8 @@ partial class MainForm
 
     // Availability Menu
     private ToolStripMenuItem mnuAvailability;
+    private ToolStripMenuItem mnuRoomAvailability;
+    private ToolStripMenuItem mnuCarAvailability;
 
     // Reports Menu
     private ToolStripMenuItem mnuReports;

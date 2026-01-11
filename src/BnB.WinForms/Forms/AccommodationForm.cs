@@ -50,8 +50,8 @@ public partial class AccommodationForm : Form
         // Date bindings
         dtpArrivalDate.DataBindings.Add("Value", _bindingSource, nameof(Accommodation.ArrivalDate), true);
         dtpDepartureDate.DataBindings.Add("Value", _bindingSource, nameof(Accommodation.DepartureDate), true);
-        txtNumberOfNights.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.NumberOfNights), true);
-        txtNumberInParty.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.NumberInParty), true);
+        txtNights.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.Nights), true);
+        txtNumberOfGuests.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.NumberOfGuests), true);
 
         // Room info
         txtUnitName.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.UnitName), true);
@@ -95,7 +95,7 @@ public partial class AccommodationForm : Form
         {
             var properties = _dbContext.Properties
                 .OrderBy(p => p.Location)
-                .Select(p => new { p.AccountNumber, p.Location })
+                .Select(p => new { p.PropertyId, p.Location })
                 .ToList();
 
             _propertyBindingSource.DataSource = properties;
@@ -225,7 +225,7 @@ public partial class AccommodationForm : Form
         {
             ArrivalDate = DateTime.Today,
             DepartureDate = DateTime.Today.AddDays(1),
-            NumberOfNights = 1,
+            Nights = 1,
             PaymentType = "Prepay",
             EntryDate = DateTime.Now,
             EntryUser = Environment.UserName
@@ -289,7 +289,7 @@ public partial class AccommodationForm : Form
                         // Set property info
                         if (cboProperty.SelectedValue is int accountNum)
                         {
-                            _currentAccommodation.PropertyAccountNumber = accountNum;
+                            _currentAccommodation.PropertyId = accountNum;
                             var property = _dbContext.Properties.Find(accountNum);
                             if (property != null)
                             {
@@ -426,12 +426,12 @@ public partial class AccommodationForm : Form
         // Calculate number of nights
         if (accommodation.DepartureDate > accommodation.ArrivalDate)
         {
-            accommodation.NumberOfNights = (int)(accommodation.DepartureDate - accommodation.ArrivalDate).TotalDays;
+            accommodation.Nights = (int)(accommodation.DepartureDate - accommodation.ArrivalDate).TotalDays;
         }
 
         // Calculate totals (simplified - would need tax rates from database)
-        accommodation.TotalGrossWithTax = accommodation.DailyGrossRate * accommodation.NumberOfNights;
-        accommodation.TotalNetWithTax = accommodation.DailyNetRate * accommodation.NumberOfNights;
+        accommodation.TotalGrossWithTax = accommodation.DailyGrossRate * accommodation.Nights;
+        accommodation.TotalNetWithTax = accommodation.DailyNetRate * accommodation.Nights;
 
         // Refresh bindings
         _bindingSource.ResetCurrentItem();
