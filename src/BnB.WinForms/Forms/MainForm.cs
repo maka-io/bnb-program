@@ -93,7 +93,11 @@ public partial class MainForm : Form
 
     private void mnuHostProperties_Click(object sender, EventArgs e)
     {
-        // TODO: Open Host Properties form
+        OpenOrActivateForm<PropertyForm>(() =>
+        {
+            var dbContext = _serviceProvider.GetRequiredService<BnBDbContext>();
+            return new PropertyForm(dbContext);
+        });
     }
 
     private void mnuTravelAgencies_Click(object sender, EventArgs e)
