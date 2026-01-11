@@ -106,7 +106,11 @@ public partial class MainForm : Form
 
     private void mnuTravelAgencies_Click(object sender, EventArgs e)
     {
-        // TODO: Open Travel Agencies form
+        OpenOrActivateForm<TravelAgencyForm>(() =>
+        {
+            var dbContext = _serviceProvider.GetRequiredService<BnBDbContext>();
+            return new TravelAgencyForm(dbContext);
+        });
     }
 
     private void mnuCarRentalAgencies_Click(object sender, EventArgs e)

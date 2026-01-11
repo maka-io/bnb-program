@@ -6,7 +6,8 @@ namespace BnB.Core.Models;
 public class TravelAgency
 {
     public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public int AccountNumber { get; set; }  // accountnum
+    public string Name { get; set; } = string.Empty;  // agencyname
     public string? ContactName { get; set; }
     public string? Address { get; set; }
     public string? City { get; set; }
