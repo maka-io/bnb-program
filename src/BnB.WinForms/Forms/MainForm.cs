@@ -115,7 +115,11 @@ public partial class MainForm : Form
 
     private void mnuCarRentalAgencies_Click(object sender, EventArgs e)
     {
-        // TODO: Open Car Rental Agencies form
+        OpenOrActivateForm<CarAgencyForm>(() =>
+        {
+            var dbContext = _serviceProvider.GetRequiredService<BnBDbContext>();
+            return new CarAgencyForm(dbContext);
+        });
     }
 
     #endregion
