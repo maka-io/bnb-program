@@ -13,7 +13,8 @@
       "Bash(timeout 5 dotnet run:*)",
       "Bash(powershell:*)",
       "Bash(dotnet-ef migrations add:*)",
-      "Bash(\"$HOME/.dotnet/tools/dotnet-ef\" migrations add InitialCreate --project BnB.Data --startup-project BnB.WinForms --output-dir Migrations)"
+      "Bash(\"$HOME/.dotnet/tools/dotnet-ef\" migrations add InitialCreate --project BnB.Data --startup-project BnB.WinForms --output-dir Migrations)",
+      "Bash(\"$HOME/.dotnet/tools/dotnet-ef\" migrations add ExpandedSchema --project BnB.Data --startup-project BnB.WinForms --output-dir Migrations)"
     ]
   }
 }

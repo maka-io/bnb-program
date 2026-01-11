@@ -5,30 +5,51 @@ namespace BnB.Core.Models;
 /// </summary>
 public class Property
 {
-    public int AccountNumber { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string? ContactName { get; set; }
-    public string? Address { get; set; }
-    public string? City { get; set; }
-    public string? State { get; set; }
-    public string? ZipCode { get; set; }
-    public string? Phone { get; set; }
-    public string? Fax { get; set; }
-    public string? Email { get; set; }
+    public int AccountNumber { get; set; }  // accountnum
+    public string Location { get; set; } = string.Empty;  // location (property name)
+    public string? FullName { get; set; }  // fullname
+    public string? DBA { get; set; }  // dba (doing business as)
 
-    /// <summary>Percentage paid to host (perdirect in legacy)</summary>
-    public decimal PercentToHost { get; set; }
+    // Property address
+    public string? PropertyAddress { get; set; }  // propaddress
+    public string? PropertyCity { get; set; }  // propcity
+    public string? PropertyState { get; set; }  // propstate
+    public string? PropertyZipCode { get; set; }  // propzipcode
+    public string? PropertyPhone { get; set; }  // propphone
+    public string? PropertyFax { get; set; }  // propfax
 
-    /// <summary>Future percentage (if rate change scheduled)</summary>
-    public decimal? FuturePercent { get; set; }
+    // Mailing address
+    public string? MailingAddress { get; set; }  // mailaddress
+    public string? MailingCity { get; set; }  // mailcity
+    public string? MailingState { get; set; }  // mailstate
+    public string? MailingZipCode { get; set; }  // mailzipcode
+    public string? MailingPhone1 { get; set; }  // mailphone1
+    public string? MailingPhone2 { get; set; }  // mailphone2
+    public string? MailingFax { get; set; }  // mailfax
 
-    /// <summary>Effective date for future percentage</summary>
-    public DateTime? FuturePercentDate { get; set; }
+    // Contact info
+    public string? Email { get; set; }  // Email
+    public string? WebUrl { get; set; }  // WebURL
 
-    /// <summary>Tax plan code for this property</summary>
-    public string? TaxPlanCode { get; set; }
+    // Financial info
+    public string? CheckTo { get; set; }  // check_to
+    public decimal PercentToHost { get; set; }  // perdirect
+    public decimal? FuturePercent { get; set; }  // futurepercent
+    public DateTime? FuturePercentDate { get; set; }  // futuredate
+    public decimal? GrossRatePercent { get; set; }  // GrosRatePercent
+    public string? FederalTaxId { get; set; }  // federaltaxid
 
-    public string? Comments { get; set; }
+    // Tax and booking settings
+    public string? TaxPlanCode { get; set; }  // tax_plan_code
+    public string? DepositRequired { get; set; }  // depositreq
+    public string? Exceptions { get; set; }  // exceptions
+    public string? ExceptionsDescription { get; set; }  // exceptions_desc
+
+    // Status flags
+    public bool IsObsolete { get; set; }  // PropObsolete
+    public bool SuppressFlag { get; set; }  // suppressflag
+
+    public string? Comments { get; set; }  // comments
 
     // Navigation properties
     public virtual ICollection<Accommodation> Accommodations { get; set; } = new List<Accommodation>();

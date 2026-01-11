@@ -1,0 +1,25 @@
+namespace BnB.Core.Models;
+
+/// <summary>
+/// Check record - maps to checktbl table in legacy database
+/// Tracks checks written to hosts for accommodations
+/// </summary>
+public class Check
+{
+    public int Id { get; set; }
+    public int AccommodationId { get; set; }  // Accom_RowId
+    public string CheckNumber { get; set; } = string.Empty;  // checknum
+
+    public decimal Amount { get; set; }
+    public DateTime? CheckDate { get; set; }
+    public string? PayableTo { get; set; }
+    public string? Memo { get; set; }
+
+    /// <summary>Whether this check has been voided</summary>
+    public bool IsVoid { get; set; }  // void_chk
+
+    public string? Comments { get; set; }
+
+    // Navigation property
+    public virtual Accommodation Accommodation { get; set; } = null!;
+}

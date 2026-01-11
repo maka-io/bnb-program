@@ -1,59 +1,66 @@
 namespace BnB.Core.Models;
 
 /// <summary>
-/// Accommodation/Reservation record - maps to accommodations table
+/// Accommodation/Reservation record - maps to bbtbl in legacy database
 /// </summary>
 public class Accommodation
 {
     public int Id { get; set; }
-    public long ConfirmationNumber { get; set; }
-    public int PropertyAccountNumber { get; set; }
+    public long ConfirmationNumber { get; set; }  // conf
+    public int PropertyAccountNumber { get; set; }  // accountnum
 
-    public DateTime ArrivalDate { get; set; }
-    public DateTime DepartureDate { get; set; }
-    public int NumberOfNights { get; set; }
+    // Denormalized guest/property info (from legacy)
+    public string? FirstName { get; set; }  // f_name
+    public string? LastName { get; set; }  // l_name
+    public string? Location { get; set; }  // location (property name)
 
-    /// <summary>Daily gross rate</summary>
-    public decimal DailyGrossRate { get; set; }
+    // Dates and duration
+    public DateTime ArrivalDate { get; set; }  // arrdate
+    public DateTime DepartureDate { get; set; }  // depdate
+    public int NumberOfNights { get; set; }  // NumNites
+    public int? NumberInParty { get; set; }  // numpty
 
-    /// <summary>Daily net rate (paid to host)</summary>
-    public decimal DailyNetRate { get; set; }
+    // Room info
+    public string? UnitName { get; set; }  // UnitName (room type code)
+    public string? UnitNameDescription { get; set; }  // UnitNameDesc
 
-    /// <summary>Total gross with tax</summary>
-    public decimal TotalGrossWithTax { get; set; }
+    // Rates and amounts
+    public decimal DailyGrossRate { get; set; }  // grosrate
+    public decimal DailyNetRate { get; set; }  // netrate
+    public decimal TotalGrossWithTax { get; set; }  // gwtax
+    public decimal TotalNetWithTax { get; set; }  // nwtax
+    public decimal TotalTax { get; set; }  // tax
+    public decimal Tax1 { get; set; }  // tax1
+    public decimal Tax2 { get; set; }  // tax2
+    public decimal Tax3 { get; set; }  // tax3
+    public decimal ServiceFee { get; set; }  // svcharge
 
-    /// <summary>Total net with tax</summary>
-    public decimal TotalNetWithTax { get; set; }
+    // Commission tracking
+    public decimal? Commission { get; set; }  // commish (commission due from host)
+    public decimal? CommissionPaid { get; set; }  // comm_paid
+    public decimal? CommissionReceived { get; set; }  // com_rcvd
 
-    /// <summary>Total tax amount</summary>
-    public decimal TotalTax { get; set; }
+    // Payment and billing
+    public string PaymentType { get; set; } = "Prepay";  // pymttype
+    public decimal? OverridePercentToHost { get; set; }  // percnt
+    public string? OverrideTaxPlanCode { get; set; }  // tax_plan_code
+    public bool UseManualAmounts { get; set; }  // FillinCalcAmounts
 
-    /// <summary>Tax 1 amount</summary>
-    public decimal Tax1 { get; set; }
+    // Status flags
+    public bool Suppress { get; set; }  // suppress
+    public bool Notified { get; set; }  // Notified
+    public bool Forfeit { get; set; }  // Forfeit
 
-    /// <summary>Tax 2 amount</summary>
-    public decimal Tax2 { get; set; }
+    // Notes
+    public string? Comments { get; set; }  // cmmnts
+    public string? NightNotes { get; set; }  // nnotes
 
-    /// <summary>Tax 3 amount</summary>
-    public decimal Tax3 { get; set; }
-
-    /// <summary>Service fee (BnB's commission)</summary>
-    public decimal ServiceFee { get; set; }
-
-    /// <summary>Payment type: Prepay, Direct, Comp</summary>
-    public string PaymentType { get; set; } = "Prepay";
-
-    /// <summary>Override percentage to host (null = use property default)</summary>
-    public decimal? OverridePercentToHost { get; set; }
-
-    /// <summary>Override tax plan code (null = use property default)</summary>
-    public string? OverrideTaxPlanCode { get; set; }
-
-    /// <summary>Manual calculation override flag</summary>
-    public bool UseManualAmounts { get; set; }
-
-    public string? RoomType { get; set; }
-    public string? Comments { get; set; }
+    // Audit fields
+    public DateTime? EntryDate { get; set; }
+    public string? EntryUser { get; set; }
+    public DateTime? UpdateDate { get; set; }
+    public string? UpdateUser { get; set; }
+    public DateTime? RevisionDate { get; set; }  // rev_date
 
     // Navigation properties
     public virtual Guest Guest { get; set; } = null!;
