@@ -84,7 +84,11 @@ public partial class MainForm : Form
 
     private void mnuPayments_Click(object sender, EventArgs e)
     {
-        // TODO: Open Payments form
+        OpenOrActivateForm<PaymentForm>(() =>
+        {
+            var dbContext = _serviceProvider.GetRequiredService<BnBDbContext>();
+            return new PaymentForm(dbContext);
+        });
     }
 
     #endregion
