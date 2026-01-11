@@ -266,6 +266,7 @@ partial class MainForm
         this.mnuAdmin.Text = "A&dmin";
         this.mnuPropertyFacts.Text = "&Property Facts Master List";
         this.mnuCompanyInfo.Text = "Company &Information";
+        this.mnuCompanyInfo.Click += mnuCompanyInfo_Click;
         this.mnuRestoreDatabase.Text = "&Restore Database";
 
         // === Help Menu ===

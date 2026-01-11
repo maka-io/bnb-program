@@ -165,6 +165,19 @@ public partial class MainForm : Form
 
     #endregion
 
+    #region Admin Menu Handlers
+
+    private void mnuCompanyInfo_Click(object sender, EventArgs e)
+    {
+        OpenOrActivateForm<CompanyInfoForm>(() =>
+        {
+            var dbContext = _serviceProvider.GetRequiredService<BnBDbContext>();
+            return new CompanyInfoForm(dbContext);
+        });
+    }
+
+    #endregion
+
     #region Help Menu Handlers
 
     private void mnuAbout_Click(object sender, EventArgs e)
