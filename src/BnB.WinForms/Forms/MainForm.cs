@@ -56,9 +56,11 @@ public partial class MainForm : Form
 
     private void mnuGeneralInfo_Click(object sender, EventArgs e)
     {
-        // TODO: Open Guest form
-        MessageBox.Show("Guest Information form will be implemented.", "Guests",
-            MessageBoxButtons.OK, MessageBoxIcon.Information);
+        OpenOrActivateForm<GuestForm>(() =>
+        {
+            var dbContext = _serviceProvider.GetRequiredService<BnBDbContext>();
+            return new GuestForm(dbContext);
+        });
     }
 
     private void mnuAccommodations_Click(object sender, EventArgs e)
@@ -144,5 +146,26 @@ public partial class MainForm : Form
         {
             // TODO: Check for unsaved changes
         }
+    }
+
+    /// <summary>
+    /// Opens a new MDI child form or activates an existing one of the same type.
+    /// </summary>
+    private void OpenOrActivateForm<T>(Func<T> formFactory) where T : Form
+    {
+        // Check if form of this type is already open
+        foreach (Form child in MdiChildren)
+        {
+            if (child is T existingForm)
+            {
+                existingForm.Activate();
+                return;
+            }
+        }
+
+        // Create and show new form
+        var form = formFactory();
+        form.MdiParent = this;
+        form.Show();
     }
 }
