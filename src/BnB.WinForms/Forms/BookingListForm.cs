@@ -1,6 +1,7 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
 using BnB.WinForms.Reports;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -23,6 +24,7 @@ public partial class BookingListForm : Form
 
     private void BookingListForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
         LoadProperties();
 
         // Default date range - current month
@@ -34,6 +36,33 @@ public partial class BookingListForm : Form
 
         cboStatus.Items.AddRange(new object[] { "(All)", "Active", "Cancelled", "Forfeit" });
         cboStatus.SelectedIndex = 0;
+
+        // Wire up resize event
+        this.Resize += BookingListForm_Resize;
+        ResizeControls();
+    }
+
+    private void BookingListForm_Resize(object? sender, EventArgs e)
+    {
+        ResizeControls();
+    }
+
+    private void ResizeControls()
+    {
+        // Manually size and position the controls
+        int filterHeight = 75;
+        int bottomHeight = 50;
+        int gridTop = filterHeight;
+        int gridHeight = this.ClientSize.Height - filterHeight - bottomHeight;
+
+        pnlFilter.Location = new Point(0, 0);
+        pnlFilter.Size = new Size(this.ClientSize.Width, filterHeight);
+
+        dgvBookings.Location = new Point(0, gridTop);
+        dgvBookings.Size = new Size(this.ClientSize.Width, gridHeight);
+
+        pnlBottom.Location = new Point(0, this.ClientSize.Height - bottomHeight);
+        pnlBottom.Size = new Size(this.ClientSize.Width, bottomHeight);
     }
 
     private void LoadProperties()
@@ -41,14 +70,14 @@ public partial class BookingListForm : Form
         var properties = _dbContext.Properties
             .Where(p => !p.IsObsolete)
             .OrderBy(p => p.Location)
-            .Select(p => new { p.PropertyId, Display = p.Location })
+            .Select(p => new { p.AccountNumber, Display = p.Location })
             .ToList();
 
-        properties.Insert(0, new { PropertyId = 0, Display = "(All Properties)" });
+        properties.Insert(0, new { AccountNumber = 0, Display = "(All Properties)" });
 
         cboProperty.DataSource = properties;
         cboProperty.DisplayMember = "Display";
-        cboProperty.ValueMember = "PropertyId";
+        cboProperty.ValueMember = "AccountNumber";
     }
 
     private void btnSearch_Click(object sender, EventArgs e)
@@ -79,7 +108,7 @@ public partial class BookingListForm : Form
         // Apply property filter
         if (selectedProperty > 0)
         {
-            query = query.Where(a => a.PropertyId == selectedProperty);
+            query = query.Where(a => a.PropertyAccountNumber == selectedProperty);
         }
 
         // Apply status filter
@@ -134,8 +163,8 @@ public partial class BookingListForm : Form
         ShowColumn("Location", "Property", 150);
         ShowColumn("ArrivalDate", "Arrival", 90, "MM/dd/yyyy");
         ShowColumn("DepartureDate", "Departure", 90, "MM/dd/yyyy");
-        ShowColumn("Nights", "Nights", 55);
-        ShowColumn("NumberOfGuests", "Guests", 55);
+        ShowColumn("NumberOfNights", "Nights", 55);
+        ShowColumn("NumberInParty", "Guests", 55);
         ShowColumn("TotalGrossWithTax", "Total", 90, "C2");
     }
 
@@ -161,9 +190,9 @@ public partial class BookingListForm : Form
     private void UpdateSummary()
     {
         var count = _accommodations.Count;
-        var totalNights = _accommodations.Sum(a => a.Nights);
+        var totalNights = _accommodations.Sum(a => a.NumberOfNights);
         var totalAmount = _accommodations.Sum(a => a.TotalGrossWithTax);
-        var totalGuests = _accommodations.Sum(a => a.NumberOfGuests ?? 1);
+        var totalGuests = _accommodations.Sum(a => a.NumberInParty ?? 1);
 
         lblSummary.Text = $"Bookings: {count} | Total Nights: {totalNights} | Total Guests: {totalGuests} | Total: {totalAmount:C2}";
     }
@@ -201,8 +230,8 @@ public partial class BookingListForm : Form
                         $"\"{accom.Location}\"," +
                         $"{accom.ArrivalDate:MM/dd/yyyy}," +
                         $"{accom.DepartureDate:MM/dd/yyyy}," +
-                        $"{accom.Nights}," +
-                        $"{accom.NumberOfGuests ?? 1}," +
+                        $"{accom.NumberOfNights}," +
+                        $"{accom.NumberInParty ?? 1}," +
                         $"{accom.TotalGrossWithTax:F2}");
                 }
 
@@ -235,6 +264,54 @@ public partial class BookingListForm : Form
         viewer.ShowDialog(this);
     }
 
+    private void btnPrintConfirmation_Click(object sender, EventArgs e)
+    {
+        if (dgvBookings.SelectedRows.Count == 0)
+        {
+            MessageBox.Show("Please select a booking first.", "Print Confirmation",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        if (dgvBookings.SelectedRows[0].DataBoundItem is not Accommodation accom)
+            return;
+
+        // Load the full guest and accommodations data
+        var guest = _dbContext.Guests
+            .FirstOrDefault(g => g.ConfirmationNumber == accom.ConfirmationNumber);
+
+        if (guest == null)
+        {
+            MessageBox.Show("Guest record not found.", "Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
+
+        var accommodations = _dbContext.Accommodations
+            .Include(a => a.Property)
+            .Where(a => a.ConfirmationNumber == accom.ConfirmationNumber)
+            .ToList();
+
+        var payment = _dbContext.Payments
+            .FirstOrDefault(p => p.ConfirmationNumber == accom.ConfirmationNumber);
+
+        // Calculate deposit and prepayment totals
+        decimal totalDeposit = payment?.DepositDue ?? 0;
+        decimal totalPrepayment = payment?.PrepaymentDue ?? 0;
+
+        var report = new ConfirmationReport(
+            guest,
+            accommodations,
+            payment,
+            "Standard",
+            "Guest",
+            totalDeposit,
+            totalPrepayment);
+
+        using var viewer = new ReportViewerForm(report);
+        viewer.ShowDialog(this);
+    }
+
     private void btnClose_Click(object sender, EventArgs e)
     {
         Close();
@@ -252,7 +329,7 @@ public partial class BookingListForm : Form
                 $"Guest: {accom.FirstName} {accom.LastName}\n" +
                 $"Property: {accom.Location}\n" +
                 $"Dates: {accom.ArrivalDate:MM/dd/yyyy} - {accom.DepartureDate:MM/dd/yyyy}\n" +
-                $"Nights: {accom.Nights}\n" +
+                $"Nights: {accom.NumberOfNights}\n" +
                 $"Total: {accom.TotalGrossWithTax:C2}",
                 "Booking Details",
                 MessageBoxButtons.OK,

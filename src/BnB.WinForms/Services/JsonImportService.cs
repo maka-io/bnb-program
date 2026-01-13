@@ -1,0 +1,712 @@
+using System.Text.Json;
+using BnB.Core.Models;
+using BnB.Data.Context;
+using Microsoft.EntityFrameworkCore;
+
+namespace BnB.WinForms.Services;
+
+internal static class StringExtensions
+{
+    public static string? Truncate(this string? value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value)) return value;
+        return value.Length <= maxLength ? value : value.Substring(0, maxLength);
+    }
+}
+
+/// <summary>
+/// Service to import data from JSON files exported by the Jackcess tool
+/// </summary>
+public class JsonImportService
+{
+    private readonly string _jsonFolderPath;
+    private readonly BnBDbContext _context;
+    private readonly IProgress<string>? _progress;
+
+    public JsonImportService(string jsonFolderPath, BnBDbContext context, IProgress<string>? progress = null)
+    {
+        _jsonFolderPath = jsonFolderPath;
+        _context = context;
+        _progress = progress;
+    }
+
+    public async Task<MigrationResult> ImportAllAsync()
+    {
+        var result = new MigrationResult();
+
+        try
+        {
+            // Import in order respecting foreign key dependencies
+            result.TaxRates = await ImportTaxRatesAsync();
+            result.TaxPlans = await ImportTaxPlansAsync();
+            result.TravelAgencies = await ImportTravelAgenciesAsync();
+            result.CarAgencies = await ImportCarAgenciesAsync();
+            result.Properties = await ImportPropertiesAsync();
+            result.RoomTypes = await ImportRoomTypesAsync();
+            result.Guests = await ImportGuestsAsync();
+            result.Accommodations = await ImportAccommodationsAsync();
+            result.Payments = await ImportPaymentsAsync();
+            result.Checks = await ImportChecksAsync();
+            result.TravelAgentBookings = await ImportTravelAgentBookingsAsync();
+            result.CarRentals = await ImportCarRentalsAsync();
+
+            result.Success = true;
+        }
+        catch (Exception ex)
+        {
+            result.Success = false;
+            // Get the innermost exception for actual error details
+            var innerEx = ex;
+            while (innerEx.InnerException != null)
+                innerEx = innerEx.InnerException;
+            result.ErrorMessage = $"{ex.Message}\nDetails: {innerEx.Message}";
+        }
+
+        return result;
+    }
+
+    private void Report(string message) => _progress?.Report(message);
+
+    private async Task<List<JsonElement>> ReadJsonFileAsync(string tableName)
+    {
+        var filePath = Path.Combine(_jsonFolderPath, $"{tableName}.json");
+        if (!File.Exists(filePath))
+        {
+            Report($"  {tableName}: file not found, skipping");
+            return new List<JsonElement>();
+        }
+
+        var json = await File.ReadAllTextAsync(filePath);
+        var items = JsonSerializer.Deserialize<List<JsonElement>>(json) ?? new List<JsonElement>();
+        return items;
+    }
+
+    private static string? GetString(JsonElement el, params string[] names)
+    {
+        foreach (var name in names)
+        {
+            if (el.TryGetProperty(name, out var prop) && prop.ValueKind == JsonValueKind.String)
+                return prop.GetString()?.Trim();
+        }
+        return null;
+    }
+
+    private static int GetInt(JsonElement el, params string[] names)
+    {
+        foreach (var name in names)
+        {
+            if (el.TryGetProperty(name, out var prop))
+            {
+                if (prop.ValueKind == JsonValueKind.Number)
+                    return prop.GetInt32();
+                if (prop.ValueKind == JsonValueKind.String && int.TryParse(prop.GetString(), out var i))
+                    return i;
+            }
+        }
+        return 0;
+    }
+
+    private static long GetLong(JsonElement el, params string[] names)
+    {
+        foreach (var name in names)
+        {
+            if (el.TryGetProperty(name, out var prop))
+            {
+                if (prop.ValueKind == JsonValueKind.Number)
+                    return prop.GetInt64();
+                if (prop.ValueKind == JsonValueKind.String && long.TryParse(prop.GetString(), out var l))
+                    return l;
+            }
+        }
+        return 0;
+    }
+
+    private static decimal GetDecimal(JsonElement el, params string[] names)
+    {
+        foreach (var name in names)
+        {
+            if (el.TryGetProperty(name, out var prop))
+            {
+                if (prop.ValueKind == JsonValueKind.Number)
+                    return prop.GetDecimal();
+                if (prop.ValueKind == JsonValueKind.String && decimal.TryParse(prop.GetString(), out var d))
+                    return d;
+            }
+        }
+        return 0;
+    }
+
+    private static decimal? GetNullableDecimal(JsonElement el, params string[] names)
+    {
+        foreach (var name in names)
+        {
+            if (el.TryGetProperty(name, out var prop))
+            {
+                if (prop.ValueKind == JsonValueKind.Null)
+                    continue;
+                if (prop.ValueKind == JsonValueKind.Number)
+                    return prop.GetDecimal();
+                if (prop.ValueKind == JsonValueKind.String && decimal.TryParse(prop.GetString(), out var d))
+                    return d;
+            }
+        }
+        return null;
+    }
+
+    private static DateTime? GetDateTime(JsonElement el, params string[] names)
+    {
+        foreach (var name in names)
+        {
+            if (el.TryGetProperty(name, out var prop))
+            {
+                if (prop.ValueKind == JsonValueKind.Null)
+                    continue;
+                if (prop.ValueKind == JsonValueKind.String)
+                {
+                    var str = prop.GetString();
+                    if (DateTime.TryParse(str, out var dt))
+                        return dt;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static bool GetBool(JsonElement el, params string[] names)
+    {
+        foreach (var name in names)
+        {
+            if (el.TryGetProperty(name, out var prop))
+            {
+                if (prop.ValueKind == JsonValueKind.True) return true;
+                if (prop.ValueKind == JsonValueKind.False) return false;
+                if (prop.ValueKind == JsonValueKind.Number) return prop.GetInt32() != 0;
+                if (prop.ValueKind == JsonValueKind.String)
+                {
+                    var s = prop.GetString()?.ToLower();
+                    return s == "true" || s == "1" || s == "-1" || s == "yes";
+                }
+            }
+        }
+        return false;
+    }
+
+    private async Task<int> ImportTaxRatesAsync()
+    {
+        Report("Importing Tax Rates...");
+        await _context.TaxRates.ExecuteDeleteAsync();
+
+        var items = await ReadJsonFileAsync("taxrates");
+        foreach (var el in items)
+        {
+            var taxRate = new TaxRate
+            {
+                TaxOne = GetDecimal(el, "tax_one", "TaxOne"),
+                TaxOneDescription = GetString(el, "tax_one_desc", "TaxOneDescription"),
+                FutureTaxOne = GetNullableDecimal(el, "future_tax_one", "FutureTaxOne"),
+                FutureTaxOneEffectiveDate = GetDateTime(el, "tax_one_eff_date", "FutureTaxOneEffectiveDate"),
+                TaxTwo = GetDecimal(el, "tax_two", "TaxTwo"),
+                TaxTwoDescription = GetString(el, "tax_two_desc", "TaxTwoDescription"),
+                FutureTaxTwo = GetNullableDecimal(el, "future_tax_two", "FutureTaxTwo"),
+                FutureTaxTwoEffectiveDate = GetDateTime(el, "tax_two_eff_date", "FutureTaxTwoEffectiveDate"),
+                TaxThree = GetDecimal(el, "tax_three", "TaxThree"),
+                TaxThreeDescription = GetString(el, "tax_three_desc", "TaxThreeDescription"),
+                FutureTaxThree = GetNullableDecimal(el, "future_tax_three", "FutureTaxThree"),
+                FutureTaxThreeEffectiveDate = GetDateTime(el, "tax_three_eff_date", "FutureTaxThreeEffectiveDate")
+            };
+            _context.TaxRates.Add(taxRate);
+        }
+
+        await _context.SaveChangesAsync();
+        Report($"  Tax Rates: {items.Count} imported");
+        return items.Count;
+    }
+
+    private async Task<int> ImportTaxPlansAsync()
+    {
+        Report("Importing Tax Plans...");
+        await _context.TaxPlans.ExecuteDeleteAsync();
+
+        var items = await ReadJsonFileAsync("taxplan");
+        foreach (var el in items)
+        {
+            var planCode = GetString(el, "plancode", "PlanCode");
+            if (string.IsNullOrEmpty(planCode)) continue;
+
+            var taxPlan = new TaxPlan
+            {
+                PlanCode = planCode,
+                PlanTitle = GetString(el, "plan_title", "PlanTitle"),
+                Description = GetString(el, "description", "Description")
+            };
+            _context.TaxPlans.Add(taxPlan);
+        }
+
+        await _context.SaveChangesAsync();
+        Report($"  Tax Plans: {items.Count} imported");
+        return items.Count;
+    }
+
+    private async Task<int> ImportTravelAgenciesAsync()
+    {
+        Report("Importing Travel Agencies...");
+        await _context.TravelAgentBookings.ExecuteDeleteAsync();
+        await _context.TravelAgencies.ExecuteDeleteAsync();
+
+        var items = await ReadJsonFileAsync("tamaster");
+        foreach (var el in items)
+        {
+            var agency = new TravelAgency
+            {
+                AccountNumber = GetInt(el, "accountnum", "AccountNumber"),
+                Name = GetString(el, "agencyname", "name", "Name") ?? "Unknown",
+                ContactName = GetString(el, "contactname", "contact", "ContactName"),
+                Address = GetString(el, "address", "Address"),
+                City = GetString(el, "city", "City"),
+                State = GetString(el, "state", "State"),
+                ZipCode = GetString(el, "zipcode", "zip", "ZipCode"),
+                Phone = GetString(el, "phone", "Phone"),
+                Fax = GetString(el, "fax", "Fax"),
+                Email = GetString(el, "email", "Email"),
+                CommissionPercent = GetNullableDecimal(el, "commpercent", "commission", "CommissionPercent"),
+                Comments = GetString(el, "comments", "Comments")
+            };
+            _context.TravelAgencies.Add(agency);
+        }
+
+        await _context.SaveChangesAsync();
+        Report($"  Travel Agencies: {items.Count} imported");
+        return items.Count;
+    }
+
+    private async Task<int> ImportCarAgenciesAsync()
+    {
+        Report("Importing Car Agencies...");
+        await _context.CarRentals.ExecuteDeleteAsync();
+        await _context.CarAgencies.ExecuteDeleteAsync();
+
+        var items = await ReadJsonFileAsync("carmaster");
+        foreach (var el in items)
+        {
+            var agency = new CarAgency
+            {
+                Name = GetString(el, "agencyname", "name", "Name") ?? "Unknown",
+                ContactName = GetString(el, "contactname", "contact", "ContactName"),
+                Address = GetString(el, "address", "Address"),
+                City = GetString(el, "city", "City"),
+                State = GetString(el, "state", "State"),
+                ZipCode = GetString(el, "zipcode", "zip", "ZipCode"),
+                Phone = GetString(el, "phone", "Phone"),
+                Fax = GetString(el, "fax", "Fax"),
+                Email = GetString(el, "email", "Email"),
+                CommissionPercent = GetNullableDecimal(el, "commpercent", "commission", "CommissionPercent"),
+                Comments = GetString(el, "comments", "Comments")
+            };
+            _context.CarAgencies.Add(agency);
+        }
+
+        await _context.SaveChangesAsync();
+        Report($"  Car Agencies: {items.Count} imported");
+        return items.Count;
+    }
+
+    private async Task<int> ImportPropertiesAsync()
+    {
+        Report("Importing Properties...");
+        await _context.Database.ExecuteSqlRawAsync("DELETE FROM Accommodations");
+        await _context.Database.ExecuteSqlRawAsync("DELETE FROM RoomTypes");
+        await _context.Database.ExecuteSqlRawAsync("DELETE FROM Properties");
+
+        var items = await ReadJsonFileAsync("proptbl");
+        foreach (var el in items)
+        {
+            var property = new Property
+            {
+                AccountNumber = GetInt(el, "accountnum", "AccountNumber"),
+                Location = GetString(el, "location", "Location") ?? "Unknown",
+                FullName = GetString(el, "fullname", "FullName"),
+                DBA = GetString(el, "dba", "DBA"),
+                PropertyAddress = GetString(el, "propaddress", "propaddr", "PropertyAddress"),
+                PropertyCity = GetString(el, "propcity", "PropertyCity"),
+                PropertyState = GetString(el, "propstate", "PropertyState"),
+                PropertyZipCode = GetString(el, "propzipcode", "propzip", "PropertyZipCode"),
+                PropertyPhone = GetString(el, "propphone", "PropertyPhone"),
+                PropertyFax = GetString(el, "propfax", "PropertyFax"),
+                MailingAddress = GetString(el, "mailaddress", "mailaddr", "MailingAddress"),
+                MailingCity = GetString(el, "mailcity", "MailingCity"),
+                MailingState = GetString(el, "mailstate", "MailingState"),
+                MailingZipCode = GetString(el, "mailzipcode", "mailzip", "MailingZipCode"),
+                MailingPhone1 = GetString(el, "mailphone1", "MailingPhone1"),
+                MailingPhone2 = GetString(el, "mailphone2", "MailingPhone2"),
+                MailingFax = GetString(el, "mailfax", "MailingFax"),
+                Email = GetString(el, "email", "Email"),
+                WebUrl = GetString(el, "weburl", "WebUrl"),
+                CheckTo = GetString(el, "check_to", "checkto", "CheckTo"),
+                PercentToHost = GetDecimal(el, "perdirect", "PercentToHost"),
+                FuturePercent = GetNullableDecimal(el, "futurepercent", "FuturePercent"),
+                FuturePercentDate = GetDateTime(el, "futuredate", "FuturePercentDate"),
+                GrossRatePercent = GetNullableDecimal(el, "grosratepercent", "grosspercent", "GrossRatePercent"),
+                FederalTaxId = GetString(el, "federaltaxid", "fedtaxid", "FederalTaxId"),
+                TaxPlanCode = GetString(el, "tax_plan_code", "TaxPlanCode"),
+                DepositRequired = GetString(el, "depositreq", "DepositRequired"),
+                Exceptions = GetString(el, "exceptions", "Exceptions"),
+                ExceptionsDescription = GetString(el, "exceptions_desc", "ExceptionsDescription"),
+                IsObsolete = GetBool(el, "propobsolete", "obsolete", "IsObsolete"),
+                SuppressFlag = GetBool(el, "suppressflag", "suppress", "SuppressFlag"),
+                Comments = GetString(el, "comments", "Comments")
+            };
+            _context.Properties.Add(property);
+        }
+
+        await _context.SaveChangesAsync();
+        Report($"  Properties: {items.Count} imported");
+        return items.Count;
+    }
+
+    private async Task<int> ImportRoomTypesAsync()
+    {
+        Report("Importing Room Types...");
+        var validProperties = await _context.Properties.Select(p => p.AccountNumber).ToListAsync();
+
+        var items = await ReadJsonFileAsync("roomtbl");
+        if (items.Count == 0)
+            items = await ReadJsonFileAsync("hostaccount_roomtype_link");
+
+        var count = 0;
+        foreach (var el in items)
+        {
+            var accountNum = GetInt(el, "accountnum", "AccountNumber");
+            if (!validProperties.Contains(accountNum)) continue;
+
+            var roomType = new RoomType
+            {
+                PropertyAccountNumber = accountNum,
+                Name = GetString(el, "unitname", "roomname", "Name") ?? "Room",
+                Description = GetString(el, "description", "unitnamedesc", "Description"),
+                DefaultRate = GetNullableDecimal(el, "rate", "defaultrate", "DefaultRate")
+            };
+            _context.RoomTypes.Add(roomType);
+            count++;
+        }
+
+        await _context.SaveChangesAsync();
+        Report($"  Room Types: {count} imported");
+        return count;
+    }
+
+    private async Task<int> ImportGuestsAsync()
+    {
+        Report("Importing Guests...");
+        await _context.Database.ExecuteSqlRawAsync("DELETE FROM TravelAgentBookings");
+        await _context.Database.ExecuteSqlRawAsync("DELETE FROM CarRentals");
+        await _context.Database.ExecuteSqlRawAsync("DELETE FROM Payments");
+        await _context.Database.ExecuteSqlRawAsync("DELETE FROM Checks");
+        await _context.Database.ExecuteSqlRawAsync("DELETE FROM Accommodations");
+        await _context.Database.ExecuteSqlRawAsync("DELETE FROM Guests");
+
+        var items = await ReadJsonFileAsync("guesttbl");
+        var count = 0;
+
+        foreach (var el in items)
+        {
+            var guest = new Guest
+            {
+                ConfirmationNumber = GetLong(el, "conf", "ConfirmationNumber"),
+                FirstName = GetString(el, "f_name", "fname", "FirstName") ?? "",
+                LastName = GetString(el, "l_name", "lname", "LastName") ?? "",
+                Address = GetString(el, "address", "addr", "Address"),
+                BusinessAddress = GetString(el, "busadd", "busaddress", "BusinessAddress"),
+                City = GetString(el, "city", "City"),
+                State = GetString(el, "state", "State"),
+                ZipCode = GetString(el, "zipcode", "zip", "ZipCode"),
+                Country = GetString(el, "country", "Country"),
+                HomePhone = GetString(el, "hmphone", "homephone", "HomePhone"),
+                BusinessPhone = GetString(el, "bsphone", "busphone", "BusinessPhone"),
+                FaxNumber = GetString(el, "faxnum", "fax", "FaxNumber"),
+                Email = GetString(el, "email", "Email"),
+                DateBooked = GetDateTime(el, "datebkd", "datebooked", "DateBooked"),
+                BookedBy = GetString(el, "bookedby", "BookedBy"),
+                Referral = GetString(el, "referral", "Referral")?.Truncate(100),
+                ReservationFee = GetNullableDecimal(el, "resfee", "ReservationFee"),
+                TravelingWith = GetString(el, "travwith", "travelingwith", "TravelingWith")?.Truncate(200),
+                Comments = GetString(el, "cmmnts", "comments", "Comments")?.Truncate(2000),
+                LabelFlag = GetBool(el, "lbl_flag", "LabelFlag"),
+                Closure = GetString(el, "closeure", "closure", "Closure")?.Truncate(2000),
+                EntryDate = GetDateTime(el, "entrydate", "EntryDate"),
+                EntryUser = GetString(el, "entryuser", "EntryUser"),
+                UpdateDate = GetDateTime(el, "updatedate", "UpdateDate"),
+                UpdateUser = GetString(el, "updateuser", "UpdateUser"),
+                RevisionDate = GetDateTime(el, "revdate", "RevisionDate"),
+                Revision = GetInt(el, "revision", "Revision")
+            };
+            _context.Guests.Add(guest);
+            count++;
+
+            if (count % 500 == 0)
+            {
+                await _context.SaveChangesAsync();
+                Report($"  Guests: {count} imported...");
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        Report($"  Guests: {count} imported");
+        return count;
+    }
+
+    private async Task<int> ImportAccommodationsAsync()
+    {
+        Report("Importing Accommodations...");
+        var validGuests = await _context.Guests.Select(g => g.ConfirmationNumber).ToListAsync();
+        var validProperties = await _context.Properties.Select(p => p.AccountNumber).ToListAsync();
+
+        var items = await ReadJsonFileAsync("bbtbl");
+        var count = 0;
+        var skipped = 0;
+
+        foreach (var el in items)
+        {
+            var conf = GetLong(el, "conf", "ConfirmationNumber");
+            var accountNum = GetInt(el, "accountnum", "AccountNumber");
+
+            if (!validGuests.Contains(conf))
+            {
+                skipped++;
+                continue;
+            }
+            if (!validProperties.Contains(accountNum))
+            {
+                skipped++;
+                continue;
+            }
+
+            try
+            {
+                var accommodation = new Accommodation
+                {
+                    ConfirmationNumber = conf,
+                    PropertyAccountNumber = accountNum,
+                    FirstName = GetString(el, "f_name", "fname", "FirstName")?.Truncate(50),
+                    LastName = GetString(el, "l_name", "lname", "LastName")?.Truncate(50),
+                    Location = GetString(el, "location", "Location")?.Truncate(100),
+                    ArrivalDate = GetDateTime(el, "arrdate", "ArrivalDate") ?? DateTime.Today,
+                    DepartureDate = GetDateTime(el, "depdate", "DepartureDate") ?? DateTime.Today,
+                    NumberOfNights = GetInt(el, "numnites", "numnights", "NumberOfNights"),
+                    NumberInParty = GetInt(el, "numpty", "numinparty", "NumberInParty"),
+                    UnitName = GetString(el, "unitname", "UnitName")?.Truncate(50),
+                    UnitNameDescription = GetString(el, "unitnamedesc", "UnitNameDescription")?.Truncate(200),
+                    DailyGrossRate = GetNullableDecimal(el, "grosrate", "dailygrossrate", "DailyGrossRate"),
+                    DailyNetRate = GetNullableDecimal(el, "netrate", "dailynetrate", "DailyNetRate"),
+                    TotalGrossWithTax = GetNullableDecimal(el, "gwtax", "totgrosswithtax", "TotalGrossWithTax"),
+                    TotalNetWithTax = GetNullableDecimal(el, "nwtax", "totnetwithtax", "TotalNetWithTax"),
+                    TotalTax = GetNullableDecimal(el, "tax", "tottax", "TotalTax"),
+                    Tax1 = GetNullableDecimal(el, "tax1", "Tax1"),
+                    Tax2 = GetNullableDecimal(el, "tax2", "Tax2"),
+                    Tax3 = GetNullableDecimal(el, "tax3", "Tax3"),
+                    ServiceFee = GetNullableDecimal(el, "svcharge", "servicefee", "ServiceFee"),
+                    Commission = GetDecimal(el, "commish", "commission", "Commission"),
+                    CommissionPaid = GetNullableDecimal(el, "comm_paid", "commissionpaid", "CommissionPaid"),
+                    CommissionReceived = GetNullableDecimal(el, "com_rcvd", "commissionreceived", "CommissionReceived"),
+                    PaymentType = GetString(el, "pymttype", "paymenttype", "PaymentType")?.Truncate(20) ?? "Prepay",
+                    OverridePercentToHost = GetNullableDecimal(el, "percnt", "OverridePercentToHost"),
+                    OverrideTaxPlanCode = GetString(el, "tax_plan_code", "OverrideTaxPlanCode")?.Truncate(10),
+                    UseManualAmounts = GetBool(el, "fillincalcamounts", "UseManualAmounts"),
+                    Suppress = GetBool(el, "suppress", "Suppress"),
+                    Notified = GetBool(el, "notified", "Notified"),
+                    Forfeit = GetBool(el, "forfeit", "Forfeit"),
+                    Comments = GetString(el, "cmmnts", "comments", "Comments")?.Truncate(2000),
+                    NightNotes = GetString(el, "nnotes", "nightnotes", "NightNotes")?.Truncate(2000),
+                    EntryDate = GetDateTime(el, "entrydate", "EntryDate"),
+                    EntryUser = GetString(el, "entryuser", "EntryUser")?.Truncate(50),
+                    UpdateDate = GetDateTime(el, "updatedate", "UpdateDate"),
+                    UpdateUser = GetString(el, "updateuser", "UpdateUser")?.Truncate(50),
+                    RevisionDate = GetDateTime(el, "rev_date", "RevisionDate")
+                };
+                _context.Accommodations.Add(accommodation);
+                await _context.SaveChangesAsync();
+                count++;
+
+                if (count % 100 == 0)
+                {
+                    Report($"  Accommodations: {count} imported...");
+                }
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+            {
+                var sqliteError = dbEx.InnerException?.Message ?? dbEx.Message;
+                throw new Exception($"Failed at conf {conf}: {sqliteError}", dbEx);
+            }
+            catch (Exception ex)
+            {
+                var innerEx = ex;
+                while (innerEx.InnerException != null)
+                    innerEx = innerEx.InnerException;
+                throw new Exception($"Failed at conf {conf}: {innerEx.Message} (Type: {innerEx.GetType().Name})", ex);
+            }
+        }
+
+        Report($"  Accommodations: {count} imported, {skipped} skipped (no matching guest/property)");
+        return count;
+    }
+
+    private async Task<int> ImportPaymentsAsync()
+    {
+        Report("Importing Payments...");
+        var validGuests = await _context.Guests.Select(g => g.ConfirmationNumber).ToListAsync();
+
+        var items = await ReadJsonFileAsync("paymentreceived");
+        var count = 0;
+
+        foreach (var el in items)
+        {
+            var conf = GetLong(el, "conf", "ConfirmationNumber");
+            if (!validGuests.Contains(conf)) continue;
+
+            var payment = new Payment
+            {
+                ConfirmationNumber = conf,
+                FirstName = GetString(el, "f_name", "fname", "FirstName"),
+                LastName = GetString(el, "l_name", "lname", "LastName"),
+                Amount = GetDecimal(el, "amountreceived", "amount", "Amount"),
+                PaymentDate = GetDateTime(el, "datereceived", "paymentdate", "PaymentDate") ?? DateTime.Today,
+                CheckNumber = GetString(el, "checknumber", "checknum", "CheckNumber"),
+                ReceivedFrom = GetString(el, "receivedfrom", "ReceivedFrom"),
+                AppliedTo = GetString(el, "appliedto", "AppliedTo"),
+                DepositDue = GetNullableDecimal(el, "depdue", "DepositDue"),
+                DepositDueDate = GetDateTime(el, "depdate", "DepositDueDate"),
+                PrepaymentDue = GetNullableDecimal(el, "predue", "PrepaymentDue"),
+                PrepaymentDueDate = GetDateTime(el, "predate", "PrepaymentDueDate"),
+                CancellationFee = GetNullableDecimal(el, "canclfee", "CancellationFee"),
+                CancellationFeeDueDate = GetDateTime(el, "canclfeedatedue", "CancellationFeeDueDate"),
+                RefundOwed = GetNullableDecimal(el, "refundowed", "RefundOwed"),
+                OtherCredit = GetNullableDecimal(el, "othercredit", "OtherCredit"),
+                DefaultCommission = GetNullableDecimal(el, "defcom", "DefaultCommission"),
+                Comments = GetString(el, "comments", "Comments")
+            };
+            _context.Payments.Add(payment);
+            count++;
+        }
+
+        await _context.SaveChangesAsync();
+        Report($"  Payments: {count} imported");
+        return count;
+    }
+
+    private async Task<int> ImportChecksAsync()
+    {
+        Report("Importing Checks...");
+        var accommodations = await _context.Accommodations
+            .Select(a => new { a.Id, a.ConfirmationNumber, a.PropertyAccountNumber })
+            .ToListAsync();
+
+        var items = await ReadJsonFileAsync("checktbl");
+        var count = 0;
+
+        foreach (var el in items)
+        {
+            var conf = GetLong(el, "conf", "ConfirmationNumber");
+            var accountNum = GetInt(el, "accountnum", "AccountNumber");
+
+            var accom = accommodations.FirstOrDefault(a =>
+                a.ConfirmationNumber == conf && a.PropertyAccountNumber == accountNum);
+
+            if (accom == null) continue;
+
+            var check = new Check
+            {
+                AccommodationId = accom.Id,
+                CheckNumber = GetString(el, "checknum", "CheckNumber") ?? "",
+                Amount = GetDecimal(el, "amount", "Amount"),
+                CheckDate = GetDateTime(el, "checkdate", "CheckDate"),
+                PayableTo = GetString(el, "payableto", "payto", "PayableTo"),
+                Memo = GetString(el, "memo", "Memo"),
+                IsVoid = GetBool(el, "void_chk", "voidchk", "IsVoid"),
+                Comments = GetString(el, "comments", "Comments")
+            };
+            _context.Checks.Add(check);
+            count++;
+        }
+
+        await _context.SaveChangesAsync();
+        Report($"  Checks: {count} imported");
+        return count;
+    }
+
+    private async Task<int> ImportTravelAgentBookingsAsync()
+    {
+        Report("Importing Travel Agent Bookings...");
+        var validGuests = await _context.Guests.Select(g => g.ConfirmationNumber).ToListAsync();
+        var agencies = await _context.TravelAgencies.ToDictionaryAsync(a => a.AccountNumber, a => a.Id);
+
+        var items = await ReadJsonFileAsync("tagentbl");
+        var count = 0;
+
+        foreach (var el in items)
+        {
+            var conf = GetLong(el, "conf", "ConfirmationNumber");
+            if (!validGuests.Contains(conf)) continue;
+
+            var agencyAccountNum = GetInt(el, "agencyaccountnum", "accountnum", "AccountNumber");
+            int? agencyId = agencies.TryGetValue(agencyAccountNum, out var id) ? id : null;
+
+            var booking = new TravelAgentBooking
+            {
+                ConfirmationNumber = conf,
+                TravelAgencyId = agencyId,
+                CommissionAmount = GetNullableDecimal(el, "commamount", "commission", "CommissionAmount"),
+                CommissionPaid = GetNullableDecimal(el, "commpaid", "CommissionPaid"),
+                CommissionPaidDate = GetDateTime(el, "commpaiddate", "CommissionPaidDate"),
+                CheckNumber = GetString(el, "checknum", "CheckNumber"),
+                Comments = GetString(el, "comments", "Comments")
+            };
+            _context.TravelAgentBookings.Add(booking);
+            count++;
+        }
+
+        await _context.SaveChangesAsync();
+        Report($"  Travel Agent Bookings: {count} imported");
+        return count;
+    }
+
+    private async Task<int> ImportCarRentalsAsync()
+    {
+        Report("Importing Car Rentals...");
+        var validGuests = await _context.Guests.Select(g => g.ConfirmationNumber).ToListAsync();
+        var agencies = await _context.CarAgencies.ToListAsync();
+
+        var items = await ReadJsonFileAsync("cartbl");
+        var count = 0;
+
+        foreach (var el in items)
+        {
+            var conf = GetLong(el, "conf", "ConfirmationNumber");
+            if (!validGuests.Contains(conf)) continue;
+
+            var agencyName = GetString(el, "carcompany", "agency", "CarAgency");
+            var agency = agencies.FirstOrDefault(a =>
+                a.Name.Equals(agencyName, StringComparison.OrdinalIgnoreCase));
+
+            var rental = new CarRental
+            {
+                ConfirmationNumber = conf,
+                CarAgencyId = agency?.Id,
+                PickupDate = GetDateTime(el, "pudate", "pickupdate", "PickupDate"),
+                ReturnDate = GetDateTime(el, "dropdate", "returndate", "ReturnDate"),
+                CarType = GetString(el, "cartype", "carclass", "CarType"),
+                DailyRate = GetNullableDecimal(el, "dailyrate", "DailyRate"),
+                TotalAmount = GetNullableDecimal(el, "totalamount", "total", "TotalAmount"),
+                CommissionAmount = GetNullableDecimal(el, "commamount", "commission", "CommissionAmount"),
+                CommissionPaid = GetNullableDecimal(el, "commpaid", "CommissionPaid"),
+                CommissionPaidDate = GetDateTime(el, "commpaiddate", "CommissionPaidDate"),
+                CheckNumber = GetString(el, "checknum", "CheckNumber"),
+                Comments = GetString(el, "comments", "Comments")
+            };
+            _context.CarRentals.Add(rental);
+            count++;
+        }
+
+        await _context.SaveChangesAsync();
+        Report($"  Car Rentals: {count} imported");
+        return count;
+    }
+}

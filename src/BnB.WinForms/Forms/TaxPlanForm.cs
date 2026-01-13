@@ -2,6 +2,7 @@ using BnB.Core.Enums;
 using BnB.Core.Models;
 using BnB.Data.Context;
 using BnB.WinForms.Services;
+using BnB.WinForms.UI;
 
 namespace BnB.WinForms.Forms;
 
@@ -25,12 +26,13 @@ public partial class TaxPlanForm : Form
         _bindingSource = new BindingSource();
 
         InitializeComponent();
-        SetupDataBindings();
     }
 
     private void TaxPlanForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
         LoadPlans();
+        SetupDataBindings();
         SetMode(FormMode.Browse);
     }
 

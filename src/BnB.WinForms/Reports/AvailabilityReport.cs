@@ -116,7 +116,7 @@ public class AvailabilityReport : BaseReport
             foreach (var property in _properties.OrderBy(p => p.Location))
             {
                 var propertyAccoms = _accommodations
-                    .Where(a => a.PropertyId == property.PropertyId)
+                    .Where(a => a.PropertyAccountNumber == property.AccountNumber)
                     .ToList();
 
                 table.Cell().TableCell(alternate).Text(SafeString(property.Location)).FontSize(8);

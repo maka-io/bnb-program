@@ -2,6 +2,7 @@ using BnB.Core.Enums;
 using BnB.Core.Models;
 using BnB.Data.Context;
 using BnB.WinForms.Services;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -26,20 +27,21 @@ public partial class PropertyForm : Form
         _bindingSource = new BindingSource();
 
         InitializeComponent();
-        SetupDataBindings();
     }
 
     private void PropertyForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
         LoadTaxPlans();
         LoadProperties();
+        SetupDataBindings();
         SetMode(FormMode.Browse);
     }
 
     private void SetupDataBindings()
     {
         // General Information
-        txtAccountNumber.DataBindings.Add("Text", _bindingSource, nameof(Property.PropertyId), true);
+        txtAccountNumber.DataBindings.Add("Text", _bindingSource, nameof(Property.AccountNumber), true);
         txtLocation.DataBindings.Add("Text", _bindingSource, nameof(Property.Location), true);
         txtFullName.DataBindings.Add("Text", _bindingSource, nameof(Property.FullName), true);
         txtCheckTo.DataBindings.Add("Text", _bindingSource, nameof(Property.CheckTo), true);
@@ -214,12 +216,12 @@ public partial class PropertyForm : Form
 
         // Generate next account number
         var maxAccountNum = _dbContext.Properties.Any()
-            ? _dbContext.Properties.Max(p => p.PropertyId)
+            ? _dbContext.Properties.Max(p => p.AccountNumber)
             : 0;
 
         _currentProperty = new Property
         {
-            PropertyId = maxAccountNum + 1,
+            AccountNumber = maxAccountNum + 1,
             Location = "",
             PercentToHost = 70  // Default percentage
         };
@@ -246,7 +248,7 @@ public partial class PropertyForm : Form
         {
             // Check if property has accommodations
             var hasAccommodations = _dbContext.Accommodations
-                .Any(a => a.PropertyId == property.PropertyId);
+                .Any(a => a.PropertyAccountNumber == property.AccountNumber);
 
             if (hasAccommodations)
             {
@@ -263,7 +265,7 @@ public partial class PropertyForm : Form
             SetMode(FormMode.Delete);
 
             var result = MessageBox.Show(
-                $"Are you sure you want to delete property '{property.Location}' (Account# {property.PropertyId})?",
+                $"Are you sure you want to delete property '{property.Location}' (Account# {property.AccountNumber})?",
                 "Confirm Delete",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning);
@@ -359,7 +361,7 @@ public partial class PropertyForm : Form
             var query = _dbContext.Properties.AsQueryable();
 
             if (criteria.PropertyId.HasValue)
-                query = query.Where(p => p.PropertyId == criteria.PropertyId);
+                query = query.Where(p => p.AccountNumber == criteria.PropertyId);
 
             if (!string.IsNullOrEmpty(criteria.PropertyName))
                 query = query.Where(p => p.Location.Contains(criteria.PropertyName));
@@ -396,7 +398,7 @@ public partial class PropertyForm : Form
         if (_bindingSource.Current is Property property)
         {
             // TODO: Open Room Types form for this property
-            MessageBox.Show($"Room Types for Property #{property.PropertyId}: {property.Location}",
+            MessageBox.Show($"Room Types for Property #{property.AccountNumber}: {property.Location}",
                 "Room Types", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }

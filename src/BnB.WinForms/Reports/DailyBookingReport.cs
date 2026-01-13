@@ -90,7 +90,7 @@ public class DailyBookingReport : BaseReport
                     table.Cell().TableCell(alternate).Text(SafeString(booking.Property?.Location)).TableCellText();
                     table.Cell().TableCell(alternate).Text(FormatDate(booking.ArrivalDate, "MM/dd/yy")).TableCellText();
                     table.Cell().TableCell(alternate).Text(FormatDate(booking.DepartureDate, "MM/dd/yy")).TableCellText();
-                    table.Cell().TableCell(alternate).AlignCenter().Text(booking.Nights.ToString()).TableCellText();
+                    table.Cell().TableCell(alternate).AlignCenter().Text(booking.NumberOfNights.ToString()).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(booking.TotalCharges)).TableCellText();
 
                     totalAmount += booking.TotalCharges ?? 0;

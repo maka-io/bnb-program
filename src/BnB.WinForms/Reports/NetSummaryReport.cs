@@ -60,7 +60,7 @@ public class NetSummaryReport : BaseReport
                 .GroupBy(a => new
                 {
                     Name = a.Property?.FullName ?? a.Location ?? "Unknown",
-                    AccountNum = a.PropertyId
+                    AccountNum = a.PropertyAccountNumber
                 })
                 .OrderBy(g => g.Key.Name)
                 .ToList();
@@ -121,7 +121,7 @@ public class NetSummaryReport : BaseReport
                     table.Cell().TableCell(alternate).Text(accom.ConfirmationNumber.ToString()).TableCellText();
                     table.Cell().TableCell(alternate).Text($"{SafeString(accom.FirstName)} {SafeString(accom.LastName)}").TableCellText();
                     table.Cell().TableCell(alternate).Text(FormatDate(accom.DepartureDate)).TableCellText();
-                    table.Cell().TableCell(alternate).AlignCenter().Text(accom.Nights.ToString()).TableCellText();
+                    table.Cell().TableCell(alternate).AlignCenter().Text(accom.NumberOfNights.ToString()).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(accom.DailyGrossRate)).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(accom.DailyNetRate)).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(accom.TotalTax)).TableCellText();
@@ -159,7 +159,7 @@ public class NetSummaryReport : BaseReport
         var totalTax = accommodations.Sum(a => a.TotalTax);
         var totalCommission = accommodations.Sum(a => a.Commission);
         var totalDueToHost = totalNet - totalCommission;
-        var totalNights = accommodations.Sum(a => a.Nights);
+        var totalNights = accommodations.Sum(a => a.NumberOfNights);
         var avgNightlyRate = totalNights > 0 ? totalGross / totalNights : 0;
 
         container.Border(2).BorderColor(ReportStyles.PrimaryColor).Padding(10).Column(column =>

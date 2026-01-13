@@ -68,6 +68,8 @@ partial class MainForm
         this.mnuHostAcctInfo = new ToolStripMenuItem();
         this.mnuCarRentalActivity = new ToolStripMenuItem();
         this.mnuTrends = new ToolStripMenuItem();
+        this.mnuMailingLabels = new ToolStripMenuItem();
+        this.mnuAccountList = new ToolStripMenuItem();
 
         // Accounting Menu
         this.mnuAccounting = new ToolStripMenuItem();
@@ -92,7 +94,10 @@ partial class MainForm
         this.mnuAdmin = new ToolStripMenuItem();
         this.mnuPropertyFacts = new ToolStripMenuItem();
         this.mnuCompanyInfo = new ToolStripMenuItem();
+        this.mnuDatabaseSettings = new ToolStripMenuItem();
         this.mnuRestoreDatabase = new ToolStripMenuItem();
+        this.mnuImportLegacyData = new ToolStripMenuItem();
+        this.mnuImportFromJson = new ToolStripMenuItem();
 
         // Help Menu
         this.mnuHelp = new ToolStripMenuItem();
@@ -190,7 +195,8 @@ partial class MainForm
             this.mnuCheckLedger, this.mnuNetSummary, this.mnuServiceFeeSummary,
             this.mnuCommission, this.mnuPaymentsReceived, this.mnuPayReceivable,
             this.mnuRefunds, this.mnuOverpayments, this.mnuHost1099,
-            this.mnuHostAcctInfo, this.mnuCarRentalActivity, this.mnuTrends
+            this.mnuHostAcctInfo, this.mnuCarRentalActivity, this.mnuTrends,
+            this.mnuMailingLabels, this.mnuAccountList
         });
         this.mnuReports.Text = "&Reports";
 
@@ -246,6 +252,12 @@ partial class MainForm
         this.mnuTrends.Text = "&Trends";
         this.mnuTrends.Click += mnuTrends_Click;
 
+        this.mnuMailingLabels.Text = "Mailing &Labels";
+        this.mnuMailingLabels.Click += mnuMailingLabels_Click;
+
+        this.mnuAccountList.Text = "Account &List";
+        this.mnuAccountList.Click += mnuAccountList_Click;
+
         // === Accounting Menu ===
         this.mnuAccounting.DropDownItems.AddRange(new ToolStripItem[] {
             this.mnuChecks, this.mnuViewEditPayments
@@ -293,15 +305,21 @@ partial class MainForm
 
         // === Admin Menu ===
         this.mnuAdmin.DropDownItems.AddRange(new ToolStripItem[] {
-            this.mnuPropertyFacts, this.mnuCompanyInfo, this.mnuRestoreDatabase
+            this.mnuPropertyFacts, this.mnuCompanyInfo, this.mnuDatabaseSettings, this.mnuRestoreDatabase, this.mnuImportLegacyData, this.mnuImportFromJson
         });
         this.mnuAdmin.Text = "A&dmin";
         this.mnuPropertyFacts.Text = "&Property Facts Master List";
         this.mnuPropertyFacts.Click += mnuPropertyFacts_Click;
         this.mnuCompanyInfo.Text = "Company &Information";
         this.mnuCompanyInfo.Click += mnuCompanyInfo_Click;
+        this.mnuDatabaseSettings.Text = "&Database Settings...";
+        this.mnuDatabaseSettings.Click += mnuDatabaseSettings_Click;
         this.mnuRestoreDatabase.Text = "&Restore Database";
         this.mnuRestoreDatabase.Click += mnuRestoreDatabase_Click;
+        this.mnuImportLegacyData.Text = "&Import Legacy Data...";
+        this.mnuImportLegacyData.Click += mnuImportLegacyData_Click;
+        this.mnuImportFromJson.Text = "Import from &JSON...";
+        this.mnuImportFromJson.Click += mnuImportFromJson_Click;
 
         // === Help Menu ===
         this.mnuHelp.DropDownItems.AddRange(new ToolStripItem[] {
@@ -395,6 +413,8 @@ partial class MainForm
     private ToolStripMenuItem mnuHostAcctInfo;
     private ToolStripMenuItem mnuCarRentalActivity;
     private ToolStripMenuItem mnuTrends;
+    private ToolStripMenuItem mnuMailingLabels;
+    private ToolStripMenuItem mnuAccountList;
 
     // Accounting Menu
     private ToolStripMenuItem mnuAccounting;
@@ -419,7 +439,10 @@ partial class MainForm
     private ToolStripMenuItem mnuAdmin;
     private ToolStripMenuItem mnuPropertyFacts;
     private ToolStripMenuItem mnuCompanyInfo;
+    private ToolStripMenuItem mnuDatabaseSettings;
     private ToolStripMenuItem mnuRestoreDatabase;
+    private ToolStripMenuItem mnuImportLegacyData;
+    private ToolStripMenuItem mnuImportFromJson;
 
     // Help Menu
     private ToolStripMenuItem mnuHelp;

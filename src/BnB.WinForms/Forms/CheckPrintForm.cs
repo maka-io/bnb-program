@@ -1,8 +1,24 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
+using BnB.WinForms.Reports;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
+
+/// <summary>
+/// Display model for checks in the grid - allows Selected to be editable
+/// </summary>
+public class CheckDisplayItem
+{
+    public int Id { get; set; }
+    public bool Selected { get; set; }
+    public string CheckNumber { get; set; } = string.Empty;
+    public DateTime? CheckDate { get; set; }
+    public string? PayableTo { get; set; }
+    public string PropertyName { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public string? Memo { get; set; }
+}
 
 /// <summary>
 /// Check printing form - migrated from ChkPrint.frm
@@ -22,29 +38,43 @@ public partial class CheckPrintForm : Form
 
     private void CheckPrintForm_Load(object sender, EventArgs e)
     {
-        LoadUnprintedChecks();
+        try
+        {
+            LoadUnprintedChecks();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error loading checks: {ex.Message}", "Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private void LoadUnprintedChecks()
     {
+        // Note: IsPrinted is [NotMapped], so we load all non-void checks
+        // and filter in memory. In production, consider adding IsPrinted to the DB schema.
         _checksToPrint = _dbContext.Checks
-            .Include(c => c.Property)
-            .Where(c => !c.IsPrinted && !c.IsVoid)
+            .Include(c => c.Accommodation)
+                .ThenInclude(a => a!.Property)
+            .Where(c => !c.IsVoid)
             .OrderBy(c => c.CheckDate)
+            .ToList()
+            .Where(c => !c.IsPrinted) // Filter in memory since IsPrinted is [NotMapped]
             .ToList();
 
-        _bindingSource.DataSource = _checksToPrint.Select(c => new
+        var displayData = _checksToPrint.Select(c => new CheckDisplayItem
         {
-            c.CheckId,
+            Id = c.Id,
             Selected = true,
-            c.CheckNumber,
-            c.CheckDate,
-            c.PayTo,
-            PropertyName = c.Property?.Location ?? "N/A",
-            c.Amount,
-            c.Memo
+            CheckNumber = c.CheckNumber,
+            CheckDate = c.CheckDate,
+            PayableTo = c.PayableTo,
+            PropertyName = c.Accommodation?.Property?.Location ?? "N/A",
+            Amount = c.Amount,
+            Memo = c.Memo
         }).ToList();
 
+        _bindingSource.DataSource = displayData;
         dgvChecks.DataSource = _bindingSource;
         ConfigureGrid();
         UpdateSummary();
@@ -54,8 +84,8 @@ public partial class CheckPrintForm : Form
     {
         if (dgvChecks.Columns.Count == 0) return;
 
-        if (dgvChecks.Columns.Contains("CheckId"))
-            dgvChecks.Columns["CheckId"].Visible = false;
+        if (dgvChecks.Columns.Contains("Id"))
+            dgvChecks.Columns["Id"].Visible = false;
 
         if (dgvChecks.Columns.Contains("Selected"))
         {
@@ -77,10 +107,10 @@ public partial class CheckPrintForm : Form
             dgvChecks.Columns["CheckDate"].DefaultCellStyle.Format = "MM/dd/yyyy";
         }
 
-        if (dgvChecks.Columns.Contains("PayTo"))
+        if (dgvChecks.Columns.Contains("PayableTo"))
         {
-            dgvChecks.Columns["PayTo"].HeaderText = "Pay To";
-            dgvChecks.Columns["PayTo"].Width = 150;
+            dgvChecks.Columns["PayableTo"].HeaderText = "Pay To";
+            dgvChecks.Columns["PayableTo"].Width = 150;
         }
 
         if (dgvChecks.Columns.Contains("PropertyName"))
@@ -109,13 +139,16 @@ public partial class CheckPrintForm : Form
         var selectedCount = 0;
         decimal selectedTotal = 0;
 
-        foreach (DataGridViewRow row in dgvChecks.Rows)
+        if (dgvChecks.Columns.Contains("Selected") && dgvChecks.Columns.Contains("Amount"))
         {
-            if (row.Cells["Selected"].Value is true)
+            foreach (DataGridViewRow row in dgvChecks.Rows)
             {
-                selectedCount++;
-                if (row.Cells["Amount"].Value is decimal amount)
-                    selectedTotal += amount;
+                if (row.Cells["Selected"].Value is true)
+                {
+                    selectedCount++;
+                    if (row.Cells["Amount"].Value is decimal amount)
+                        selectedTotal += amount;
+                }
             }
         }
 
@@ -124,7 +157,8 @@ public partial class CheckPrintForm : Form
 
     private void dgvChecks_CellValueChanged(object sender, DataGridViewCellEventArgs e)
     {
-        if (e.ColumnIndex >= 0 && dgvChecks.Columns[e.ColumnIndex].Name == "Selected")
+        if (e.ColumnIndex >= 0 && e.ColumnIndex < dgvChecks.Columns.Count &&
+            dgvChecks.Columns[e.ColumnIndex].Name == "Selected")
         {
             UpdateSummary();
         }
@@ -132,7 +166,8 @@ public partial class CheckPrintForm : Form
 
     private void dgvChecks_CellContentClick(object sender, DataGridViewCellEventArgs e)
     {
-        if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && dgvChecks.Columns[e.ColumnIndex].Name == "Selected")
+        if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && e.ColumnIndex < dgvChecks.Columns.Count &&
+            dgvChecks.Columns[e.ColumnIndex].Name == "Selected")
         {
             dgvChecks.EndEdit();
             UpdateSummary();
@@ -141,6 +176,7 @@ public partial class CheckPrintForm : Form
 
     private void btnSelectAll_Click(object sender, EventArgs e)
     {
+        if (!dgvChecks.Columns.Contains("Selected")) return;
         foreach (DataGridViewRow row in dgvChecks.Rows)
         {
             row.Cells["Selected"].Value = true;
@@ -150,6 +186,7 @@ public partial class CheckPrintForm : Form
 
     private void btnSelectNone_Click(object sender, EventArgs e)
     {
+        if (!dgvChecks.Columns.Contains("Selected")) return;
         foreach (DataGridViewRow row in dgvChecks.Rows)
         {
             row.Cells["Selected"].Value = false;
@@ -167,8 +204,26 @@ public partial class CheckPrintForm : Form
             return;
         }
 
-        MessageBox.Show($"Preview of {selectedCheckIds.Count} check(s) will be shown here.", "Preview",
-            MessageBoxButtons.OK, MessageBoxIcon.Information);
+        try
+        {
+            var checks = _dbContext.Checks
+                .Include(c => c.Accommodation)
+                    .ThenInclude(a => a.Property)
+                .Where(c => selectedCheckIds.Contains(c.Id))
+                .OrderBy(c => c.CheckNumber)
+                .ToList();
+
+            var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
+
+            var report = new CheckPrintReport(checks, companyInfo);
+            var viewer = new ReportViewerForm(report);
+            viewer.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error generating preview: {ex.Message}", "Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private void btnPrint_Click(object sender, EventArgs e)
@@ -195,9 +250,12 @@ public partial class CheckPrintForm : Form
     private List<int> GetSelectedCheckIds()
     {
         var ids = new List<int>();
+        if (!dgvChecks.Columns.Contains("Selected") || !dgvChecks.Columns.Contains("Id"))
+            return ids;
+
         foreach (DataGridViewRow row in dgvChecks.Rows)
         {
-            if (row.Cells["Selected"].Value is true && row.Cells["CheckId"].Value is int checkId)
+            if (row.Cells["Selected"].Value is true && row.Cells["Id"].Value is int checkId)
             {
                 ids.Add(checkId);
             }
@@ -209,16 +267,50 @@ public partial class CheckPrintForm : Form
     {
         try
         {
-            // Mark checks as printed
-            var checks = _dbContext.Checks.Where(c => checkIds.Contains(c.CheckId)).ToList();
+            var checks = _dbContext.Checks
+                .Include(c => c.Accommodation)
+                    .ThenInclude(a => a.Property)
+                .Where(c => checkIds.Contains(c.Id))
+                .OrderBy(c => c.CheckNumber)
+                .ToList();
+
+            var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
+
+            var report = new CheckPrintReport(checks, companyInfo);
+            var pdfBytes = report.GeneratePdf();
+
+            // Save to temp file and open with default PDF viewer/printer
+            var tempFile = Path.Combine(Path.GetTempPath(), $"Checks_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+            File.WriteAllBytes(tempFile, pdfBytes);
+
+            // Open PDF for printing
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = tempFile,
+                UseShellExecute = true,
+                Verb = "print"
+            };
+
+            try
+            {
+                System.Diagnostics.Process.Start(psi);
+            }
+            catch
+            {
+                // If print verb fails, just open the file
+                psi.Verb = "open";
+                System.Diagnostics.Process.Start(psi);
+            }
+
+            // Mark checks as printed (in memory only since IsPrinted/PrintedDate are [NotMapped])
             foreach (var check in checks)
             {
                 check.IsPrinted = true;
                 check.PrintedDate = DateTime.Now;
             }
-            _dbContext.SaveChanges();
 
-            MessageBox.Show($"{checkIds.Count} check(s) have been marked as printed.\n\nActual printing functionality coming soon.",
+            MessageBox.Show($"{checkIds.Count} check(s) have been sent to the printer.\n\n" +
+                "The PDF has been opened for printing. Please ensure your check stock is loaded.",
                 "Checks Printed", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             LoadUnprintedChecks();

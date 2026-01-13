@@ -27,28 +27,41 @@ public partial class PaymentReceivableForm : Form
 
     private void LoadPaymentsReceivable()
     {
-        // Find accommodations where balance due > 0
+        // Note: BalanceDue and TotalCharges are computed properties not in DB
+        // We compute balance by comparing TotalGrossWithTax against payments
         var today = DateTime.Today;
-        var receivables = _dbContext.Accommodations
+
+        // Get all accommodations first (SQLite can't do Sum on decimal in subquery)
+        var accommodations = _dbContext.Accommodations
             .Include(a => a.Property)
             .Include(a => a.Guest)
-            .Where(a => a.BalanceDue > 0)
+            .Where(a => a.ArrivalDate >= today.AddMonths(-6)) // Reasonable date range
             .OrderBy(a => a.ArrivalDate)
+            .ToList();
+
+        // Get all payments and group by confirmation number (client-side)
+        var paymentsByConf = _dbContext.Payments
             .ToList()
+            .GroupBy(p => p.ConfirmationNumber)
+            .ToDictionary(g => g.Key, g => g.Sum(p => p.Amount));
+
+        // Build the result with computed values (all on client side)
+        var receivables = accommodations
             .Select(a => new
             {
-                a.AccommodationId,
+                a.Id,
                 a.ConfirmationNumber,
                 a.FirstName,
                 a.LastName,
                 a.ArrivalDate,
                 a.DepartureDate,
                 PropertyName = a.Property?.Location ?? "N/A",
-                a.TotalCharges,
-                a.TotalPaid,
-                a.BalanceDue,
+                TotalCharges = a.TotalGrossWithTax ?? 0m,
+                TotalPaid = paymentsByConf.TryGetValue(a.ConfirmationNumber, out var paid) ? paid : 0m,
+                BalanceDue = (a.TotalGrossWithTax ?? 0m) - (paymentsByConf.TryGetValue(a.ConfirmationNumber, out var p) ? p : 0m),
                 DaysUntilArrival = (a.ArrivalDate - today).Days
             })
+            .Where(a => a.BalanceDue > 0)
             .ToList();
 
         _bindingSource.DataSource = receivables;
@@ -61,8 +74,8 @@ public partial class PaymentReceivableForm : Form
     {
         if (dgvReceivables.Columns.Count == 0) return;
 
-        if (dgvReceivables.Columns.Contains("AccommodationId"))
-            dgvReceivables.Columns["AccommodationId"].Visible = false;
+        if (dgvReceivables.Columns.Contains("Id"))
+            dgvReceivables.Columns["Id"].Visible = false;
 
         if (dgvReceivables.Columns.Contains("ConfirmationNumber"))
         {
@@ -168,10 +181,13 @@ public partial class PaymentReceivableForm : Form
 
     private void btnPrint_Click(object sender, EventArgs e)
     {
+        // Note: BalanceDue is computed, so we fetch all recent accommodations
+        // and the report will handle filtering/display
+        var today = DateTime.Today;
         var receivables = _dbContext.Accommodations
             .Include(a => a.Property)
             .Include(a => a.Guest)
-            .Where(a => a.BalanceDue > 0)
+            .Where(a => a.ArrivalDate >= today.AddMonths(-6))
             .OrderBy(a => a.ArrivalDate)
             .ToList();
 

@@ -1,0 +1,426 @@
+using System.Reflection;
+using BnB.Core.Models;
+using BnB.Data.Context;
+using Microsoft.EntityFrameworkCore;
+
+namespace BnB.WinForms.Services;
+
+/// <summary>
+/// Service to migrate data from SQLite to PostgreSQL
+/// </summary>
+public class SqliteToPostgresMigrationService
+{
+    private readonly List<string> _skippedTables = new();
+
+    /// <summary>
+    /// Migrates all data from SQLite to PostgreSQL
+    /// </summary>
+    public void MigrateData(string sqlitePath, string postgresConnectionString, IProgress<string>? progress = null)
+    {
+        _skippedTables.Clear();
+        progress?.Report("Initializing migration...");
+
+        // Create SQLite context
+        var sqliteOptions = new DbContextOptionsBuilder<BnBDbContext>()
+            .UseSqlite($"Data Source={sqlitePath}")
+            .Options;
+
+        // Create PostgreSQL context
+        var postgresOptions = new DbContextOptionsBuilder<BnBDbContext>()
+            .UseNpgsql(postgresConnectionString)
+            .Options;
+
+        using var sqliteContext = new BnBDbContext(sqliteOptions);
+        using var postgresContext = new BnBDbContext(postgresOptions);
+
+        // Recreate PostgreSQL database schema
+        // Use EnsureDeleted + EnsureCreated instead of Migrate because the migrations
+        // were generated for SQLite and contain SQLite-specific type mappings (e.g., INTEGER for bool)
+        progress?.Report("Dropping existing PostgreSQL tables (if any)...");
+        postgresContext.Database.EnsureDeleted();
+        progress?.Report("Creating PostgreSQL schema...");
+        postgresContext.Database.EnsureCreated();
+
+        // Migrate in dependency order (tables with no foreign keys first)
+        MigrateTableSafe("Tax Rates", () => MigrateTaxRates(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Tax Plans", () => MigrateTaxPlans(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Company Info", () => MigrateCompanyInfo(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Common Texts", () => MigrateCommonTexts(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Check Number Configs", () => MigrateCheckNumberConfigs(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Facts", () => MigrateFacts(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Guests", () => MigrateGuests(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Properties", () => MigrateProperties(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Travel Agencies", () => MigrateTravelAgencies(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Car Agencies", () => MigrateCarAgencies(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Room Types", () => MigrateRoomTypes(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Accommodations", () => MigrateAccommodations(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Payments", () => MigratePayments(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Checks", () => MigrateChecks(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Property Facts", () => MigratePropertyFacts(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Travel Agent Bookings", () => MigrateTravelAgentBookings(sqliteContext, postgresContext), progress);
+        MigrateTableSafe("Car Rentals", () => MigrateCarRentals(sqliteContext, postgresContext), progress);
+
+        progress?.Report("Resetting PostgreSQL sequences...");
+        ResetSequences(postgresContext);
+
+        if (_skippedTables.Count > 0)
+        {
+            progress?.Report($"Migration completed. Skipped tables (not in source): {string.Join(", ", _skippedTables)}");
+        }
+        else
+        {
+            progress?.Report("Migration completed successfully!");
+        }
+    }
+
+    private void MigrateTableSafe(string tableName, Action migrateAction, IProgress<string>? progress)
+    {
+        try
+        {
+            progress?.Report($"Migrating {tableName}...");
+            migrateAction();
+        }
+        catch (Exception ex) when (ContainsMessage(ex, "no such table"))
+        {
+            _skippedTables.Add(tableName);
+            progress?.Report($"Skipping {tableName} (table not found in source)...");
+        }
+        catch (Exception ex)
+        {
+            // Re-throw with more context about which table failed
+            throw new Exception($"Failed to migrate {tableName}: {GetInnerMostMessage(ex)}", ex);
+        }
+    }
+
+    private static bool ContainsMessage(Exception ex, string text)
+    {
+        var current = ex;
+        while (current != null)
+        {
+            if (current.Message.Contains(text, StringComparison.OrdinalIgnoreCase))
+                return true;
+            current = current.InnerException;
+        }
+        return false;
+    }
+
+    private static string GetInnerMostMessage(Exception ex)
+    {
+        var current = ex;
+        while (current.InnerException != null)
+            current = current.InnerException;
+        return current.Message;
+    }
+
+    /// <summary>
+    /// Process DateTime properties for PostgreSQL compatibility.
+    /// With Npgsql.EnableLegacyTimestampBehavior=true, we keep dates as-is (no UTC conversion needed).
+    /// </summary>
+    private static List<T> FixDateTimeKinds<T>(List<T> items) where T : class
+    {
+        // With legacy timestamp behavior enabled, no conversion is needed
+        // Dates are stored as timestamp without time zone
+        return items;
+    }
+
+    private void MigrateTaxRates(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.TaxRates.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.TaxRates.Any(x => x.Id == item.Id))
+            {
+                target.TaxRates.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigrateTaxPlans(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.TaxPlans.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.TaxPlans.Any(x => x.Id == item.Id))
+            {
+                target.TaxPlans.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigrateCompanyInfo(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.CompanyInfo.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.CompanyInfo.Any(x => x.Id == item.Id))
+            {
+                target.CompanyInfo.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigrateCommonTexts(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.CommonTexts.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.CommonTexts.Any(x => x.Id == item.Id))
+            {
+                target.CommonTexts.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigrateCheckNumberConfigs(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.CheckNumberConfigs.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.CheckNumberConfigs.Any(x => x.Id == item.Id))
+            {
+                target.CheckNumberConfigs.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigrateFacts(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.Facts.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.Facts.Any(x => x.FactId == item.FactId))
+            {
+                target.Facts.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigrateGuests(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.Guests.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.Guests.Any(x => x.ConfirmationNumber == item.ConfirmationNumber))
+            {
+                target.Guests.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigrateProperties(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.Properties.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.Properties.Any(x => x.AccountNumber == item.AccountNumber))
+            {
+                target.Properties.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigrateTravelAgencies(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.TravelAgencies.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.TravelAgencies.Any(x => x.Id == item.Id))
+            {
+                target.TravelAgencies.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigrateCarAgencies(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.CarAgencies.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.CarAgencies.Any(x => x.Id == item.Id))
+            {
+                target.CarAgencies.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigrateRoomTypes(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.RoomTypes.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.RoomTypes.Any(x => x.Id == item.Id))
+            {
+                target.RoomTypes.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigrateAccommodations(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.Accommodations.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.Accommodations.Any(x => x.Id == item.Id))
+            {
+                target.Accommodations.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigratePayments(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.Payments.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.Payments.Any(x => x.Id == item.Id))
+            {
+                target.Payments.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigrateChecks(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.Checks.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.Checks.Any(x => x.Id == item.Id))
+            {
+                target.Checks.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigratePropertyFacts(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.PropertyFacts.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.PropertyFacts.Any(x => x.PropertyFactId == item.PropertyFactId))
+            {
+                target.PropertyFacts.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigrateTravelAgentBookings(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.TravelAgentBookings.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.TravelAgentBookings.Any(x => x.Id == item.Id))
+            {
+                target.TravelAgentBookings.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void MigrateCarRentals(BnBDbContext source, BnBDbContext target)
+    {
+        var items = FixDateTimeKinds(source.CarRentals.AsNoTracking().ToList());
+        if (items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            if (!target.CarRentals.Any(x => x.Id == item.Id))
+            {
+                target.CarRentals.Add(item);
+            }
+        }
+        target.SaveChanges();
+    }
+
+    private void ResetSequences(BnBDbContext context)
+    {
+        // PostgreSQL uses sequences for auto-increment columns
+        // We need to reset them after inserting data with explicit IDs
+        var sequences = new[]
+        {
+            ("TaxRates", "Id"),
+            ("TaxPlans", "Id"),
+            ("CompanyInfo", "Id"),
+            ("CommonTexts", "Id"),
+            ("CheckNumberConfigs", "Id"),
+            ("Facts", "FactId"),
+            ("Guests", "ConfirmationNumber"),
+            ("Properties", "AccountNumber"),
+            ("TravelAgencies", "Id"),
+            ("CarAgencies", "Id"),
+            ("RoomTypes", "Id"),
+            ("Accommodations", "Id"),
+            ("Payments", "Id"),
+            ("Checks", "Id"),
+            ("PropertyFacts", "PropertyFactId"),
+            ("TravelAgentBookings", "Id"),
+            ("CarRentals", "Id")
+        };
+
+        foreach (var (table, column) in sequences)
+        {
+            try
+            {
+                // Get the sequence name (PostgreSQL convention: tablename_columnname_seq)
+                var sql = $@"
+                    SELECT setval(
+                        pg_get_serial_sequence('""{table}""', '{column}'),
+                        COALESCE((SELECT MAX(""{column}"") FROM ""{table}""), 0) + 1,
+                        false
+                    )";
+                context.Database.ExecuteSqlRaw(sql);
+            }
+            catch
+            {
+                // Some tables may not have sequences (e.g., if they use natural keys)
+                // Continue with other sequences
+            }
+        }
+    }
+}

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace BnB.Core.Models;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace BnB.Core.Models;
 /// </summary>
 public class Property
 {
-    public int PropertyId { get; set; }  // accountnum
+    public int AccountNumber { get; set; }  // accountnum (primary key)
     public string Location { get; set; } = string.Empty;  // location (property name)
     public string? FullName { get; set; }  // fullname
     public string? DBA { get; set; }  // dba (doing business as)
@@ -46,7 +48,8 @@ public class Property
     public string? ExceptionsDescription { get; set; }  // exceptions_desc
 
     // Status flags
-    public bool IsActive { get; set; } = true;
+    [NotMapped]
+    public bool IsActive { get; set; } = true;  // Not in database
     public bool IsObsolete { get; set; }  // PropObsolete
     public bool SuppressFlag { get; set; }  // suppressflag
 

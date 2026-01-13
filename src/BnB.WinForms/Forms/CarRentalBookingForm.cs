@@ -26,13 +26,13 @@ public partial class CarRentalBookingForm : Form
         _bindingSource = new BindingSource();
 
         InitializeComponent();
-        SetupDataBindings();
         LoadAgencies();
     }
 
     private void CarRentalBookingForm_Load(object sender, EventArgs e)
     {
         LoadRentals();
+        SetupDataBindings();
         SetMode(FormMode.Browse);
     }
 

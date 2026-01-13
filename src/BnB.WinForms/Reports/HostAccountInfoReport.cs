@@ -60,7 +60,7 @@ public class HostAccountInfoReport : BaseReport
                         {
                             row.RelativeItem().Text(SafeString(property.Location))
                                 .FontSize(14).Bold().FontColor(ReportStyles.PrimaryColor);
-                            row.ConstantItem(100).AlignRight().Text($"Acct# {property.PropertyId}")
+                            row.ConstantItem(100).AlignRight().Text($"Acct# {property.AccountNumber}")
                                 .FontSize(10);
                         });
 

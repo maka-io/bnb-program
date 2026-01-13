@@ -94,9 +94,8 @@ public class ClientTrustReport : BaseReport
 
                 foreach (var payment in _payments)
                 {
-                    var guest = payment.Accommodation?.Guest;
-                    var guestName = guest != null ? $"{SafeString(guest.LastName)}, {SafeString(guest.FirstName)}" : "N/A";
-                    var confNum = payment.Accommodation?.ConfirmationNumber ?? 0;
+                    var guestName = $"{SafeString(payment.LastName)}, {SafeString(payment.FirstName)}";
+                    var confNum = payment.ConfirmationNumber;
 
                     table.Cell().TableCell(alternate).Text(FormatDate(payment.PaymentDate, "MM/dd/yy")).TableCellText();
                     table.Cell().TableCell(alternate).Text(confNum.ToString()).TableCellText();

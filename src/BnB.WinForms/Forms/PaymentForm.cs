@@ -2,6 +2,7 @@ using BnB.Core.Enums;
 using BnB.Core.Models;
 using BnB.Data.Context;
 using BnB.WinForms.Services;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -28,13 +29,14 @@ public partial class PaymentForm : Form
         _filterConfirmationNumber = confirmationNumber;
 
         InitializeComponent();
-        SetupDataBindings();
         LoadAppliedToOptions();
     }
 
     private void PaymentForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
         LoadPayments();
+        SetupDataBindings();
         SetMode(FormMode.Browse);
     }
 

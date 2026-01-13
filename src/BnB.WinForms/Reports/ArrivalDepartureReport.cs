@@ -83,8 +83,8 @@ public class ArrivalDepartureReport : BaseReport
                         table.Cell().TableCell(alternate).Text(arr.ConfirmationNumber.ToString()).TableCellText();
                         table.Cell().TableCell(alternate).Text($"{SafeString(arr.FirstName)} {SafeString(arr.LastName)}").TableCellText();
                         table.Cell().TableCell(alternate).Text(SafeString(arr.Property?.Location)).TableCellText();
-                        table.Cell().TableCell(alternate).AlignCenter().Text((arr.Nights ?? 0).ToString()).TableCellText();
-                        table.Cell().TableCell(alternate).AlignCenter().Text((arr.NumberOfGuests ?? 0).ToString()).TableCellText();
+                        table.Cell().TableCell(alternate).AlignCenter().Text(arr.NumberOfNights.ToString()).TableCellText();
+                        table.Cell().TableCell(alternate).AlignCenter().Text((arr.NumberInParty ?? 0).ToString()).TableCellText();
                         table.Cell().TableCell(alternate).Text(FormatDate(arr.DepartureDate, "MM/dd/yy")).TableCellText();
                         table.Cell().TableCell(alternate).Text(SafeString(arr.SpecialRequests)).TableCellText();
                         alternate = !alternate;
@@ -138,7 +138,7 @@ public class ArrivalDepartureReport : BaseReport
                         table.Cell().TableCell(alternate).Text($"{SafeString(dep.FirstName)} {SafeString(dep.LastName)}").TableCellText();
                         table.Cell().TableCell(alternate).Text(SafeString(dep.Property?.Location)).TableCellText();
                         table.Cell().TableCell(alternate).Text(FormatDate(dep.ArrivalDate, "MM/dd/yy")).TableCellText();
-                        table.Cell().TableCell(alternate).AlignCenter().Text((dep.Nights ?? 0).ToString()).TableCellText();
+                        table.Cell().TableCell(alternate).AlignCenter().Text(dep.NumberOfNights.ToString()).TableCellText();
                         table.Cell().CurrencyCell(alternate).Text(FormatCurrency(balance)).TableCellText();
                         totalBalance += balance;
                         alternate = !alternate;

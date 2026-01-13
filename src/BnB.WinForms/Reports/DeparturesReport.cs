@@ -106,7 +106,7 @@ public class DeparturesReport : BaseReport
                     table.Cell().TableCell(alternate).Text(SafeString(departure.Location)).TableCellText();
                     table.Cell().TableCell(alternate).Text(FormatDate(departure.ArrivalDate)).TableCellText();
                     table.Cell().TableCell(alternate).Text(FormatDate(departure.DepartureDate)).TableCellText();
-                    table.Cell().TableCell(alternate).AlignCenter().Text(departure.Nights.ToString()).TableCellText();
+                    table.Cell().TableCell(alternate).AlignCenter().Text(departure.NumberOfNights.ToString()).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(balanceDue)).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(departure.TotalGrossWithTax)).TableCellText();
 
@@ -162,7 +162,7 @@ public class DeparturesReport : BaseReport
                 {
                     table.Cell().TableCell(alternate).Text(group.Key).TableCellText();
                     table.Cell().TableCell(alternate).AlignCenter().Text(group.Count().ToString()).TableCellText();
-                    table.Cell().TableCell(alternate).AlignCenter().Text(group.Sum(a => a.Nights).ToString()).TableCellText();
+                    table.Cell().TableCell(alternate).AlignCenter().Text(group.Sum(a => a.NumberOfNights).ToString()).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(group.Sum(a => a.TotalGrossWithTax))).TableCellText();
                     alternate = !alternate;
                 }

@@ -44,11 +44,11 @@ namespace BnB.Data.Migrations
                     b.Property<long>("ConfirmationNumber")
                         .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("DailyGrossRate")
+                    b.Property<decimal?>("DailyGrossRate")
                         .HasPrecision(10, 2)
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("DailyNetRate")
+                    b.Property<decimal?>("DailyNetRate")
                         .HasPrecision(10, 2)
                         .HasColumnType("TEXT");
 
@@ -108,34 +108,34 @@ namespace BnB.Data.Migrations
                     b.Property<DateTime?>("RevisionDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("ServiceFee")
+                    b.Property<decimal?>("ServiceFee")
                         .HasPrecision(10, 2)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("Suppress")
                         .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("Tax1")
+                    b.Property<decimal?>("Tax1")
                         .HasPrecision(10, 2)
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("Tax2")
+                    b.Property<decimal?>("Tax2")
                         .HasPrecision(10, 2)
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("Tax3")
+                    b.Property<decimal?>("Tax3")
                         .HasPrecision(10, 2)
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("TotalGrossWithTax")
+                    b.Property<decimal?>("TotalGrossWithTax")
                         .HasPrecision(10, 2)
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("TotalNetWithTax")
+                    b.Property<decimal?>("TotalNetWithTax")
                         .HasPrecision(10, 2)
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("TotalTax")
+                    b.Property<decimal?>("TotalTax")
                         .HasPrecision(10, 2)
                         .HasColumnType("TEXT");
 

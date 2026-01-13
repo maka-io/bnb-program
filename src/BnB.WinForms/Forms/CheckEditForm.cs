@@ -1,5 +1,6 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -23,6 +24,7 @@ public partial class CheckEditForm : Form
 
     private void CheckEditForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
         LoadChecks();
         UpdateButtonStates();
     }
@@ -112,7 +114,7 @@ public partial class CheckEditForm : Form
     {
         txtCheckNumber.Text = check.CheckNumber;
         dtpCheckDate.Value = check.CheckDate ?? DateTime.Now;
-        txtPayTo.Text = check.PayTo;
+        txtPayTo.Text = check.PayableTo;
         txtAmount.Text = check.Amount.ToString("F2");
         txtMemo.Text = check.Memo;
         txtComments.Text = check.Comments;
@@ -182,7 +184,7 @@ public partial class CheckEditForm : Form
         try
         {
             _currentCheck.CheckDate = dtpCheckDate.Value;
-            _currentCheck.PayTo = txtPayTo.Text.Trim();
+            _currentCheck.PayableTo = txtPayTo.Text.Trim();
             _currentCheck.Memo = txtMemo.Text.Trim();
             _currentCheck.Comments = txtComments.Text.Trim();
 
@@ -211,7 +213,7 @@ public partial class CheckEditForm : Form
 
         var found = _checks.FirstOrDefault(c =>
             c.CheckNumber.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-            (c.PayTo?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false));
+            (c.PayableTo?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false));
 
         if (found != null)
         {

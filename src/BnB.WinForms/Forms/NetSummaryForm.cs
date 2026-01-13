@@ -38,20 +38,21 @@ public partial class NetSummaryForm : Form
         var startDate = dtpStartDate.Value.Date;
         var endDate = dtpEndDate.Value.Date;
 
+        // Note: Status is not in DB (using Suppress instead), TotalCharges is computed (using TotalGrossWithTax)
         var summary = _dbContext.Accommodations
             .Include(a => a.Property)
             .Where(a => a.DepartureDate >= startDate && a.DepartureDate <= endDate
-                     && a.Status != "Cancelled")
-            .GroupBy(a => new { a.PropertyId, PropertyName = a.Property.Location })
+                     && !a.Suppress)
+            .GroupBy(a => new { a.PropertyAccountNumber, PropertyName = a.Property.Location })
             .Select(g => new
             {
-                g.Key.PropertyId,
+                g.Key.PropertyAccountNumber,
                 g.Key.PropertyName,
                 Bookings = g.Count(),
-                Nights = g.Sum(a => a.Nights ?? 0),
-                GrossRevenue = g.Sum(a => a.TotalCharges ?? 0),
+                NumberOfNights = g.Sum(a => a.NumberOfNights),
+                GrossRevenue = g.Sum(a => a.TotalGrossWithTax ?? 0),
                 Commission = g.Sum(a => a.Commission),
-                NetRevenue = g.Sum(a => (a.TotalCharges ?? 0) - a.Commission)
+                NetRevenue = g.Sum(a => (a.TotalGrossWithTax ?? 0) - a.Commission)
             })
             .OrderByDescending(s => s.NetRevenue)
             .ToList();
@@ -66,8 +67,8 @@ public partial class NetSummaryForm : Form
     {
         if (dgvSummary.Columns.Count == 0) return;
 
-        if (dgvSummary.Columns.Contains("PropertyId"))
-            dgvSummary.Columns["PropertyId"].Visible = false;
+        if (dgvSummary.Columns.Contains("PropertyAccountNumber"))
+            dgvSummary.Columns["PropertyAccountNumber"].Visible = false;
 
         if (dgvSummary.Columns.Contains("PropertyName"))
         {
@@ -82,11 +83,11 @@ public partial class NetSummaryForm : Form
             dgvSummary.Columns["Bookings"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
         }
 
-        if (dgvSummary.Columns.Contains("Nights"))
+        if (dgvSummary.Columns.Contains("NumberOfNights"))
         {
-            dgvSummary.Columns["Nights"].HeaderText = "Nights";
-            dgvSummary.Columns["Nights"].Width = 60;
-            dgvSummary.Columns["Nights"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgvSummary.Columns["NumberOfNights"].HeaderText = "Nights";
+            dgvSummary.Columns["NumberOfNights"].Width = 60;
+            dgvSummary.Columns["NumberOfNights"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
         }
 
         if (dgvSummary.Columns.Contains("GrossRevenue"))
@@ -128,7 +129,7 @@ public partial class NetSummaryForm : Form
             var type = item.GetType();
             if (type.GetProperty("Bookings")?.GetValue(item) is int bookings)
                 totalBookings += bookings;
-            if (type.GetProperty("Nights")?.GetValue(item) is int nights)
+            if (type.GetProperty("NumberOfNights")?.GetValue(item) is int nights)
                 totalNights += nights;
             if (type.GetProperty("GrossRevenue")?.GetValue(item) is decimal gross)
                 totalGross += gross;
@@ -153,7 +154,7 @@ public partial class NetSummaryForm : Form
         var accommodations = _dbContext.Accommodations
             .Include(a => a.Property)
             .Where(a => a.DepartureDate >= startDate && a.DepartureDate <= endDate
-                     && a.Status != "Cancelled")
+                     && !a.Suppress)
             .OrderBy(a => a.Property.Location)
             .ThenBy(a => a.DepartureDate)
             .ToList();
@@ -183,7 +184,7 @@ public partial class NetSummaryForm : Form
                 {
                     var property = row.Cells["PropertyName"].Value;
                     var bookings = row.Cells["Bookings"].Value;
-                    var nights = row.Cells["Nights"].Value;
+                    var nights = row.Cells["NumberOfNights"].Value;
                     var gross = row.Cells["GrossRevenue"].Value;
                     var commission = row.Cells["Commission"].Value;
                     var net = row.Cells["NetRevenue"].Value;

@@ -2,6 +2,7 @@ using BnB.Core.Enums;
 using BnB.Core.Models;
 using BnB.Data.Context;
 using BnB.WinForms.Services;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -30,13 +31,14 @@ public partial class AccommodationForm : Form
         _filterConfirmationNumber = confirmationNumber;
 
         InitializeComponent();
-        SetupDataBindings();
     }
 
     private void AccommodationForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
         LoadProperties();
         LoadAccommodations();
+        SetupDataBindings();
         SetMode(FormMode.Browse);
     }
 
@@ -50,8 +52,8 @@ public partial class AccommodationForm : Form
         // Date bindings
         dtpArrivalDate.DataBindings.Add("Value", _bindingSource, nameof(Accommodation.ArrivalDate), true);
         dtpDepartureDate.DataBindings.Add("Value", _bindingSource, nameof(Accommodation.DepartureDate), true);
-        txtNights.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.Nights), true);
-        txtNumberOfGuests.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.NumberOfGuests), true);
+        txtNights.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.NumberOfNights), true);
+        txtNumberOfGuests.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.NumberInParty), true);
 
         // Room info
         txtUnitName.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.UnitName), true);
@@ -87,6 +89,74 @@ public partial class AccommodationForm : Form
 
         // Navigation grid
         dgvAccommodations.DataSource = _bindingSource;
+        ConfigureGrid();
+    }
+
+    private void ConfigureGrid()
+    {
+        dgvAccommodations.AutoGenerateColumns = false;
+        dgvAccommodations.Columns.Clear();
+
+        // Add only the columns we want to display
+        dgvAccommodations.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = "ConfirmationNumber",
+            HeaderText = "Conf #",
+            Width = 70
+        });
+
+        dgvAccommodations.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = "FirstName",
+            HeaderText = "First Name",
+            Width = 90
+        });
+
+        dgvAccommodations.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = "LastName",
+            HeaderText = "Last Name",
+            Width = 100
+        });
+
+        dgvAccommodations.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = "Location",
+            HeaderText = "Property",
+            Width = 130
+        });
+
+        dgvAccommodations.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = "ArrivalDate",
+            HeaderText = "Arrival",
+            Width = 85,
+            DefaultCellStyle = new DataGridViewCellStyle { Format = "MM/dd/yyyy" }
+        });
+
+        dgvAccommodations.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = "DepartureDate",
+            HeaderText = "Departure",
+            Width = 85,
+            DefaultCellStyle = new DataGridViewCellStyle { Format = "MM/dd/yyyy" }
+        });
+
+        dgvAccommodations.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = "NumberOfNights",
+            HeaderText = "Nights",
+            Width = 55,
+            DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter }
+        });
+
+        dgvAccommodations.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = "TotalGrossWithTax",
+            HeaderText = "Total",
+            Width = 80,
+            DefaultCellStyle = new DataGridViewCellStyle { Format = "C2", Alignment = DataGridViewContentAlignment.MiddleRight }
+        });
     }
 
     private void LoadProperties()
@@ -95,7 +165,7 @@ public partial class AccommodationForm : Form
         {
             var properties = _dbContext.Properties
                 .OrderBy(p => p.Location)
-                .Select(p => new { p.PropertyId, p.Location })
+                .Select(p => new { p.AccountNumber, p.Location })
                 .ToList();
 
             _propertyBindingSource.DataSource = properties;
@@ -225,7 +295,7 @@ public partial class AccommodationForm : Form
         {
             ArrivalDate = DateTime.Today,
             DepartureDate = DateTime.Today.AddDays(1),
-            Nights = 1,
+            NumberOfNights = 1,
             PaymentType = "Prepay",
             EntryDate = DateTime.Now,
             EntryUser = Environment.UserName
@@ -289,7 +359,7 @@ public partial class AccommodationForm : Form
                         // Set property info
                         if (cboProperty.SelectedValue is int accountNum)
                         {
-                            _currentAccommodation.PropertyId = accountNum;
+                            _currentAccommodation.PropertyAccountNumber = accountNum;
                             var property = _dbContext.Properties.Find(accountNum);
                             if (property != null)
                             {
@@ -426,12 +496,12 @@ public partial class AccommodationForm : Form
         // Calculate number of nights
         if (accommodation.DepartureDate > accommodation.ArrivalDate)
         {
-            accommodation.Nights = (int)(accommodation.DepartureDate - accommodation.ArrivalDate).TotalDays;
+            accommodation.NumberOfNights = (int)(accommodation.DepartureDate - accommodation.ArrivalDate).TotalDays;
         }
 
         // Calculate totals (simplified - would need tax rates from database)
-        accommodation.TotalGrossWithTax = accommodation.DailyGrossRate * accommodation.Nights;
-        accommodation.TotalNetWithTax = accommodation.DailyNetRate * accommodation.Nights;
+        accommodation.TotalGrossWithTax = accommodation.DailyGrossRate * accommodation.NumberOfNights;
+        accommodation.TotalNetWithTax = accommodation.DailyNetRate * accommodation.NumberOfNights;
 
         // Refresh bindings
         _bindingSource.ResetCurrentItem();

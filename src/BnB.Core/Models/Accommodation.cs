@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace BnB.Core.Models;
 
 /// <summary>
@@ -5,9 +7,9 @@ namespace BnB.Core.Models;
 /// </summary>
 public class Accommodation
 {
-    public int AccommodationId { get; set; }
+    public int Id { get; set; }
     public long ConfirmationNumber { get; set; }  // conf
-    public int PropertyId { get; set; }  // accountnum
+    public int PropertyAccountNumber { get; set; }  // accountnum
 
     // Denormalized guest/property info (from legacy)
     public string? FirstName { get; set; }  // f_name
@@ -17,9 +19,11 @@ public class Accommodation
     // Dates and duration
     public DateTime ArrivalDate { get; set; }  // arrdate
     public DateTime DepartureDate { get; set; }  // depdate
-    public int? Nights { get; set; }  // NumNites
-    public int? NumberOfGuests { get; set; }  // numpty
-    public DateTime? BookedDate { get; set; }
+    public int NumberOfNights { get; set; }  // NumNites
+    public int? NumberInParty { get; set; }  // numpty
+
+    [NotMapped]
+    public DateTime? BookedDate { get; set; }  // Not in database
 
     // Room info
     public string? UnitName { get; set; }  // UnitName (room type code)
@@ -36,10 +40,14 @@ public class Accommodation
     public decimal? Tax3 { get; set; }  // tax3
     public decimal? ServiceFee { get; set; }  // svcharge
 
-    // Billing totals
+    // Billing totals (not mapped - computed values)
+    [NotMapped]
     public decimal? TotalCharges { get; set; }
+    [NotMapped]
     public decimal? TotalPaid { get; set; }
+    [NotMapped]
     public decimal? BalanceDue { get; set; }
+    [NotMapped]
     public decimal? RefundOwed { get; set; }
 
     // Commission tracking
@@ -54,7 +62,8 @@ public class Accommodation
     public bool UseManualAmounts { get; set; }  // FillinCalcAmounts
 
     // Status
-    public string? Status { get; set; }  // Active, Cancelled, etc.
+    [NotMapped]
+    public string? Status { get; set; }  // Not in database
     public bool Suppress { get; set; }  // suppress
     public bool Notified { get; set; }  // Notified
     public bool Forfeit { get; set; }  // Forfeit
@@ -62,7 +71,8 @@ public class Accommodation
     // Notes
     public string? Comments { get; set; }  // cmmnts
     public string? NightNotes { get; set; }  // nnotes
-    public string? SpecialRequests { get; set; }
+    [NotMapped]
+    public string? SpecialRequests { get; set; }  // Not in database
 
     // Audit fields
     public DateTime? EntryDate { get; set; }

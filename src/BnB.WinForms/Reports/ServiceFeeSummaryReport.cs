@@ -83,7 +83,7 @@ public class ServiceFeeSummaryReport : BaseReport
                 foreach (var accom in _accommodations)
                 {
                     var guestName = $"{SafeString(accom.LastName)}, {SafeString(accom.FirstName)}";
-                    var roomRate = (accom.DailyGrossRate ?? 0) * (accom.Nights ?? 0);
+                    var roomRate = (accom.DailyGrossRate ?? 0) * accom.NumberOfNights;
                     var serviceFee = accom.ServiceFee ?? 0;
                     var total = accom.TotalCharges ?? 0;
 

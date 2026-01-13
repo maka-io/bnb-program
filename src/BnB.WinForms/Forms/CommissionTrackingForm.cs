@@ -1,6 +1,7 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
 using BnB.WinForms.Reports;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -22,6 +23,7 @@ public partial class CommissionTrackingForm : Form
 
     private void CommissionTrackingForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
         LoadProperties();
         LoadCommissions();
     }
@@ -32,7 +34,7 @@ public partial class CommissionTrackingForm : Form
         cboProperty.Items.Add("(All Properties)");
 
         var properties = _dbContext.Properties
-            .Where(p => p.IsActive)
+            .Where(p => !p.IsObsolete)
             .OrderBy(p => p.Location)
             .ToList();
 
@@ -54,7 +56,7 @@ public partial class CommissionTrackingForm : Form
         // Filter by property
         if (cboProperty.SelectedIndex > 0 && cboProperty.SelectedItem is Property selectedProperty)
         {
-            query = query.Where(a => a.PropertyId == selectedProperty.PropertyId);
+            query = query.Where(a => a.PropertyAccountNumber == selectedProperty.AccountNumber);
         }
 
         // Filter by status
@@ -68,7 +70,7 @@ public partial class CommissionTrackingForm : Form
             .ThenBy(a => a.DepartureDate)
             .Select(a => new
             {
-                a.AccommodationId,
+                a.Id,
                 a.ConfirmationNumber,
                 GuestName = a.FirstName + " " + a.LastName,
                 PropertyName = a.Property.Location,
@@ -89,8 +91,8 @@ public partial class CommissionTrackingForm : Form
     {
         if (dgvCommissions.Columns.Count == 0) return;
 
-        if (dgvCommissions.Columns.Contains("AccommodationId"))
-            dgvCommissions.Columns["AccommodationId"].Visible = false;
+        if (dgvCommissions.Columns.Contains("Id"))
+            dgvCommissions.Columns["Id"].Visible = false;
 
         if (dgvCommissions.Columns.Contains("ConfirmationNumber"))
         {
@@ -185,7 +187,7 @@ public partial class CommissionTrackingForm : Form
     {
         if (dgvCommissions.CurrentRow == null) return;
 
-        var accommodationId = (int)dgvCommissions.CurrentRow.Cells["AccommodationId"].Value;
+        var accommodationId = (int)dgvCommissions.CurrentRow.Cells["Id"].Value;
         var commission = (decimal)dgvCommissions.CurrentRow.Cells["Commission"].Value;
         var paid = (decimal)dgvCommissions.CurrentRow.Cells["CommissionPaid"].Value;
         var due = commission - paid;
@@ -223,7 +225,7 @@ public partial class CommissionTrackingForm : Form
         // Apply property filter
         if (cboProperty.SelectedIndex > 0 && cboProperty.SelectedItem is Property selectedProperty)
         {
-            query = query.Where(a => a.PropertyId == selectedProperty.PropertyId);
+            query = query.Where(a => a.PropertyAccountNumber == selectedProperty.AccountNumber);
         }
 
         // Apply status filter

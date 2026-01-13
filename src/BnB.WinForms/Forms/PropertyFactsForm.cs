@@ -33,7 +33,7 @@ public partial class PropertyFactsForm : Form
 
         lstProperties.DataSource = properties;
         lstProperties.DisplayMember = "Location";
-        lstProperties.ValueMember = "AccountNumber";
+        lstProperties.ValueMember = nameof(Property.AccountNumber);
     }
 
     private void lstProperties_SelectedIndexChanged(object sender, EventArgs e)
@@ -132,7 +132,7 @@ public partial class PropertyFactsForm : Form
     {
         if (_currentProperty == null) return;
 
-        using var form = new RoomTypeForm(_dbContext, _currentProperty.PropertyId);
+        using var form = new RoomTypeForm(_dbContext, _currentProperty.AccountNumber);
         form.ShowDialog(this);
     }
 

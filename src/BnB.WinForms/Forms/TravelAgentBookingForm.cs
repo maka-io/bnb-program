@@ -26,13 +26,13 @@ public partial class TravelAgentBookingForm : Form
         _bindingSource = new BindingSource();
 
         InitializeComponent();
-        SetupDataBindings();
         LoadAgencies();
     }
 
     private void TravelAgentBookingForm_Load(object sender, EventArgs e)
     {
         LoadBookings();
+        SetupDataBindings();
         SetMode(FormMode.Browse);
     }
 

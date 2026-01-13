@@ -133,7 +133,7 @@ public class CommissionReport : BaseReport
                     table.Cell().TableCell(alternate).Text($"{SafeString(accom.FirstName)} {SafeString(accom.LastName)}").TableCellText();
                     table.Cell().TableCell(alternate).Text(FormatDate(accom.ArrivalDate)).TableCellText();
                     table.Cell().TableCell(alternate).Text(FormatDate(accom.DepartureDate)).TableCellText();
-                    table.Cell().TableCell(alternate).AlignCenter().Text(accom.Nights.ToString()).TableCellText();
+                    table.Cell().TableCell(alternate).AlignCenter().Text(accom.NumberOfNights.ToString()).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(accom.TotalGrossWithTax)).TableCellText();
                     table.Cell().TableCell(alternate).AlignCenter().Text($"{percent:F1}%").TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(accom.Commission)).TableCellText();
@@ -166,7 +166,7 @@ public class CommissionReport : BaseReport
         var totalCommissionPaid = accommodations.Sum(a => a.CommissionPaid ?? 0);
         var totalOutstanding = totalCommissionDue - totalCommissionPaid;
         var totalGross = accommodations.Sum(a => a.TotalGrossWithTax);
-        var totalNights = accommodations.Sum(a => a.Nights);
+        var totalNights = accommodations.Sum(a => a.NumberOfNights);
 
         container.Border(2).BorderColor(ReportStyles.PrimaryColor).Padding(10).Column(column =>
         {

@@ -39,21 +39,19 @@ public partial class PaymentReceivedForm : Form
         var endDate = dtpEndDate.Value.Date;
 
         var payments = _dbContext.Payments
-            .Include(p => p.Accommodation)
-                .ThenInclude(a => a.Property)
             .Where(p => p.PaymentDate >= startDate && p.PaymentDate <= endDate)
             .OrderBy(p => p.PaymentDate)
             .Select(p => new
             {
-                p.PaymentId,
+                p.Id,
                 p.PaymentDate,
-                ConfirmationNumber = p.Accommodation.ConfirmationNumber,
-                GuestName = p.Accommodation.FirstName + " " + p.Accommodation.LastName,
-                PropertyName = p.Accommodation.Property.Location,
-                p.PaymentMethod,
+                p.ConfirmationNumber,
+                GuestName = p.FirstName + " " + p.LastName,
+                PropertyName = "", // Property not available on Payment
+                PaymentMethod = p.ReceivedFrom ?? "", // Using ReceivedFrom since PaymentMethod is [NotMapped]
                 p.CheckNumber,
                 p.Amount,
-                p.Notes
+                Notes = p.Comments ?? "" // Using Comments since Notes is [NotMapped]
             })
             .ToList();
 
@@ -67,8 +65,8 @@ public partial class PaymentReceivedForm : Form
     {
         if (dgvPayments.Columns.Count == 0) return;
 
-        if (dgvPayments.Columns.Contains("PaymentId"))
-            dgvPayments.Columns["PaymentId"].Visible = false;
+        if (dgvPayments.Columns.Contains("Id"))
+            dgvPayments.Columns["Id"].Visible = false;
 
         if (dgvPayments.Columns.Contains("PaymentDate"))
         {
@@ -142,8 +140,6 @@ public partial class PaymentReceivedForm : Form
         var endDate = dtpEndDate.Value.Date;
 
         var payments = _dbContext.Payments
-            .Include(p => p.Accommodation)
-                .ThenInclude(a => a.Property)
             .Where(p => p.PaymentDate >= startDate && p.PaymentDate <= endDate)
             .OrderBy(p => p.PaymentDate)
             .ToList();

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using BnB.Data.Context;
 using BnB.WinForms.Forms;
@@ -9,6 +10,7 @@ namespace BnB.WinForms;
 static class Program
 {
     public static IServiceProvider ServiceProvider { get; private set; } = null!;
+    public static IConfiguration Configuration { get; private set; } = null!;
 
     /// <summary>
     /// The main entry point for the application.
@@ -16,21 +18,42 @@ static class Program
     [STAThread]
     static void Main()
     {
+        // Enable legacy timestamp behavior for Npgsql to handle DateTime with Kind=Unspecified
+        // This allows DateTime values without explicit UTC kind to work with PostgreSQL
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
         // Configure QuestPDF license (Community license for open source/small business)
         QuestPDF.Settings.License = LicenseType.Community;
 
         ApplicationConfiguration.Initialize();
+
+        // Load configuration
+        Configuration = new ConfigurationBuilder()
+            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .Build();
 
         // Configure services
         var services = new ServiceCollection();
         ConfigureServices(services);
         ServiceProvider = services.BuildServiceProvider();
 
-        // Ensure database is created
+        // Ensure database is created and migrated
         using (var scope = ServiceProvider.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<BnBDbContext>();
-            dbContext.Database.Migrate();
+            var provider = Configuration["Database:Provider"] ?? "SQLite";
+
+            if (provider.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase))
+            {
+                // For PostgreSQL, use EnsureCreated since migrations were generated for SQLite
+                dbContext.Database.EnsureCreated();
+            }
+            else
+            {
+                // For SQLite, use Migrate to apply migrations
+                dbContext.Database.Migrate();
+            }
         }
 
         // Run the main form
@@ -40,20 +63,52 @@ static class Program
 
     private static void ConfigureServices(IServiceCollection services)
     {
-        // Get database path in user's local app data folder
-        var dbPath = GetDatabasePath();
+        // Register configuration
+        services.AddSingleton(Configuration);
 
-        // Register DbContext with SQLite
+        // Get database provider from configuration
+        var provider = Configuration["Database:Provider"] ?? "SQLite";
+
+        // Register DbContext based on provider
         services.AddDbContext<BnBDbContext>(options =>
-            options.UseSqlite($"Data Source={dbPath}"));
+        {
+            if (provider.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase))
+            {
+                var connectionString = BuildPostgreSQLConnectionString();
+                options.UseNpgsql(connectionString);
+            }
+            else
+            {
+                var dbPath = GetSQLiteDatabasePath();
+                options.UseSqlite($"Data Source={dbPath}");
+            }
+        });
 
         // Register forms
         services.AddTransient<MainForm>(sp => new MainForm(sp));
     }
 
-    private static string GetDatabasePath()
+    private static string BuildPostgreSQLConnectionString()
     {
-        // Store database in LocalApplicationData folder
+        var host = Configuration["Database:PostgreSQL:Host"] ?? "localhost";
+        var port = Configuration["Database:PostgreSQL:Port"] ?? "5432";
+        var database = Configuration["Database:PostgreSQL:Database"] ?? "bnb";
+        var username = Configuration["Database:PostgreSQL:Username"] ?? "postgres";
+        var password = Configuration["Database:PostgreSQL:Password"] ?? "";
+
+        return $"Host={host};Port={port};Database={database};Username={username};Password={password}";
+    }
+
+    public static string GetSQLiteDatabasePath()
+    {
+        // Check if custom path is specified in config
+        var customPath = Configuration["Database:SQLite:DatabasePath"];
+        if (!string.IsNullOrWhiteSpace(customPath))
+        {
+            return customPath;
+        }
+
+        // Default: Store database in LocalApplicationData folder
         var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         var bnbDataPath = Path.Combine(appDataPath, "BnB");
 
@@ -61,5 +116,21 @@ static class Program
         Directory.CreateDirectory(bnbDataPath);
 
         return Path.Combine(bnbDataPath, "bnb.db");
+    }
+
+    /// <summary>
+    /// Gets the current database provider name
+    /// </summary>
+    public static string GetCurrentDatabaseProvider()
+    {
+        return Configuration["Database:Provider"] ?? "SQLite";
+    }
+
+    /// <summary>
+    /// Gets the path to the appsettings.json file
+    /// </summary>
+    public static string GetSettingsFilePath()
+    {
+        return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
     }
 }

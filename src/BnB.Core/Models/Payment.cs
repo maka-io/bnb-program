@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace BnB.Core.Models;
 
 /// <summary>
@@ -5,9 +7,8 @@ namespace BnB.Core.Models;
 /// </summary>
 public class Payment
 {
-    public int PaymentId { get; set; }
+    public int Id { get; set; }
     public long ConfirmationNumber { get; set; }  // conf
-    public int? AccommodationId { get; set; }
 
     // Denormalized guest info
     public string? FirstName { get; set; }  // f_name
@@ -16,11 +17,13 @@ public class Payment
     // Payment details
     public decimal Amount { get; set; }  // AmountReceived
     public DateTime PaymentDate { get; set; }  // DateReceived
-    public string? PaymentMethod { get; set; }  // Cash, Check, Credit Card
+    [NotMapped]
+    public string? PaymentMethod { get; set; }  // Not in database
     public string? CheckNumber { get; set; }  // CheckNumber
     public string? ReceivedFrom { get; set; }  // ReceivedFrom
     public string? AppliedTo { get; set; }  // AppliedTo
-    public string? Notes { get; set; }
+    [NotMapped]
+    public string? Notes { get; set; }  // Not in database
 
     // Payment due tracking
     public decimal? DepositDue { get; set; }  // depdue
@@ -37,9 +40,8 @@ public class Payment
     public decimal? OtherCredit { get; set; }  // OtherCredit
     public decimal? DefaultCommission { get; set; }  // defcom
 
-    public string? Comments { get; set; }  // Comments + cmmnts
+    public string? Comments { get; set; }
 
     // Navigation properties
     public virtual Guest Guest { get; set; } = null!;
-    public virtual Accommodation? Accommodation { get; set; }
 }

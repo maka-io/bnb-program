@@ -53,6 +53,7 @@ public partial class TrendGraphForm : Form
         var startDate = new DateTime(dtpStartDate.Value.Year, dtpStartDate.Value.Month, 1);
         var endDate = new DateTime(dtpEndDate.Value.Year, dtpEndDate.Value.Month, 1).AddMonths(1).AddDays(-1);
 
+        // Note: TotalCharges is computed, using TotalGrossWithTax instead
         _trendData = _dbContext.Accommodations
             .Where(a => a.ArrivalDate >= startDate && a.ArrivalDate <= endDate)
             .GroupBy(a => new { a.ArrivalDate.Year, a.ArrivalDate.Month })
@@ -61,8 +62,8 @@ public partial class TrendGraphForm : Form
                 Year = g.Key.Year,
                 Month = g.Key.Month,
                 BookingCount = g.Count(),
-                TotalRevenue = g.Sum(a => a.TotalCharges ?? 0),
-                TotalNights = g.Sum(a => a.Nights ?? 0)
+                TotalRevenue = g.Sum(a => a.TotalGrossWithTax ?? 0),
+                TotalNights = g.Sum(a => a.NumberOfNights)
             })
             .OrderBy(t => t.Year)
             .ThenBy(t => t.Month)

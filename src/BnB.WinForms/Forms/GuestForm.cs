@@ -2,6 +2,7 @@ using BnB.Core.Enums;
 using BnB.Core.Models;
 using BnB.Data.Context;
 using BnB.WinForms.Services;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -25,12 +26,15 @@ public partial class GuestForm : Form
         _bindingSource = new BindingSource();
 
         InitializeComponent();
-        SetupDataBindings();
     }
 
     private void GuestForm_Load(object sender, EventArgs e)
     {
+        // Apply modern UI theme
+        this.ApplyTheme();
+
         LoadGuests();
+        SetupDataBindings();
         SetMode(FormMode.Browse);
     }
 
@@ -57,6 +61,32 @@ public partial class GuestForm : Form
 
         // Navigation grid
         dgvGuests.DataSource = _bindingSource;
+
+        // Hide navigation property columns and audit columns that aren't needed in grid
+        if (dgvGuests.Columns.Contains("Accommodations"))
+            dgvGuests.Columns["Accommodations"].Visible = false;
+        if (dgvGuests.Columns.Contains("Payments"))
+            dgvGuests.Columns["Payments"].Visible = false;
+        if (dgvGuests.Columns.Contains("EntryDate"))
+            dgvGuests.Columns["EntryDate"].Visible = false;
+        if (dgvGuests.Columns.Contains("EntryUser"))
+            dgvGuests.Columns["EntryUser"].Visible = false;
+        if (dgvGuests.Columns.Contains("UpdateDate"))
+            dgvGuests.Columns["UpdateDate"].Visible = false;
+        if (dgvGuests.Columns.Contains("UpdateUser"))
+            dgvGuests.Columns["UpdateUser"].Visible = false;
+        if (dgvGuests.Columns.Contains("RevisionDate"))
+            dgvGuests.Columns["RevisionDate"].Visible = false;
+        if (dgvGuests.Columns.Contains("Revision"))
+            dgvGuests.Columns["Revision"].Visible = false;
+        if (dgvGuests.Columns.Contains("BusinessAddress"))
+            dgvGuests.Columns["BusinessAddress"].Visible = false;
+        if (dgvGuests.Columns.Contains("Closure"))
+            dgvGuests.Columns["Closure"].Visible = false;
+        if (dgvGuests.Columns.Contains("ReservationFee"))
+            dgvGuests.Columns["ReservationFee"].Visible = false;
+        if (dgvGuests.Columns.Contains("DateBooked"))
+            dgvGuests.Columns["DateBooked"].Visible = false;
     }
 
     private void LoadGuests()

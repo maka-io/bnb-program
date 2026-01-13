@@ -1,5 +1,6 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -24,6 +25,7 @@ public partial class RoomTypeForm : Form
 
     private void RoomTypeForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
         LoadProperties();
 
         if (_currentPropertyAccountNum > 0)
@@ -40,12 +42,12 @@ public partial class RoomTypeForm : Form
         var properties = _dbContext.Properties
             .Where(p => !p.IsObsolete)
             .OrderBy(p => p.Location)
-            .Select(p => new { p.PropertyId, Display = $"{p.Location} ({p.PropertyId})" })
+            .Select(p => new { p.AccountNumber, Display = $"{p.Location} ({p.AccountNumber})" })
             .ToList();
 
         cboProperty.DataSource = properties;
         cboProperty.DisplayMember = "Display";
-        cboProperty.ValueMember = "AccountNumber";
+        cboProperty.ValueMember = nameof(Property.AccountNumber);
     }
 
     private void LoadRoomTypes()
@@ -55,7 +57,7 @@ public partial class RoomTypeForm : Form
         _currentPropertyAccountNum = (int)cboProperty.SelectedValue;
 
         _roomTypes = _dbContext.RoomTypes
-            .Where(r => r.PropertyId == _currentPropertyAccountNum)
+            .Where(r => r.PropertyAccountNumber == _currentPropertyAccountNum)
             .OrderBy(r => r.Name)
             .ToList();
 
@@ -71,7 +73,7 @@ public partial class RoomTypeForm : Form
         if (dgvRoomTypes.Columns.Count == 0) return;
 
         dgvRoomTypes.Columns["Id"].Visible = false;
-        dgvRoomTypes.Columns["PropertyId"].Visible = false;
+        dgvRoomTypes.Columns["PropertyAccountNumber"].Visible = false;
         dgvRoomTypes.Columns["Property"].Visible = false;
 
         if (dgvRoomTypes.Columns.Contains("Name"))
@@ -184,7 +186,7 @@ public partial class RoomTypeForm : Form
                 // New room type
                 roomType = new RoomType
                 {
-                    PropertyId = _currentPropertyAccountNum,
+                    PropertyAccountNumber = _currentPropertyAccountNum,
                     Name = txtRoomType.Text.Trim()
                 };
                 _dbContext.RoomTypes.Add(roomType);

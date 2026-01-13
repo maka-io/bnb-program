@@ -1,6 +1,7 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
 using BnB.WinForms.Reports;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -23,6 +24,7 @@ public partial class ArrivalDepartureForm : Form
 
     private void ArrivalDepartureForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
         // Default to today
         dtpDate.Value = DateTime.Today;
         LoadData();
@@ -37,21 +39,21 @@ public partial class ArrivalDepartureForm : Form
     {
         var selectedDate = dtpDate.Value.Date;
 
-        // Load arrivals
+        // Load arrivals (using Suppress instead of Status since Status is not in DB)
         var arrivals = _dbContext.Accommodations
             .Include(a => a.Property)
             .Include(a => a.Guest)
-            .Where(a => a.ArrivalDate == selectedDate && a.Status != "Cancelled")
+            .Where(a => a.ArrivalDate == selectedDate && !a.Suppress)
             .OrderBy(a => a.Property.Location)
             .Select(a => new
             {
                 a.ConfirmationNumber,
                 GuestName = a.FirstName + " " + a.LastName,
                 PropertyName = a.Property.Location,
-                a.Nights,
-                a.NumberOfGuests,
+                a.NumberOfNights,
+                a.NumberInParty,
                 a.DepartureDate,
-                a.SpecialRequests
+                SpecialRequests = a.Comments ?? ""
             })
             .ToList();
 
@@ -59,11 +61,12 @@ public partial class ArrivalDepartureForm : Form
         dgvArrivals.DataSource = _arrivalsBinding;
         ConfigureGrid(dgvArrivals, true);
 
-        // Load departures
+        // Load departures (using Suppress instead of Status since Status is not in DB)
+        // Note: BalanceDue is computed, using 0 as placeholder
         var departures = _dbContext.Accommodations
             .Include(a => a.Property)
             .Include(a => a.Guest)
-            .Where(a => a.DepartureDate == selectedDate && a.Status != "Cancelled")
+            .Where(a => a.DepartureDate == selectedDate && !a.Suppress)
             .OrderBy(a => a.Property.Location)
             .Select(a => new
             {
@@ -71,8 +74,8 @@ public partial class ArrivalDepartureForm : Form
                 GuestName = a.FirstName + " " + a.LastName,
                 PropertyName = a.Property.Location,
                 a.ArrivalDate,
-                a.Nights,
-                a.BalanceDue
+                a.NumberOfNights,
+                BalanceDue = (decimal?)0
             })
             .ToList();
 
@@ -105,20 +108,20 @@ public partial class ArrivalDepartureForm : Form
             dgv.Columns["PropertyName"].Width = 130;
         }
 
-        if (dgv.Columns.Contains("Nights"))
+        if (dgv.Columns.Contains("NumberOfNights"))
         {
-            dgv.Columns["Nights"].HeaderText = "Nights";
-            dgv.Columns["Nights"].Width = 55;
-            dgv.Columns["Nights"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgv.Columns["NumberOfNights"].HeaderText = "Nights";
+            dgv.Columns["NumberOfNights"].Width = 55;
+            dgv.Columns["NumberOfNights"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
         }
 
         if (isArrival)
         {
-            if (dgv.Columns.Contains("NumberOfGuests"))
+            if (dgv.Columns.Contains("NumberInParty"))
             {
-                dgv.Columns["NumberOfGuests"].HeaderText = "Guests";
-                dgv.Columns["NumberOfGuests"].Width = 55;
-                dgv.Columns["NumberOfGuests"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                dgv.Columns["NumberInParty"].HeaderText = "Guests";
+                dgv.Columns["NumberInParty"].Width = 55;
+                dgv.Columns["NumberInParty"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             }
 
             if (dgv.Columns.Contains("DepartureDate"))
@@ -180,14 +183,14 @@ public partial class ArrivalDepartureForm : Form
         var arrivals = _dbContext.Accommodations
             .Include(a => a.Property)
             .Include(a => a.Guest)
-            .Where(a => a.ArrivalDate == selectedDate && a.Status != "Cancelled")
+            .Where(a => a.ArrivalDate == selectedDate && !a.Suppress)
             .OrderBy(a => a.Property.Location)
             .ToList();
 
         var departures = _dbContext.Accommodations
             .Include(a => a.Property)
             .Include(a => a.Guest)
-            .Where(a => a.DepartureDate == selectedDate && a.Status != "Cancelled")
+            .Where(a => a.DepartureDate == selectedDate && !a.Suppress)
             .OrderBy(a => a.Property.Location)
             .ToList();
 

@@ -1,6 +1,7 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
 using BnB.WinForms.Reports;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -21,6 +22,7 @@ public partial class AvailabilityForm : Form
 
     private void AvailabilityForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
         LoadProperties();
         LoadRoomTypes();
 
@@ -36,14 +38,14 @@ public partial class AvailabilityForm : Form
         var properties = _dbContext.Properties
             .Where(p => !p.IsObsolete)
             .OrderBy(p => p.Location)
-            .Select(p => new { p.PropertyId, Display = p.Location })
+            .Select(p => new { p.AccountNumber, Display = p.Location })
             .ToList();
 
-        properties.Insert(0, new { PropertyId = 0, Display = "(All Properties)" });
+        properties.Insert(0, new { AccountNumber = 0, Display = "(All Properties)" });
 
         cboProperty.DataSource = properties;
         cboProperty.DisplayMember = "Display";
-        cboProperty.ValueMember = "PropertyId";
+        cboProperty.ValueMember = "AccountNumber";
     }
 
     private void LoadRoomTypes()
@@ -54,7 +56,7 @@ public partial class AvailabilityForm : Form
         if (cboProperty.SelectedValue is int accountNum && accountNum > 0)
         {
             var roomTypes = _dbContext.RoomTypes
-                .Where(r => r.PropertyId == accountNum)
+                .Where(r => r.PropertyAccountNumber == accountNum)
                 .OrderBy(r => r.Name)
                 .Select(r => r.Name)
                 .ToList();
@@ -119,7 +121,7 @@ public partial class AvailabilityForm : Form
 
         if (selectedProperty > 0)
         {
-            propertiesQuery = propertiesQuery.Where(p => p.PropertyId == selectedProperty);
+            propertiesQuery = propertiesQuery.Where(p => p.AccountNumber == selectedProperty);
         }
 
         var properties = propertiesQuery.OrderBy(p => p.Location).ToList();
@@ -130,7 +132,7 @@ public partial class AvailabilityForm : Form
 
         if (selectedProperty > 0)
         {
-            accommodationsQuery = accommodationsQuery.Where(a => a.PropertyId == selectedProperty);
+            accommodationsQuery = accommodationsQuery.Where(a => a.PropertyAccountNumber == selectedProperty);
         }
 
         var accommodations = accommodationsQuery.ToList();
@@ -143,7 +145,7 @@ public partial class AvailabilityForm : Form
             row.Cells[0].Value = property.Location;
 
             var propertyAccoms = accommodations
-                .Where(a => a.PropertyId == property.PropertyId)
+                .Where(a => a.PropertyAccountNumber == property.AccountNumber)
                 .ToList();
 
             var days = (endDate - startDate).Days + 1;
@@ -198,7 +200,7 @@ public partial class AvailabilityForm : Form
 
         if (selectedProperty > 0)
         {
-            propertiesQuery = propertiesQuery.Where(p => p.PropertyId == selectedProperty);
+            propertiesQuery = propertiesQuery.Where(p => p.AccountNumber == selectedProperty);
         }
 
         var properties = propertiesQuery.OrderBy(p => p.Location).ToList();
@@ -209,7 +211,7 @@ public partial class AvailabilityForm : Form
 
         if (selectedProperty > 0)
         {
-            accommodationsQuery = accommodationsQuery.Where(a => a.PropertyId == selectedProperty);
+            accommodationsQuery = accommodationsQuery.Where(a => a.PropertyAccountNumber == selectedProperty);
         }
 
         var accommodations = accommodationsQuery.ToList();

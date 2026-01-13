@@ -206,14 +206,14 @@ public class ConfirmationReport : BaseReport
                 bool alternate = false;
                 foreach (var accom in accommodationList)
                 {
-                    var total = accom.DailyGrossRate * accom.Nights;
+                    var total = accom.DailyGrossRate * accom.NumberOfNights;
                     var totalWithTax = accom.TotalGrossWithTax;
 
                     table.Cell().TableCell(alternate).Text(SafeString(accom.Location)).TableCellText();
                     table.Cell().TableCell(alternate).Text(FormatDate(accom.ArrivalDate)).TableCellText();
                     table.Cell().TableCell(alternate).Text(FormatDate(accom.DepartureDate)).TableCellText();
-                    table.Cell().TableCell(alternate).AlignCenter().Text(accom.Nights.ToString()).TableCellText();
-                    table.Cell().TableCell(alternate).AlignCenter().Text(accom.NumberOfGuests?.ToString() ?? "").TableCellText();
+                    table.Cell().TableCell(alternate).AlignCenter().Text(accom.NumberOfNights.ToString()).TableCellText();
+                    table.Cell().TableCell(alternate).AlignCenter().Text(accom.NumberInParty?.ToString() ?? "").TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(accom.DailyGrossRate)).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(accom.TotalTax)).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(totalWithTax)).TableCellText();

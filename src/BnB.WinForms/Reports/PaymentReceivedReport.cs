@@ -82,13 +82,12 @@ public class PaymentReceivedReport : BaseReport
 
                 foreach (var payment in _payments.OrderBy(p => p.PaymentDate))
                 {
-                    var guestName = $"{SafeString(payment.Accommodation?.FirstName)} {SafeString(payment.Accommodation?.LastName)}";
-                    var propertyName = SafeString(payment.Accommodation?.Property?.Location);
+                    var guestName = $"{SafeString(payment.FirstName)} {SafeString(payment.LastName)}";
 
                     table.Cell().TableCell(alternate).Text(FormatDate(payment.PaymentDate, "MM/dd/yy")).TableCellText();
-                    table.Cell().TableCell(alternate).Text(payment.Accommodation?.ConfirmationNumber.ToString() ?? "").TableCellText();
+                    table.Cell().TableCell(alternate).Text(payment.ConfirmationNumber.ToString()).TableCellText();
                     table.Cell().TableCell(alternate).Text(guestName).TableCellText();
-                    table.Cell().TableCell(alternate).Text(propertyName).TableCellText();
+                    table.Cell().TableCell(alternate).Text("").TableCellText(); // Property not available on Payment
                     table.Cell().TableCell(alternate).Text(SafeString(payment.PaymentMethod)).TableCellText();
                     table.Cell().TableCell(alternate).Text(SafeString(payment.CheckNumber)).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(payment.Amount)).TableCellText();

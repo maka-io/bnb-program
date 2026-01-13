@@ -1,5 +1,6 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
+using BnB.WinForms.UI;
 
 namespace BnB.WinForms.Forms;
 
@@ -21,6 +22,7 @@ public partial class TaxRateForm : Form
 
     private void TaxRateForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
         LoadTaxRates();
         SetEditMode(false);
     }
