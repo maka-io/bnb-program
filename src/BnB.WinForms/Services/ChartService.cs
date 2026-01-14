@@ -65,6 +65,61 @@ public class ChartService : IChartService
         return plot.GetImageBytes(width, height, ImageFormat.Png);
     }
 
+    /// <inheritdoc />
+    public byte[] ExportBoxPlotToImage(BoxPlotData boxPlotData, int width, int height)
+    {
+        var plot = CreateBoxPlot(boxPlotData);
+        return plot.GetImageBytes(width, height, ImageFormat.Png);
+    }
+
+    /// <summary>
+    /// Creates a ScottPlot Plot object for a box plot.
+    /// </summary>
+    public static Plot CreateBoxPlot(BoxPlotData boxPlotData)
+    {
+        var plot = new Plot();
+        plot.Title(boxPlotData.Title);
+
+        if (boxPlotData.DataPoints.Count == 0)
+        {
+            return plot;
+        }
+
+        var boxes = new List<ScottPlot.Box>();
+        for (int i = 0; i < boxPlotData.DataPoints.Count; i++)
+        {
+            var dp = boxPlotData.DataPoints[i];
+            boxes.Add(new ScottPlot.Box
+            {
+                Position = i,
+                BoxMin = dp.Q1,
+                BoxMax = dp.Q3,
+                WhiskerMin = dp.Min,
+                WhiskerMax = dp.Max,
+                BoxMiddle = dp.Median
+            });
+        }
+
+        var boxPlot = plot.Add.Boxes(boxes);
+        boxPlot.FillColor = Colors.SteelBlue;
+        boxPlot.LineColor = Colors.DarkSlateGray;
+
+        // Set custom tick labels
+        var ticks = boxPlotData.DataPoints.Select((p, i) => new Tick(i, p.Label)).ToArray();
+        plot.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericManual(ticks);
+
+        if (!string.IsNullOrEmpty(boxPlotData.XAxisTitle))
+        {
+            plot.XLabel(boxPlotData.XAxisTitle);
+        }
+        if (!string.IsNullOrEmpty(boxPlotData.YAxisTitle))
+        {
+            plot.YLabel(boxPlotData.YAxisTitle);
+        }
+
+        return plot;
+    }
+
     /// <summary>
     /// Creates a ScottPlot Plot object from ChartData.
     /// </summary>

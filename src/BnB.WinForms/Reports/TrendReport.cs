@@ -77,28 +77,62 @@ public class TrendReport : BaseReport
     {
         var chartService = new ChartService();
 
-        // Group by month number (1-12) and average across all years
-        var monthlyAverages = _trendData
+        // Group by month number (1-12) and calculate statistics for box plot
+        var monthlyGroups = _trendData
             .GroupBy(t => t.Month)
-            .Select(g => new
-            {
-                Month = g.Key,
-                AvgRevenue = g.Average(t => t.BookingCount > 0 ? (double)(t.TotalRevenue / t.BookingCount) : 0)
-            })
-            .OrderBy(x => x.Month)
+            .OrderBy(g => g.Key)
             .ToList();
 
-        var dataPoints = monthlyAverages.Select(m => new ChartDataPoint
+        var boxPlotData = new BoxPlotData
         {
-            Label = new DateTime(2000, m.Month, 1).ToString("MMM"),  // Jan, Feb, Mar, etc.
-            Value = m.AvgRevenue
-        });
+            Title = "Revenue per Booking by Month",
+            XAxisTitle = "Month",
+            YAxisTitle = "Revenue ($)"
+        };
 
-        var chartData = chartService.CreateBarChart("Average Revenue per Booking by Month", dataPoints);
-        chartData.YAxisTitle = "Avg Revenue ($)";
-        chartData.XAxisTitle = "Month";
+        foreach (var group in monthlyGroups)
+        {
+            var values = group
+                .Where(t => t.BookingCount > 0)
+                .Select(t => (double)(t.TotalRevenue / t.BookingCount))
+                .OrderBy(v => v)
+                .ToList();
 
-        return chartService.ExportToImage(chartData, 700, 300);
+            if (values.Count == 0)
+                continue;
+
+            var dataPoint = new BoxPlotDataPoint
+            {
+                Label = new DateTime(2000, group.Key, 1).ToString("MMM"),
+                Min = values.First(),
+                Max = values.Last(),
+                Median = GetPercentile(values, 50),
+                Q1 = GetPercentile(values, 25),
+                Q3 = GetPercentile(values, 75)
+            };
+
+            boxPlotData.DataPoints.Add(dataPoint);
+        }
+
+        return chartService.ExportBoxPlotToImage(boxPlotData, 700, 300);
+    }
+
+    private static double GetPercentile(List<double> sortedValues, double percentile)
+    {
+        if (sortedValues.Count == 0)
+            return 0;
+        if (sortedValues.Count == 1)
+            return sortedValues[0];
+
+        var index = (percentile / 100.0) * (sortedValues.Count - 1);
+        var lower = (int)Math.Floor(index);
+        var upper = (int)Math.Ceiling(index);
+
+        if (lower == upper)
+            return sortedValues[lower];
+
+        var fraction = index - lower;
+        return sortedValues[lower] + (sortedValues[upper] - sortedValues[lower]) * fraction;
     }
 
     public override string Title => $"Booking Trends Report ({_startDate:MMM yyyy} - {_endDate:MMM yyyy})";
@@ -144,10 +178,10 @@ public class TrendReport : BaseReport
                     .Image(_bookingsChartImage).FitWidth();
             }
 
-            // Average Revenue Bar Chart
+            // Revenue Box Plot (shows min, Q1, median, Q3, max by month)
             if (_avgRevenueChartImage != null)
             {
-                column.Item().Text("Average Revenue per Booking by Month").FontSize(12).Bold();
+                column.Item().Text("Revenue per Booking by Month (Min/Max Range)").FontSize(12).Bold();
                 column.Item().PaddingTop(5).PaddingBottom(15).AlignCenter()
                     .Image(_avgRevenueChartImage).FitWidth();
             }

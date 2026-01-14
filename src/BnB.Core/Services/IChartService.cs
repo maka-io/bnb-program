@@ -27,6 +27,11 @@ public interface IChartService
     byte[] ExportToImage(ChartData chartData, int width, int height);
 
     /// <summary>
+    /// Exports a box plot chart to a bitmap image.
+    /// </summary>
+    byte[] ExportBoxPlotToImage(BoxPlotData boxPlotData, int width, int height);
+
+    /// <summary>
     /// Gets chart data for monthly trends.
     /// </summary>
     ChartData CreateMonthlyTrendChart(string title, IEnumerable<MonthlyDataPoint> dataPoints);
@@ -128,5 +133,30 @@ public enum ChartType
     Line,
     Pie,
     Area,
-    Scatter
+    Scatter,
+    BoxPlot
+}
+
+/// <summary>
+/// Represents data for a box plot (box-and-whisker) chart.
+/// </summary>
+public class BoxPlotData
+{
+    public string Title { get; set; } = string.Empty;
+    public string? XAxisTitle { get; set; }
+    public string? YAxisTitle { get; set; }
+    public List<BoxPlotDataPoint> DataPoints { get; set; } = new();
+}
+
+/// <summary>
+/// Represents a single box in a box plot.
+/// </summary>
+public class BoxPlotDataPoint
+{
+    public string Label { get; set; } = string.Empty;
+    public double Min { get; set; }
+    public double Q1 { get; set; }
+    public double Median { get; set; }
+    public double Q3 { get; set; }
+    public double Max { get; set; }
 }
