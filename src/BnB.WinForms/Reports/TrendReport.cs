@@ -78,6 +78,7 @@ public class TrendReport : BaseReport
         var chartService = new ChartService();
 
         // Group by month number (1-12) and calculate statistics for box plot
+        // Uses total monthly revenue (not per booking)
         var monthlyGroups = _trendData
             .GroupBy(t => t.Month)
             .OrderBy(g => g.Key)
@@ -85,16 +86,15 @@ public class TrendReport : BaseReport
 
         var boxPlotData = new BoxPlotData
         {
-            Title = "Revenue per Booking by Month",
+            Title = "Monthly Revenue Distribution by Month",
             XAxisTitle = "Month",
-            YAxisTitle = "Revenue ($)"
+            YAxisTitle = "Total Revenue ($)"
         };
 
         foreach (var group in monthlyGroups)
         {
             var values = group
-                .Where(t => t.BookingCount > 0)
-                .Select(t => (double)(t.TotalRevenue / t.BookingCount))
+                .Select(t => (double)t.TotalRevenue)
                 .OrderBy(v => v)
                 .ToList();
 
@@ -181,7 +181,7 @@ public class TrendReport : BaseReport
             // Revenue Box Plot (shows min, Q1, median, Q3, max by month)
             if (_avgRevenueChartImage != null)
             {
-                column.Item().Text("Revenue per Booking by Month (Min/Max Range)").FontSize(12).Bold();
+                column.Item().Text("Monthly Revenue Distribution (Min/Max Range)").FontSize(12).Bold();
                 column.Item().PaddingTop(5).PaddingBottom(15).AlignCenter()
                     .Image(_avgRevenueChartImage).FitWidth();
             }
