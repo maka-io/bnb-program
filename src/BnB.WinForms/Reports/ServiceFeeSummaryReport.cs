@@ -14,8 +14,9 @@ public class ServiceFeeSummaryReport : BaseReport
     private readonly DateTime _endDate;
     private readonly List<Accommodation> _accommodations;
 
-    public ServiceFeeSummaryReport(DateTime startDate, DateTime endDate, List<Accommodation> accommodations)
+    public ServiceFeeSummaryReport(DateTime startDate, DateTime endDate, List<Accommodation> accommodations, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _accommodations = accommodations;

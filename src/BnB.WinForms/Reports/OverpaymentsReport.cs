@@ -14,8 +14,9 @@ public class OverpaymentsReport : BaseReport
     private readonly DateTime _endDate;
     private readonly List<Accommodation> _overpayments;
 
-    public OverpaymentsReport(DateTime startDate, DateTime endDate, List<Accommodation> overpayments)
+    public OverpaymentsReport(DateTime startDate, DateTime endDate, List<Accommodation> overpayments, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _overpayments = overpayments;

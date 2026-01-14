@@ -1,6 +1,7 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
 using BnB.WinForms.Reports;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -22,6 +23,7 @@ public partial class PaymentReceivableForm : Form
 
     private void PaymentReceivableForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
         LoadPaymentsReceivable();
     }
 
@@ -179,7 +181,17 @@ public partial class PaymentReceivableForm : Form
         LoadPaymentsReceivable();
     }
 
+    private void btnPreview_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: false);
+    }
+
     private void btnPrint_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: true);
+    }
+
+    private void ShowReport(bool autoPrint)
     {
         // Note: BalanceDue is computed, so we fetch all recent accommodations
         // and the report will handle filtering/display
@@ -191,8 +203,9 @@ public partial class PaymentReceivableForm : Form
             .OrderBy(a => a.ArrivalDate)
             .ToList();
 
-        var report = new PaymentReceivableReport(receivables);
-        using var viewer = new ReportViewerForm(report);
+        var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
+        var report = new PaymentReceivableReport(receivables, companyInfo);
+        using var viewer = new ReportViewerForm(report, autoPrint);
         viewer.ShowDialog(this);
     }
 

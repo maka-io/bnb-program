@@ -464,7 +464,8 @@ public partial class MailingLabelsForm : Form
 
         try
         {
-            var report = new MailingLabelsReport(labels);
+            var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
+            var report = new MailingLabelsReport(labels, LabelFormat.Avery5160, companyInfo);
             var viewer = new ReportViewerForm(report);
             viewer.ShowDialog();
         }
@@ -494,7 +495,8 @@ public partial class MailingLabelsForm : Form
         {
             try
             {
-                var report = new MailingLabelsReport(labels);
+                var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
+                var report = new MailingLabelsReport(labels, LabelFormat.Avery5160, companyInfo);
                 var pdfBytes = report.GeneratePdf();
 
                 var tempFile = Path.Combine(Path.GetTempPath(), $"Labels_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");

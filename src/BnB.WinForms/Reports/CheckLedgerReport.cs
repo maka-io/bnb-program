@@ -34,8 +34,9 @@ public class CheckLedgerReport : BaseReport
 
     public override string Title => $"Check Ledger ({_startDate:MM/dd/yyyy} - {_endDate:MM/dd/yyyy})";
 
-    public CheckLedgerReport(DateTime startDate, DateTime endDate, IEnumerable<CheckRecord> checks, string category = "All")
+    public CheckLedgerReport(DateTime startDate, DateTime endDate, IEnumerable<CheckRecord> checks, string category = "All", CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _checks = checks.OrderBy(c => c.CheckDate).ThenBy(c => c.CheckNumber).ToList();
@@ -62,6 +63,13 @@ public class CheckLedgerReport : BaseReport
         {
             column.Item().Row(row =>
             {
+                // Logo on the left (if available)
+                if (CompanyInfo?.Logo != null && CompanyInfo.Logo.Length > 0)
+                {
+                    row.ConstantItem(80).Height(60).Image(CompanyInfo.Logo, ImageScaling.FitArea);
+                    row.ConstantItem(15); // Spacing
+                }
+
                 row.RelativeItem().Column(col =>
                 {
                     col.Item().Text(CompanyName)
@@ -69,7 +77,32 @@ public class CheckLedgerReport : BaseReport
                         .Bold()
                         .FontColor(ReportStyles.PrimaryColor);
 
-                    col.Item().Text(Title)
+                    // Address line (if available)
+                    if (CompanyInfo != null && !string.IsNullOrWhiteSpace(CompanyInfo.Address))
+                    {
+                        var addressLine = CompanyInfo.Address;
+                        if (!string.IsNullOrWhiteSpace(CompanyInfo.City))
+                            addressLine += $", {CompanyInfo.City}";
+                        if (!string.IsNullOrWhiteSpace(CompanyInfo.State))
+                            addressLine += $", {CompanyInfo.State}";
+                        if (!string.IsNullOrWhiteSpace(CompanyInfo.ZipCode))
+                            addressLine += $" {CompanyInfo.ZipCode}";
+                        col.Item().Text(addressLine).FontSize(SmallFontSize);
+                    }
+
+                    // Contact info
+                    if (CompanyInfo != null)
+                    {
+                        var contactParts = new List<string>();
+                        if (!string.IsNullOrWhiteSpace(CompanyInfo.Phone))
+                            contactParts.Add($"Phone: {CompanyInfo.Phone}");
+                        if (!string.IsNullOrWhiteSpace(CompanyInfo.Email))
+                            contactParts.Add(CompanyInfo.Email);
+                        if (contactParts.Count > 0)
+                            col.Item().Text(string.Join(" | ", contactParts)).FontSize(SmallFontSize);
+                    }
+
+                    col.Item().PaddingTop(5).Text(Title)
                         .FontSize(SubHeaderFontSize)
                         .SemiBold();
 

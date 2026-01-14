@@ -17,8 +17,9 @@ public class DeparturesReport : BaseReport
 
     public override string Title => $"Departures Report ({_startDate:MM/dd/yyyy} - {_endDate:MM/dd/yyyy})";
 
-    public DeparturesReport(DateTime startDate, DateTime endDate, IEnumerable<Accommodation> departures)
+    public DeparturesReport(DateTime startDate, DateTime endDate, IEnumerable<Accommodation> departures, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _departures = departures.OrderBy(a => a.DepartureDate).ThenBy(a => a.Location).ToList();

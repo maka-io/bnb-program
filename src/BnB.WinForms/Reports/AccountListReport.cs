@@ -20,8 +20,10 @@ public class AccountListReport : BaseReport
     public AccountListReport(
         IEnumerable<Property> properties,
         bool includeInactive = false,
-        string? filterArea = null)
+        string? filterArea = null,
+        CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _properties = properties.ToList();
         _includeInactive = includeInactive;
         _filterArea = filterArea;

@@ -28,8 +28,9 @@ public class MailingLabelsReport : BaseReport
 
     public override string Title => "Mailing Labels";
 
-    public MailingLabelsReport(IEnumerable<LabelData> labels, LabelFormat format = LabelFormat.Avery5160)
+    public MailingLabelsReport(IEnumerable<LabelData> labels, LabelFormat format = LabelFormat.Avery5160, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _labels = labels.ToList();
         _format = format;
     }

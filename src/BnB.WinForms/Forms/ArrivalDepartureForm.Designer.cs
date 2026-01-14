@@ -30,6 +30,7 @@ partial class ArrivalDepartureForm
         dgvDepartures = new DataGridView();
         pnlBottom = new Panel();
         lblSummary = new Label();
+        btnPreview = new Button();
         btnPrint = new Button();
         btnClose = new Button();
 
@@ -99,6 +100,7 @@ partial class ArrivalDepartureForm
         // pnlBottom - Summary and action buttons
         //
         pnlBottom.Controls.Add(lblSummary);
+        pnlBottom.Controls.Add(btnPreview);
         pnlBottom.Controls.Add(btnPrint);
         pnlBottom.Controls.Add(btnClose);
         pnlBottom.Dock = DockStyle.Bottom;
@@ -113,12 +115,22 @@ partial class ArrivalDepartureForm
         lblSummary.Text = "Loading...";
 
         //
+        // btnPreview
+        //
+        btnPreview.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        btnPreview.Location = new Point(632, 10);
+        btnPreview.Size = new Size(80, 28);
+        btnPreview.TabIndex = 1;
+        btnPreview.Text = "Pre&view";
+        btnPreview.Click += btnPreview_Click;
+
+        //
         // btnPrint
         //
         btnPrint.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         btnPrint.Location = new Point(720, 10);
         btnPrint.Size = new Size(80, 28);
-        btnPrint.TabIndex = 1;
+        btnPrint.TabIndex = 2;
         btnPrint.Text = "&Print";
         btnPrint.Click += btnPrint_Click;
 
@@ -128,7 +140,7 @@ partial class ArrivalDepartureForm
         btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         btnClose.Location = new Point(808, 10);
         btnClose.Size = new Size(80, 28);
-        btnClose.TabIndex = 2;
+        btnClose.TabIndex = 3;
         btnClose.Text = "&Close";
         btnClose.Click += btnClose_Click;
 
@@ -255,6 +267,7 @@ partial class ArrivalDepartureForm
     private DataGridView dgvDepartures;
     private Panel pnlBottom;
     private Label lblSummary;
+    private Button btnPreview;
     private Button btnPrint;
     private Button btnClose;
 }

@@ -33,6 +33,7 @@ public class CheckPrintReport : BaseReport
         string routingNumber = "XXXXXXXXX",
         string accountNumber = "XXXXXXXXXX")
     {
+        CompanyInfo = companyInfo;
         _checks = checks.ToList();
         _companyInfo = companyInfo;
         _bankName = bankName;
@@ -75,7 +76,7 @@ public class CheckPrintReport : BaseReport
                     // Company info (left side)
                     row.RelativeItem().Column(col =>
                     {
-                        col.Item().Text(_companyInfo?.CompanyName ?? "Hawaii's Best Bed & Breakfasts")
+                        col.Item().Text(CompanyName)
                             .FontSize(11).Bold();
 
                         if (!string.IsNullOrEmpty(_companyInfo?.Address))

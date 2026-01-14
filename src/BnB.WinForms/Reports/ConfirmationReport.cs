@@ -32,8 +32,10 @@ public class ConfirmationReport : BaseReport
         decimal totalDeposit = 0,
         decimal totalPrepayment = 0,
         string? depositCheckNum = null,
-        string? prepayCheckNum = null)
+        string? prepayCheckNum = null,
+        CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _guest = guest;
         _accommodations = accommodations.ToList();
         _payment = payment;
@@ -63,9 +65,16 @@ public class ConfirmationReport : BaseReport
     {
         container.Column(column =>
         {
-            // Company Header
+            // Company Header with Logo
             column.Item().Row(row =>
             {
+                // Logo on the left (if available)
+                if (CompanyInfo?.Logo != null && CompanyInfo.Logo.Length > 0)
+                {
+                    row.ConstantItem(80).Height(60).Image(CompanyInfo.Logo, ImageScaling.FitArea);
+                    row.ConstantItem(15); // Spacing
+                }
+
                 row.RelativeItem().Column(col =>
                 {
                     col.Item().Text(CompanyName)
@@ -73,7 +82,32 @@ public class ConfirmationReport : BaseReport
                         .Bold()
                         .FontColor(ReportStyles.PrimaryColor);
 
-                    col.Item().Text("Reservation Confirmation")
+                    // Address line (if available)
+                    if (CompanyInfo != null && !string.IsNullOrWhiteSpace(CompanyInfo.Address))
+                    {
+                        var addressLine = CompanyInfo.Address;
+                        if (!string.IsNullOrWhiteSpace(CompanyInfo.City))
+                            addressLine += $", {CompanyInfo.City}";
+                        if (!string.IsNullOrWhiteSpace(CompanyInfo.State))
+                            addressLine += $", {CompanyInfo.State}";
+                        if (!string.IsNullOrWhiteSpace(CompanyInfo.ZipCode))
+                            addressLine += $" {CompanyInfo.ZipCode}";
+                        col.Item().Text(addressLine).FontSize(SmallFontSize);
+                    }
+
+                    // Contact info
+                    if (CompanyInfo != null)
+                    {
+                        var contactParts = new List<string>();
+                        if (!string.IsNullOrWhiteSpace(CompanyInfo.Phone))
+                            contactParts.Add($"Phone: {CompanyInfo.Phone}");
+                        if (!string.IsNullOrWhiteSpace(CompanyInfo.Email))
+                            contactParts.Add(CompanyInfo.Email);
+                        if (contactParts.Count > 0)
+                            col.Item().Text(string.Join(" | ", contactParts)).FontSize(SmallFontSize);
+                    }
+
+                    col.Item().PaddingTop(5).Text("Reservation Confirmation")
                         .FontSize(14)
                         .SemiBold();
                 });
@@ -179,14 +213,14 @@ public class ConfirmationReport : BaseReport
                 // Define columns
                 table.ColumnsDefinition(columns =>
                 {
-                    columns.RelativeColumn(2);  // Property/Location
-                    columns.RelativeColumn(1);  // Arrival
-                    columns.RelativeColumn(1);  // Departure
-                    columns.ConstantColumn(50); // Nights
-                    columns.ConstantColumn(50); // Guests
-                    columns.RelativeColumn(1);  // Rate
-                    columns.RelativeColumn(1);  // Tax
-                    columns.RelativeColumn(1);  // Total
+                    columns.RelativeColumn(1.3f);  // Property/Location
+                    columns.ConstantColumn(65);    // Arrival
+                    columns.ConstantColumn(65);    // Departure
+                    columns.ConstantColumn(40);    // Nights
+                    columns.ConstantColumn(40);    // Guests
+                    columns.ConstantColumn(60);    // Rate
+                    columns.ConstantColumn(55);    // Tax
+                    columns.ConstantColumn(65);    // Total
                 });
 
                 // Header row
@@ -241,6 +275,7 @@ public class ConfirmationReport : BaseReport
                     row.ConstantItem(200).AlignRight().Text($"Reservation Fee: {FormatCurrency(_guest.ReservationFee)}");
                 });
             }
+
         });
     }
 
@@ -346,7 +381,7 @@ public class ConfirmationReport : BaseReport
                          "Please contact your host directly if you need to arrange different times.").FontSize(8);
             });
 
-            column.Item().PaddingTop(10).Text("Thank you for choosing Hawaii's Best Bed & Breakfasts!")
+            column.Item().PaddingTop(10).Text($"Thank you for choosing {CompanyName}!")
                 .FontSize(10)
                 .Italic()
                 .FontColor(ReportStyles.PrimaryColor);

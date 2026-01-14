@@ -15,8 +15,9 @@ public class AvailabilityReport : BaseReport
     private readonly List<Property> _properties;
     private readonly List<Accommodation> _accommodations;
 
-    public AvailabilityReport(DateTime startDate, DateTime endDate, List<Property> properties, List<Accommodation> accommodations)
+    public AvailabilityReport(DateTime startDate, DateTime endDate, List<Property> properties, List<Accommodation> accommodations, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _properties = properties;

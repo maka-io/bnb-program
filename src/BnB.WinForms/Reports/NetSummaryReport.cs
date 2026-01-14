@@ -17,8 +17,9 @@ public class NetSummaryReport : BaseReport
 
     public override string Title => $"Net Summary Report ({_startDate:MM/dd/yyyy} - {_endDate:MM/dd/yyyy})";
 
-    public NetSummaryReport(DateTime startDate, DateTime endDate, IEnumerable<Accommodation> accommodations)
+    public NetSummaryReport(DateTime startDate, DateTime endDate, IEnumerable<Accommodation> accommodations, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _accommodations = accommodations

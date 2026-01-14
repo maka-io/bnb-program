@@ -216,7 +216,17 @@ public partial class CommissionTrackingForm : Form
         }
     }
 
+    private void btnPreview_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: false);
+    }
+
     private void btnPrint_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: true);
+    }
+
+    private void ShowReport(bool autoPrint)
     {
         IQueryable<Accommodation> query = _dbContext.Accommodations
             .Include(a => a.Property)
@@ -250,8 +260,9 @@ public partial class CommissionTrackingForm : Form
             .ToList();
 
         var propertyFilter = cboProperty.SelectedItem is Property prop ? prop.Location : "(All Properties)";
-        var report = new CommissionTrackingReport(commissions, propertyFilter ?? "(All Properties)", chkShowUnpaidOnly.Checked);
-        using var viewer = new ReportViewerForm(report);
+        var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
+        var report = new CommissionTrackingReport(commissions, propertyFilter ?? "(All Properties)", chkShowUnpaidOnly.Checked, companyInfo);
+        using var viewer = new ReportViewerForm(report, autoPrint);
         viewer.ShowDialog(this);
     }
 

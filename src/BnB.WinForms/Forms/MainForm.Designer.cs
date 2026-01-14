@@ -353,6 +353,13 @@ partial class MainForm
         this.Load += MainForm_Load;
         this.FormClosing += MainForm_FormClosing;
 
+        // Set the application icon
+        var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BNBHale1.ico");
+        if (File.Exists(iconPath))
+        {
+            this.Icon = new Icon(iconPath);
+        }
+
         this.ResumeLayout(false);
         this.PerformLayout();
     }

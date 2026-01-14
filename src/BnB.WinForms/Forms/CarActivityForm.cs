@@ -94,7 +94,17 @@ public partial class CarActivityForm : Form
         lblSummary.Text = $"Rentals: {count} | Total: {totalAmount:C2}";
     }
 
+    private void btnPreview_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: false);
+    }
+
     private void btnPrint_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: true);
+    }
+
+    private void ShowReport(bool autoPrint)
     {
         var startDate = dtpStartDate.Value.Date;
         var endDate = dtpEndDate.Value.Date;
@@ -106,8 +116,9 @@ public partial class CarActivityForm : Form
             .OrderBy(r => r.PickupDate)
             .ToList();
 
-        var report = new CarActivityListReport(startDate, endDate, rentals);
-        using var viewer = new ReportViewerForm(report);
+        var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
+        var report = new CarActivityListReport(startDate, endDate, rentals, companyInfo);
+        using var viewer = new ReportViewerForm(report, autoPrint);
         viewer.ShowDialog(this);
     }
 

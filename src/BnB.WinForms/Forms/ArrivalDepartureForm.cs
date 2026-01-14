@@ -38,45 +38,57 @@ public partial class ArrivalDepartureForm : Form
     private void LoadData()
     {
         var selectedDate = dtpDate.Value.Date;
+        var today = DateTime.Today;
 
-        // Load arrivals (using Suppress instead of Status since Status is not in DB)
-        var arrivals = _dbContext.Accommodations
+        // Load arrivals - from selected date onwards, sorted by days until arrival
+        var arrivalsData = _dbContext.Accommodations
             .Include(a => a.Property)
             .Include(a => a.Guest)
-            .Where(a => a.ArrivalDate == selectedDate && !a.Suppress)
-            .OrderBy(a => a.Property.Location)
+            .Where(a => a.ArrivalDate >= selectedDate && !a.Suppress)
+            .ToList();
+
+        var arrivals = arrivalsData
             .Select(a => new
             {
                 a.ConfirmationNumber,
                 GuestName = a.FirstName + " " + a.LastName,
-                PropertyName = a.Property.Location,
+                PropertyName = a.Property?.Location ?? "",
+                a.ArrivalDate,
+                DaysUntilArrival = (a.ArrivalDate - today).Days,
                 a.NumberOfNights,
                 a.NumberInParty,
                 a.DepartureDate,
                 SpecialRequests = a.Comments ?? ""
             })
+            .OrderBy(a => a.DaysUntilArrival)
+            .ThenBy(a => a.PropertyName)
             .ToList();
 
         _arrivalsBinding.DataSource = arrivals;
         dgvArrivals.DataSource = _arrivalsBinding;
         ConfigureGrid(dgvArrivals, true);
 
-        // Load departures (using Suppress instead of Status since Status is not in DB)
-        // Note: BalanceDue is computed, using 0 as placeholder
-        var departures = _dbContext.Accommodations
+        // Load departures - from selected date onwards, only if already checked in (arrived)
+        var departuresData = _dbContext.Accommodations
             .Include(a => a.Property)
             .Include(a => a.Guest)
-            .Where(a => a.DepartureDate == selectedDate && !a.Suppress)
-            .OrderBy(a => a.Property.Location)
+            .Where(a => a.DepartureDate >= selectedDate && a.ArrivalDate <= today && !a.Suppress)
+            .ToList();
+
+        var departures = departuresData
             .Select(a => new
             {
                 a.ConfirmationNumber,
                 GuestName = a.FirstName + " " + a.LastName,
-                PropertyName = a.Property.Location,
+                PropertyName = a.Property?.Location ?? "",
+                a.DepartureDate,
+                DaysUntilCheckout = (a.DepartureDate - today).Days,
                 a.ArrivalDate,
                 a.NumberOfNights,
                 BalanceDue = (decimal?)0
             })
+            .OrderBy(a => a.DaysUntilCheckout)
+            .ThenBy(a => a.PropertyName)
             .ToList();
 
         _departuresBinding.DataSource = departures;
@@ -94,18 +106,21 @@ public partial class ArrivalDepartureForm : Form
         {
             dgv.Columns["ConfirmationNumber"].HeaderText = "Conf #";
             dgv.Columns["ConfirmationNumber"].Width = 70;
+            dgv.Columns["ConfirmationNumber"].DisplayIndex = 0;
         }
 
         if (dgv.Columns.Contains("GuestName"))
         {
             dgv.Columns["GuestName"].HeaderText = "Guest";
             dgv.Columns["GuestName"].Width = 140;
+            dgv.Columns["GuestName"].DisplayIndex = 1;
         }
 
         if (dgv.Columns.Contains("PropertyName"))
         {
             dgv.Columns["PropertyName"].HeaderText = "Property";
             dgv.Columns["PropertyName"].Width = 130;
+            dgv.Columns["PropertyName"].DisplayIndex = 2;
         }
 
         if (dgv.Columns.Contains("NumberOfNights"))
@@ -117,6 +132,22 @@ public partial class ArrivalDepartureForm : Form
 
         if (isArrival)
         {
+            if (dgv.Columns.Contains("ArrivalDate"))
+            {
+                dgv.Columns["ArrivalDate"].HeaderText = "Arrival";
+                dgv.Columns["ArrivalDate"].Width = 85;
+                dgv.Columns["ArrivalDate"].DefaultCellStyle.Format = "MM/dd/yyyy";
+                dgv.Columns["ArrivalDate"].DisplayIndex = 3;
+            }
+
+            if (dgv.Columns.Contains("DaysUntilArrival"))
+            {
+                dgv.Columns["DaysUntilArrival"].HeaderText = "Days Until";
+                dgv.Columns["DaysUntilArrival"].Width = 70;
+                dgv.Columns["DaysUntilArrival"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                dgv.Columns["DaysUntilArrival"].DisplayIndex = 4;
+            }
+
             if (dgv.Columns.Contains("NumberInParty"))
             {
                 dgv.Columns["NumberInParty"].HeaderText = "Guests";
@@ -139,6 +170,22 @@ public partial class ArrivalDepartureForm : Form
         }
         else
         {
+            if (dgv.Columns.Contains("DepartureDate"))
+            {
+                dgv.Columns["DepartureDate"].HeaderText = "Checkout";
+                dgv.Columns["DepartureDate"].Width = 85;
+                dgv.Columns["DepartureDate"].DefaultCellStyle.Format = "MM/dd/yyyy";
+                dgv.Columns["DepartureDate"].DisplayIndex = 3;
+            }
+
+            if (dgv.Columns.Contains("DaysUntilCheckout"))
+            {
+                dgv.Columns["DaysUntilCheckout"].HeaderText = "Days Until";
+                dgv.Columns["DaysUntilCheckout"].Width = 70;
+                dgv.Columns["DaysUntilCheckout"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                dgv.Columns["DaysUntilCheckout"].DisplayIndex = 4;
+            }
+
             if (dgv.Columns.Contains("ArrivalDate"))
             {
                 dgv.Columns["ArrivalDate"].HeaderText = "Arrived";
@@ -176,7 +223,17 @@ public partial class ArrivalDepartureForm : Form
         dtpDate.Value = DateTime.Today;
     }
 
+    private void btnPreview_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: false);
+    }
+
     private void btnPrint_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: true);
+    }
+
+    private void ShowReport(bool autoPrint)
     {
         var selectedDate = dtpDate.Value.Date;
 
@@ -194,8 +251,9 @@ public partial class ArrivalDepartureForm : Form
             .OrderBy(a => a.Property.Location)
             .ToList();
 
-        var report = new ArrivalDepartureReport(selectedDate, arrivals, departures);
-        using var viewer = new ReportViewerForm(report);
+        var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
+        var report = new ArrivalDepartureReport(selectedDate, arrivals, departures, companyInfo);
+        using var viewer = new ReportViewerForm(report, autoPrint);
         viewer.ShowDialog(this);
     }
 

@@ -31,6 +31,7 @@ partial class CheckLedgerReportForm
         chkSaveSettings = new CheckBox();
         btnExit = new Button();
         btnPrinterSetup = new Button();
+        btnPreview = new Button();
         btnPrint = new Button();
         grpCategory.SuspendLayout();
         grpDateRange.SuspendLayout();
@@ -171,8 +172,8 @@ partial class CheckLedgerReportForm
         //
         // btnExit
         //
-        btnExit.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        btnExit.Location = new Point(198, 148);
+        btnExit.Font = new Font("Segoe UI", 9F);
+        btnExit.Location = new Point(107, 148);
         btnExit.Name = "btnExit";
         btnExit.Size = new Size(85, 28);
         btnExit.TabIndex = 4;
@@ -182,22 +183,33 @@ partial class CheckLedgerReportForm
         //
         // btnPrinterSetup
         //
-        btnPrinterSetup.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        btnPrinterSetup.Location = new Point(289, 148);
+        btnPrinterSetup.Font = new Font("Segoe UI", 9F);
+        btnPrinterSetup.Location = new Point(198, 148);
         btnPrinterSetup.Name = "btnPrinterSetup";
-        btnPrinterSetup.Size = new Size(85, 28);
+        btnPrinterSetup.Size = new Size(95, 28);
         btnPrinterSetup.TabIndex = 5;
         btnPrinterSetup.Text = "P&rinter Setup";
         btnPrinterSetup.UseVisualStyleBackColor = true;
         btnPrinterSetup.Click += btnPrinterSetup_Click;
         //
+        // btnPreview
+        //
+        btnPreview.Font = new Font("Segoe UI", 9F);
+        btnPreview.Location = new Point(299, 148);
+        btnPreview.Name = "btnPreview";
+        btnPreview.Size = new Size(85, 28);
+        btnPreview.TabIndex = 6;
+        btnPreview.Text = "Pre&view";
+        btnPreview.UseVisualStyleBackColor = true;
+        btnPreview.Click += btnPreview_Click;
+        //
         // btnPrint
         //
         btnPrint.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        btnPrint.Location = new Point(380, 148);
+        btnPrint.Location = new Point(390, 148);
         btnPrint.Name = "btnPrint";
         btnPrint.Size = new Size(85, 28);
-        btnPrint.TabIndex = 6;
+        btnPrint.TabIndex = 7;
         btnPrint.Text = "&Print";
         btnPrint.UseVisualStyleBackColor = true;
         btnPrint.Click += btnPrint_Click;
@@ -207,8 +219,9 @@ partial class CheckLedgerReportForm
         AcceptButton = btnPrint;
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(477, 188);
+        ClientSize = new Size(487, 188);
         Controls.Add(btnPrint);
+        Controls.Add(btnPreview);
         Controls.Add(btnPrinterSetup);
         Controls.Add(btnExit);
         Controls.Add(chkSaveSettings);
@@ -246,5 +259,6 @@ partial class CheckLedgerReportForm
     private CheckBox chkSaveSettings;
     private Button btnExit;
     private Button btnPrinterSetup;
+    private Button btnPreview;
     private Button btnPrint;
 }

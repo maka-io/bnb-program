@@ -188,7 +188,17 @@ public partial class AvailabilityForm : Form
         }
     }
 
+    private void btnPreview_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: false);
+    }
+
     private void btnPrint_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: true);
+    }
+
+    private void ShowReport(bool autoPrint)
     {
         var startDate = dtpStartDate.Value.Date;
         var endDate = dtpEndDate.Value.Date;
@@ -216,8 +226,9 @@ public partial class AvailabilityForm : Form
 
         var accommodations = accommodationsQuery.ToList();
 
-        var report = new AvailabilityReport(startDate, endDate, properties, accommodations);
-        using var viewer = new ReportViewerForm(report);
+        var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
+        var report = new AvailabilityReport(startDate, endDate, properties, accommodations, companyInfo);
+        using var viewer = new ReportViewerForm(report, autoPrint);
         viewer.ShowDialog(this);
     }
 

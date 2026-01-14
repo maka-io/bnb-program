@@ -14,8 +14,9 @@ public class RefundsReport : BaseReport
     private readonly DateTime _endDate;
     private readonly List<Accommodation> _refunds;
 
-    public RefundsReport(DateTime startDate, DateTime endDate, List<Accommodation> refunds)
+    public RefundsReport(DateTime startDate, DateTime endDate, List<Accommodation> refunds, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _refunds = refunds;

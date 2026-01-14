@@ -37,6 +37,7 @@ partial class BookingListForm
         lblSummary = new Label();
         btnPrintConfirmation = new Button();
         btnExport = new Button();
+        btnPreview = new Button();
         btnPrint = new Button();
         btnClose = new Button();
 
@@ -171,6 +172,7 @@ partial class BookingListForm
         pnlBottom.Controls.Add(lblSummary);
         pnlBottom.Controls.Add(btnPrintConfirmation);
         pnlBottom.Controls.Add(btnExport);
+        pnlBottom.Controls.Add(btnPreview);
         pnlBottom.Controls.Add(btnPrint);
         pnlBottom.Controls.Add(btnClose);
         pnlBottom.Dock = DockStyle.Bottom;
@@ -188,7 +190,7 @@ partial class BookingListForm
         // btnPrintConfirmation
         //
         btnPrintConfirmation.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        btnPrintConfirmation.Location = new Point(565, 12);
+        btnPrintConfirmation.Location = new Point(483, 12);
         btnPrintConfirmation.Size = new Size(125, 28);
         btnPrintConfirmation.TabIndex = 8;
         btnPrintConfirmation.Text = "Print &Confirmation";
@@ -198,19 +200,29 @@ partial class BookingListForm
         // btnExport
         //
         btnExport.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        btnExport.Location = new Point(700, 12);
+        btnExport.Location = new Point(618, 12);
         btnExport.Size = new Size(75, 28);
         btnExport.TabIndex = 9;
         btnExport.Text = "&Export";
         btnExport.Click += btnExport_Click;
 
         //
+        // btnPreview
+        //
+        btnPreview.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        btnPreview.Location = new Point(699, 12);
+        btnPreview.Size = new Size(75, 28);
+        btnPreview.TabIndex = 10;
+        btnPreview.Text = "Pre&view";
+        btnPreview.Click += btnPreview_Click;
+
+        //
         // btnPrint
         //
         btnPrint.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        btnPrint.Location = new Point(782, 12);
+        btnPrint.Location = new Point(780, 12);
         btnPrint.Size = new Size(75, 28);
-        btnPrint.TabIndex = 9;
+        btnPrint.TabIndex = 11;
         btnPrint.Text = "&Print";
         btnPrint.Click += btnPrint_Click;
 
@@ -218,9 +230,9 @@ partial class BookingListForm
         // btnClose
         //
         btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        btnClose.Location = new Point(864, 12);
+        btnClose.Location = new Point(861, 12);
         btnClose.Size = new Size(75, 28);
-        btnClose.TabIndex = 10;
+        btnClose.TabIndex = 12;
         btnClose.Text = "&Close";
         btnClose.Click += btnClose_Click;
 
@@ -236,7 +248,7 @@ partial class BookingListForm
         //
         dgvBookings.AllowUserToAddRows = false;
         dgvBookings.AllowUserToDeleteRows = false;
-        dgvBookings.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        dgvBookings.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
         dgvBookings.BackgroundColor = SystemColors.Window;
         dgvBookings.BorderStyle = BorderStyle.Fixed3D;
         dgvBookings.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
@@ -294,6 +306,7 @@ partial class BookingListForm
     private Label lblSummary;
     private Button btnPrintConfirmation;
     private Button btnExport;
+    private Button btnPreview;
     private Button btnPrint;
     private Button btnClose;
 }

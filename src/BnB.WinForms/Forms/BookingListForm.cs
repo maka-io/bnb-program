@@ -27,9 +27,9 @@ public partial class BookingListForm : Form
         this.ApplyTheme();
         LoadProperties();
 
-        // Default date range - current month
-        dtpStartDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-        dtpEndDate.Value = dtpStartDate.Value.AddMonths(1).AddDays(-1);
+        // Default date range - 15 days before and after today
+        dtpStartDate.Value = DateTime.Today.AddDays(-15);
+        dtpEndDate.Value = DateTime.Today.AddDays(15);
 
         cboDateField.Items.AddRange(new object[] { "Arrival Date", "Departure Date", "Booked Date" });
         cboDateField.SelectedIndex = 0;
@@ -40,6 +40,9 @@ public partial class BookingListForm : Form
         // Wire up resize event
         this.Resize += BookingListForm_Resize;
         ResizeControls();
+
+        // Auto search on load
+        LoadBookings();
     }
 
     private void BookingListForm_Resize(object? sender, EventArgs e)
@@ -157,10 +160,11 @@ public partial class BookingListForm : Form
         }
 
         // Show and configure visible columns
-        ShowColumn("ConfirmationNumber", "Conf #", 80);
-        ShowColumn("FirstName", "First Name", 100);
-        ShowColumn("LastName", "Last Name", 100);
-        ShowColumn("Location", "Property", 150);
+        ShowColumn("ConfirmationNumber", "Conf #", 75);
+        ShowColumn("FirstName", "First Name", 100, fill: true);
+        ShowColumn("LastName", "Last Name", 100, fill: true);
+        ShowColumn("Location", "Property", 150, fill: true);
+        ShowColumn("BookedDate", "Booked", 90, "MM/dd/yyyy");
         ShowColumn("ArrivalDate", "Arrival", 90, "MM/dd/yyyy");
         ShowColumn("DepartureDate", "Departure", 90, "MM/dd/yyyy");
         ShowColumn("NumberOfNights", "Nights", 55);
@@ -168,14 +172,23 @@ public partial class BookingListForm : Form
         ShowColumn("TotalGrossWithTax", "Total", 90, "C2");
     }
 
-    private void ShowColumn(string name, string header, int width, string? format = null)
+    private void ShowColumn(string name, string header, int width, string? format = null, bool fill = false)
     {
         if (!dgvBookings.Columns.Contains(name)) return;
 
         var col = dgvBookings.Columns[name];
         col.Visible = true;
         col.HeaderText = header;
-        col.Width = width;
+        col.MinimumWidth = width;
+
+        if (fill)
+        {
+            col.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        }
+        else
+        {
+            col.Width = width;
+        }
 
         if (format != null)
         {
@@ -246,7 +259,17 @@ public partial class BookingListForm : Form
         }
     }
 
+    private void btnPreview_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: false);
+    }
+
     private void btnPrint_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: true);
+    }
+
+    private void ShowReport(bool autoPrint)
     {
         if (_accommodations.Count == 0)
         {
@@ -259,8 +282,9 @@ public partial class BookingListForm : Form
         var endDate = dtpEndDate.Value.Date;
         var dateField = cboDateField.SelectedItem?.ToString() ?? "Arrival Date";
 
-        var report = new BookingListReport(startDate, endDate, dateField, _accommodations);
-        using var viewer = new ReportViewerForm(report);
+        var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
+        var report = new BookingListReport(startDate, endDate, dateField, _accommodations, companyInfo);
+        using var viewer = new ReportViewerForm(report, autoPrint);
         viewer.ShowDialog(this);
     }
 
@@ -299,6 +323,7 @@ public partial class BookingListForm : Form
         decimal totalDeposit = payment?.DepositDue ?? 0;
         decimal totalPrepayment = payment?.PrepaymentDue ?? 0;
 
+        var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
         var report = new ConfirmationReport(
             guest,
             accommodations,
@@ -306,9 +331,12 @@ public partial class BookingListForm : Form
             "Standard",
             "Guest",
             totalDeposit,
-            totalPrepayment);
+            totalPrepayment,
+            null,
+            null,
+            companyInfo);
 
-        using var viewer = new ReportViewerForm(report);
+        using var viewer = new ReportViewerForm(report, autoPrint: true);
         viewer.ShowDialog(this);
     }
 

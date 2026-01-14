@@ -26,6 +26,7 @@ partial class CarActivityForm
         dgvCarActivity = new DataGridView();
         pnlBottom = new Panel();
         lblSummary = new Label();
+        btnPreview = new Button();
         btnPrint = new Button();
         btnClose = new Button();
         pnlFilter.SuspendLayout();
@@ -97,6 +98,7 @@ partial class CarActivityForm
         // pnlBottom
         //
         pnlBottom.Controls.Add(lblSummary);
+        pnlBottom.Controls.Add(btnPreview);
         pnlBottom.Controls.Add(btnPrint);
         pnlBottom.Controls.Add(btnClose);
         pnlBottom.Dock = DockStyle.Bottom;
@@ -109,21 +111,30 @@ partial class CarActivityForm
         lblSummary.Location = new Point(13, 13);
         lblSummary.Text = "Click Refresh to load data";
         //
+        // btnPreview
+        //
+        btnPreview.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        btnPreview.Location = new Point(548, 7);
+        btnPreview.Size = new Size(75, 28);
+        btnPreview.TabIndex = 4;
+        btnPreview.Text = "Pre&view";
+        btnPreview.Click += btnPreview_Click;
+        //
         // btnPrint
         //
         btnPrint.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        btnPrint.Location = new Point(630, 7);
+        btnPrint.Location = new Point(629, 7);
         btnPrint.Size = new Size(75, 28);
-        btnPrint.TabIndex = 4;
+        btnPrint.TabIndex = 5;
         btnPrint.Text = "&Print";
         btnPrint.Click += btnPrint_Click;
         //
         // btnClose
         //
         btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        btnClose.Location = new Point(712, 7);
+        btnClose.Location = new Point(710, 7);
         btnClose.Size = new Size(75, 28);
-        btnClose.TabIndex = 5;
+        btnClose.TabIndex = 6;
         btnClose.Text = "&Close";
         btnClose.Click += btnClose_Click;
         //
@@ -159,6 +170,7 @@ partial class CarActivityForm
     private DataGridView dgvCarActivity;
     private Panel pnlBottom;
     private Label lblSummary;
+    private Button btnPreview;
     private Button btnPrint;
     private Button btnClose;
 }

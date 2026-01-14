@@ -827,7 +827,8 @@ public partial class MainForm : Form
                 .OrderBy(a => a.ArrivalDate)
                 .ToList();
 
-            var report = new ArrivalsReport(startDate, endDate, arrivals);
+            var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+            var report = new ArrivalsReport(startDate, endDate, arrivals, companyInfo);
             using var viewer = new ReportViewerForm(report);
             viewer.ShowDialog(this);
         });
@@ -845,7 +846,8 @@ public partial class MainForm : Form
                 .OrderBy(a => a.DepartureDate)
                 .ToList();
 
-            var report = new DeparturesReport(startDate, endDate, departures);
+            var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+            var report = new DeparturesReport(startDate, endDate, departures, companyInfo);
             using var viewer = new ReportViewerForm(report);
             viewer.ShowDialog(this);
         });
@@ -877,7 +879,8 @@ public partial class MainForm : Form
                 .ThenBy(c => c.CheckNumber)
                 .ToList();
 
-            var report = new CheckLedgerReport(startDate, endDate, checks);
+            var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+            var report = new CheckLedgerReport(startDate, endDate, checks, "All", companyInfo);
             using var viewer = new ReportViewerForm(report);
             viewer.ShowDialog(this);
         });
@@ -896,7 +899,8 @@ public partial class MainForm : Form
                 .ThenBy(a => a.DepartureDate)
                 .ToList();
 
-            var report = new NetSummaryReport(startDate, endDate, accommodations);
+            var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+            var report = new NetSummaryReport(startDate, endDate, accommodations, companyInfo);
             using var viewer = new ReportViewerForm(report);
             viewer.ShowDialog(this);
         });
@@ -916,7 +920,8 @@ public partial class MainForm : Form
                 .ThenBy(a => a.DepartureDate)
                 .ToList();
 
-            var report = new CommissionReport(startDate, endDate, accommodations);
+            var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+            var report = new CommissionReport(startDate, endDate, accommodations, false, companyInfo);
             using var viewer = new ReportViewerForm(report);
             viewer.ShowDialog(this);
         });
@@ -957,7 +962,8 @@ public partial class MainForm : Form
             .OrderBy(h => h.HostName)
             .ToList();
 
-        var report = new Host1099Report(taxYear.Value, hostData);
+        var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+        var report = new Host1099Report(taxYear.Value, hostData, 600, companyInfo);
         using var viewer = new ReportViewerForm(report);
         viewer.ShowDialog(this);
     }
@@ -1044,7 +1050,8 @@ public partial class MainForm : Form
                 return;
             }
 
-            var report = new Reports.AccountListReport(properties);
+            var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+            var report = new Reports.AccountListReport(properties, false, null, companyInfo);
             using var viewer = new Reports.ReportViewerForm(report);
             viewer.ShowDialog(this);
         }
@@ -1076,7 +1083,8 @@ public partial class MainForm : Form
                 .OrderBy(a => a.Guest.DateBooked)
                 .ToList();
 
-            var report = new DailyBookingReport(startDate, endDate, bookings);
+            var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+            var report = new DailyBookingReport(startDate, endDate, bookings, companyInfo);
             using var viewer = new ReportViewerForm(report);
             viewer.ShowDialog(this);
         });
@@ -1095,7 +1103,8 @@ public partial class MainForm : Form
                 .ThenBy(a => a.ArrivalDate)
                 .ToList();
 
-            var report = new HostNotificationReport(startDate, endDate, arrivals);
+            var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+            var report = new HostNotificationReport(startDate, endDate, arrivals, companyInfo);
             using var viewer = new ReportViewerForm(report);
             viewer.ShowDialog(this);
         });
@@ -1113,7 +1122,8 @@ public partial class MainForm : Form
                 .OrderBy(a => a.DepartureDate)
                 .ToList();
 
-            var report = new ServiceFeeSummaryReport(startDate, endDate, accommodations);
+            var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+            var report = new ServiceFeeSummaryReport(startDate, endDate, accommodations, companyInfo);
             using var viewer = new ReportViewerForm(report);
             viewer.ShowDialog(this);
         });
@@ -1138,7 +1148,8 @@ public partial class MainForm : Form
                 .OrderBy(p => p.PaymentDate)
                 .ToList();
 
-            var report = new ClientTrustReport(startDate, endDate, payments);
+            var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+            var report = new ClientTrustReport(startDate, endDate, payments, companyInfo);
             using var viewer = new ReportViewerForm(report);
             viewer.ShowDialog(this);
         });
@@ -1167,7 +1178,8 @@ public partial class MainForm : Form
                 .OrderBy(a => a.DepartureDate)
                 .ToList();
 
-            var report = new RefundsReport(startDate, endDate, refunds);
+            var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+            var report = new RefundsReport(startDate, endDate, refunds, companyInfo);
             using var viewer = new ReportViewerForm(report);
             viewer.ShowDialog(this);
         });
@@ -1188,7 +1200,8 @@ public partial class MainForm : Form
                 .ThenBy(a => a.DepartureDate)
                 .ToList();
 
-            var report = new OverpaymentsReport(startDate, endDate, overpayments);
+            var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+            var report = new OverpaymentsReport(startDate, endDate, overpayments, companyInfo);
             using var viewer = new ReportViewerForm(report);
             viewer.ShowDialog(this);
         });
@@ -1201,7 +1214,8 @@ public partial class MainForm : Form
             .OrderBy(p => p.Location)
             .ToList();
 
-        var report = new HostAccountInfoReport(properties);
+        var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+        var report = new HostAccountInfoReport(properties, companyInfo);
         using var viewer = new ReportViewerForm(report);
         viewer.ShowDialog(this);
     }
@@ -1218,7 +1232,8 @@ public partial class MainForm : Form
                 .OrderBy(r => r.PickupDate)
                 .ToList();
 
-            var report = new CarRentalActivityReport(startDate, endDate, rentals);
+            var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+            var report = new CarRentalActivityReport(startDate, endDate, rentals, companyInfo);
             using var viewer = new ReportViewerForm(report);
             viewer.ShowDialog(this);
         });

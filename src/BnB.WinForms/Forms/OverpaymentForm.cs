@@ -100,7 +100,17 @@ public partial class OverpaymentForm : Form
         }
     }
 
+    private void btnPreview_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: false);
+    }
+
     private void btnPrint_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: true);
+    }
+
+    private void ShowReport(bool autoPrint)
     {
         var overpayments = _dbContext.Accommodations
             .Include(a => a.Property)
@@ -119,8 +129,9 @@ public partial class OverpaymentForm : Form
             .OrderByDescending(a => a.Overpayment)
             .ToList();
 
-        var report = new CommissionOverpaymentReport(overpayments);
-        using var viewer = new ReportViewerForm(report);
+        var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
+        var report = new CommissionOverpaymentReport(overpayments, companyInfo);
+        using var viewer = new ReportViewerForm(report, autoPrint);
         viewer.ShowDialog(this);
     }
 

@@ -48,6 +48,9 @@ static class Program
             {
                 // For PostgreSQL, use EnsureCreated since migrations were generated for SQLite
                 dbContext.Database.EnsureCreated();
+
+                // Apply schema updates for new columns
+                ApplyPostgresSchemaUpdates(dbContext);
             }
             else
             {
@@ -132,5 +135,57 @@ static class Program
     public static string GetSettingsFilePath()
     {
         return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
+    }
+
+    /// <summary>
+    /// Apply schema updates for PostgreSQL that EnsureCreated doesn't handle
+    /// </summary>
+    private static void ApplyPostgresSchemaUpdates(BnBDbContext dbContext)
+    {
+        try
+        {
+            // Add Logo column to CompanyInfo if it doesn't exist
+            dbContext.Database.ExecuteSqlRaw(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = 'CompanyInfo' AND column_name = 'Logo'
+                    ) THEN
+                        ALTER TABLE ""CompanyInfo"" ADD COLUMN ""Logo"" BYTEA;
+                    END IF;
+                END $$;
+            ");
+        }
+        catch
+        {
+            // Ignore errors - column may already exist or table may not exist yet
+        }
+
+        try
+        {
+            // Add Category and ConfirmationNumber columns to Checks if they don't exist
+            dbContext.Database.ExecuteSqlRaw(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = 'Checks' AND column_name = 'Category'
+                    ) THEN
+                        ALTER TABLE ""Checks"" ADD COLUMN ""Category"" VARCHAR(50);
+                    END IF;
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = 'Checks' AND column_name = 'ConfirmationNumber'
+                    ) THEN
+                        ALTER TABLE ""Checks"" ADD COLUMN ""ConfirmationNumber"" BIGINT DEFAULT 0;
+                    END IF;
+                END $$;
+            ");
+        }
+        catch
+        {
+            // Ignore errors - columns may already exist or table may not exist yet
+        }
     }
 }

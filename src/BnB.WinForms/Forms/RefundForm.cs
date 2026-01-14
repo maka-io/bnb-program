@@ -109,7 +109,17 @@ public partial class RefundForm : Form
         }
     }
 
+    private void btnPreview_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: false);
+    }
+
     private void btnPrint_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: true);
+    }
+
+    private void ShowReport(bool autoPrint)
     {
         var payments = _dbContext.Payments
             .Include(p => p.Guest)
@@ -117,8 +127,9 @@ public partial class RefundForm : Form
             .OrderByDescending(p => p.PaymentDate)
             .ToList();
 
-        var report = new RefundListReport(payments);
-        using var viewer = new ReportViewerForm(report);
+        var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
+        var report = new RefundListReport(payments, companyInfo);
+        using var viewer = new ReportViewerForm(report, autoPrint);
         viewer.ShowDialog(this);
     }
 

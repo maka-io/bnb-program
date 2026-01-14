@@ -30,6 +30,7 @@ partial class AvailabilityForm
         dgvCalendar = new DataGridView();
         pnlBottom = new Panel();
         lblStatus = new Label();
+        btnPreview = new Button();
         btnPrint = new Button();
         btnClose = new Button();
         lblLegend = new Label();
@@ -156,6 +157,7 @@ partial class AvailabilityForm
         pnlBottom.Controls.Add(lblAvailable);
         pnlBottom.Controls.Add(pnlLegendBooked);
         pnlBottom.Controls.Add(lblBooked);
+        pnlBottom.Controls.Add(btnPreview);
         pnlBottom.Controls.Add(btnPrint);
         pnlBottom.Controls.Add(btnClose);
         pnlBottom.Dock = DockStyle.Bottom;
@@ -211,13 +213,23 @@ partial class AvailabilityForm
         lblBooked.Size = new Size(48, 15);
         lblBooked.Text = "Booked";
         //
+        // btnPreview
+        //
+        btnPreview.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        btnPreview.Location = new Point(648, 12);
+        btnPreview.Name = "btnPreview";
+        btnPreview.Size = new Size(75, 28);
+        btnPreview.TabIndex = 6;
+        btnPreview.Text = "Pre&view";
+        btnPreview.Click += btnPreview_Click;
+        //
         // btnPrint
         //
         btnPrint.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         btnPrint.Location = new Point(730, 12);
         btnPrint.Name = "btnPrint";
         btnPrint.Size = new Size(75, 28);
-        btnPrint.TabIndex = 6;
+        btnPrint.TabIndex = 7;
         btnPrint.Text = "&Print";
         btnPrint.Click += btnPrint_Click;
         //
@@ -227,7 +239,7 @@ partial class AvailabilityForm
         btnClose.Location = new Point(812, 12);
         btnClose.Name = "btnClose";
         btnClose.Size = new Size(75, 28);
-        btnClose.TabIndex = 7;
+        btnClose.TabIndex = 8;
         btnClose.Text = "&Close";
         btnClose.Click += btnClose_Click;
         //
@@ -272,6 +284,7 @@ partial class AvailabilityForm
     private Label lblAvailable;
     private Panel pnlLegendBooked;
     private Label lblBooked;
+    private Button btnPreview;
     private Button btnPrint;
     private Button btnClose;
 }

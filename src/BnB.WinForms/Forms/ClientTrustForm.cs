@@ -70,7 +70,17 @@ public partial class ClientTrustForm : Form
         txtTotalDue.Text = totalDue.ToString("C2");
     }
 
+    private void btnPreview_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: false);
+    }
+
     private void btnPrint_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: true);
+    }
+
+    private void ShowReport(bool autoPrint)
     {
         var startDate = dtpStartDate.Value.Date;
         var endDate = dtpEndDate.Value.Date;
@@ -100,8 +110,9 @@ public partial class ClientTrustForm : Form
             PrepaymentsDue = prepaymentsDue
         };
 
-        var report = new ClientTrustSummaryReport(startDate, endDate, summary);
-        using var viewer = new ReportViewerForm(report);
+        var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
+        var report = new ClientTrustSummaryReport(startDate, endDate, summary, companyInfo);
+        using var viewer = new ReportViewerForm(report, autoPrint);
         viewer.ShowDialog(this);
     }
 

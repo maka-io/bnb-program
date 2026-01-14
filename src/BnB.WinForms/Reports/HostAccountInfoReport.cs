@@ -12,8 +12,9 @@ public class HostAccountInfoReport : BaseReport
 {
     private readonly List<Property> _properties;
 
-    public HostAccountInfoReport(List<Property> properties)
+    public HostAccountInfoReport(List<Property> properties, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _properties = properties;
     }
 

@@ -201,7 +201,17 @@ public partial class TrendGraphForm : Form
         }
     }
 
+    private void btnPreview_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: false);
+    }
+
     private void btnPrint_Click(object sender, EventArgs e)
+    {
+        ShowReport(autoPrint: true);
+    }
+
+    private void ShowReport(bool autoPrint)
     {
         var startDate = new DateTime(dtpStartDate.Value.Year, dtpStartDate.Value.Month, 1);
         var endDate = new DateTime(dtpEndDate.Value.Year, dtpEndDate.Value.Month, 1).AddMonths(1).AddDays(-1);
@@ -215,8 +225,9 @@ public partial class TrendGraphForm : Form
             TotalNights = t.TotalNights
         }).ToList();
 
-        var report = new TrendReport(startDate, endDate, trendItems);
-        using var viewer = new ReportViewerForm(report);
+        var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
+        var report = new TrendReport(startDate, endDate, trendItems, companyInfo);
+        using var viewer = new ReportViewerForm(report, autoPrint);
         viewer.ShowDialog(this);
     }
 

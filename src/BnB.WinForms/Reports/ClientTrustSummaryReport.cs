@@ -1,3 +1,4 @@
+using BnB.Core.Models;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -13,8 +14,9 @@ public class ClientTrustSummaryReport : BaseReport
     private readonly DateTime _endDate;
     private readonly ClientTrustSummary _summary;
 
-    public ClientTrustSummaryReport(DateTime startDate, DateTime endDate, ClientTrustSummary summary)
+    public ClientTrustSummaryReport(DateTime startDate, DateTime endDate, ClientTrustSummary summary, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _summary = summary;

@@ -16,4 +16,9 @@ public class CompanyInfo
     public string? Fax { get; set; }
     public string? Email { get; set; }
     public string? WebUrl { get; set; }
+
+    /// <summary>
+    /// Company logo image stored as byte array (PNG, JPG, etc.)
+    /// </summary>
+    public byte[]? Logo { get; set; }
 }

@@ -14,8 +14,9 @@ public class ArrivalDepartureReport : BaseReport
     private readonly List<Accommodation> _arrivals;
     private readonly List<Accommodation> _departures;
 
-    public ArrivalDepartureReport(DateTime date, List<Accommodation> arrivals, List<Accommodation> departures)
+    public ArrivalDepartureReport(DateTime date, List<Accommodation> arrivals, List<Accommodation> departures, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _date = date;
         _arrivals = arrivals;
         _departures = departures;

@@ -1,5 +1,6 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
+using BnB.WinForms.UI;
 
 namespace BnB.WinForms.Forms;
 
@@ -12,6 +13,8 @@ public partial class CompanyInfoForm : Form
     private readonly BnBDbContext _dbContext;
     private CompanyInfo? _companyInfo;
     private bool _isEditing;
+    private byte[]? _pendingLogo;
+    private bool _logoChanged;
 
     public CompanyInfoForm(BnBDbContext dbContext)
     {
@@ -21,6 +24,7 @@ public partial class CompanyInfoForm : Form
 
     private void CompanyInfoForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
         LoadCompanyInfo();
         SetEditMode(false);
     }
@@ -64,6 +68,36 @@ public partial class CompanyInfoForm : Form
         txtFax.Text = _companyInfo.Fax ?? "";
         txtEmail.Text = _companyInfo.Email ?? "";
         txtWebUrl.Text = _companyInfo.WebUrl ?? "";
+
+        // Display logo
+        DisplayLogo(_companyInfo.Logo);
+        _pendingLogo = _companyInfo.Logo;
+        _logoChanged = false;
+    }
+
+    private void DisplayLogo(byte[]? logoData)
+    {
+        if (logoData != null && logoData.Length > 0)
+        {
+            try
+            {
+                using var ms = new MemoryStream(logoData);
+                picLogo.Image?.Dispose();
+                picLogo.Image = Image.FromStream(ms);
+                btnRemoveLogo.Enabled = _isEditing;
+            }
+            catch
+            {
+                picLogo.Image = null;
+                btnRemoveLogo.Enabled = false;
+            }
+        }
+        else
+        {
+            picLogo.Image?.Dispose();
+            picLogo.Image = null;
+            btnRemoveLogo.Enabled = false;
+        }
     }
 
     private void SetEditMode(bool editing)
@@ -80,6 +114,10 @@ public partial class CompanyInfoForm : Form
         txtFax.ReadOnly = !editing;
         txtEmail.ReadOnly = !editing;
         txtWebUrl.ReadOnly = !editing;
+
+        // Enable/disable logo buttons
+        btnSelectLogo.Enabled = editing;
+        btnRemoveLogo.Enabled = editing && picLogo.Image != null;
 
         // Enable/disable buttons
         btnEdit.Enabled = !editing;
@@ -113,7 +151,15 @@ public partial class CompanyInfoForm : Form
             _companyInfo.Email = txtEmail.Text.Trim();
             _companyInfo.WebUrl = txtWebUrl.Text.Trim();
 
+            // Save logo if changed
+            if (_logoChanged)
+            {
+                _companyInfo.Logo = _pendingLogo;
+            }
+
             _dbContext.SaveChanges();
+            _logoChanged = false;
+
             MessageBox.Show("Company information saved successfully.", "Success",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -135,6 +181,61 @@ public partial class CompanyInfoForm : Form
     private void btnClose_Click(object sender, EventArgs e)
     {
         Close();
+    }
+
+    private void btnSelectLogo_Click(object sender, EventArgs e)
+    {
+        using var openDialog = new OpenFileDialog
+        {
+            Title = "Select Company Logo",
+            Filter = "Image Files|*.png;*.jpg;*.jpeg;*.gif;*.bmp|PNG Files|*.png|JPEG Files|*.jpg;*.jpeg|All Files|*.*",
+            FilterIndex = 1
+        };
+
+        if (openDialog.ShowDialog() == DialogResult.OK)
+        {
+            try
+            {
+                // Read the image file
+                var imageData = File.ReadAllBytes(openDialog.FileName);
+
+                // Validate it's a valid image
+                using var ms = new MemoryStream(imageData);
+                using var testImage = Image.FromStream(ms);
+
+                // Check size (limit to 1MB)
+                if (imageData.Length > 1024 * 1024)
+                {
+                    MessageBox.Show("Logo file is too large. Please select an image under 1MB.",
+                        "File Too Large", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Store and display
+                _pendingLogo = imageData;
+                _logoChanged = true;
+                DisplayLogo(_pendingLogo);
+                btnRemoveLogo.Enabled = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading image: {ex.Message}",
+                    "Image Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+    }
+
+    private void btnRemoveLogo_Click(object sender, EventArgs e)
+    {
+        var result = MessageBox.Show("Remove the company logo?", "Confirm Remove",
+            MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+        if (result == DialogResult.Yes)
+        {
+            _pendingLogo = null;
+            _logoChanged = true;
+            DisplayLogo(null);
+        }
     }
 
     private bool ValidateInput()

@@ -23,7 +23,7 @@ public class Accommodation
     public int? NumberInParty { get; set; }  // numpty
 
     [NotMapped]
-    public DateTime? BookedDate { get; set; }  // Not in database
+    public DateTime? BookedDate => Guest?.DateBooked;  // From Guest record
 
     // Room info
     public string? UnitName { get; set; }  // UnitName (room type code)

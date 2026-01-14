@@ -14,8 +14,9 @@ public class CarRentalActivityReport : BaseReport
     private readonly DateTime _endDate;
     private readonly List<CarRental> _rentals;
 
-    public CarRentalActivityReport(DateTime startDate, DateTime endDate, List<CarRental> rentals)
+    public CarRentalActivityReport(DateTime startDate, DateTime endDate, List<CarRental> rentals, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _rentals = rentals;

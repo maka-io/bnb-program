@@ -15,8 +15,9 @@ public class HostNotificationReport : BaseReport
     private readonly DateTime _endDate;
     private readonly List<Accommodation> _arrivals;
 
-    public HostNotificationReport(DateTime startDate, DateTime endDate, List<Accommodation> arrivals)
+    public HostNotificationReport(DateTime startDate, DateTime endDate, List<Accommodation> arrivals, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _arrivals = arrivals;

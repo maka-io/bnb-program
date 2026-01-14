@@ -12,8 +12,9 @@ public class PaymentReceivableReport : BaseReport
 {
     private readonly List<Accommodation> _receivables;
 
-    public PaymentReceivableReport(List<Accommodation> receivables)
+    public PaymentReceivableReport(List<Accommodation> receivables, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _receivables = receivables;
     }
 

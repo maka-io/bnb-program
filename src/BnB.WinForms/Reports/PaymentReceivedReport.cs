@@ -14,8 +14,9 @@ public class PaymentReceivedReport : BaseReport
     private readonly DateTime _endDate;
     private readonly List<Payment> _payments;
 
-    public PaymentReceivedReport(DateTime startDate, DateTime endDate, List<Payment> payments)
+    public PaymentReceivedReport(DateTime startDate, DateTime endDate, List<Payment> payments, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _payments = payments;

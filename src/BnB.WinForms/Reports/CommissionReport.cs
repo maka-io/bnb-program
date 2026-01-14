@@ -20,8 +20,9 @@ public class CommissionReport : BaseReport
         ? $"Unpaid Commissions ({_startDate:MM/dd/yyyy} - {_endDate:MM/dd/yyyy})"
         : $"Commission Report ({_startDate:MM/dd/yyyy} - {_endDate:MM/dd/yyyy})";
 
-    public CommissionReport(DateTime startDate, DateTime endDate, IEnumerable<Accommodation> accommodations, bool unpaidOnly = false)
+    public CommissionReport(DateTime startDate, DateTime endDate, IEnumerable<Accommodation> accommodations, bool unpaidOnly = false, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _accommodations = accommodations

@@ -398,6 +398,9 @@ namespace BnB.Data.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("TEXT");
 
+                    b.Property<byte[]>("Logo")
+                        .HasColumnType("BLOB");
+
                     b.Property<string>("Phone")
                         .HasMaxLength(30)
                         .HasColumnType("TEXT");

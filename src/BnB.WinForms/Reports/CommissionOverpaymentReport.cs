@@ -1,3 +1,4 @@
+using BnB.Core.Models;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -11,8 +12,9 @@ public class CommissionOverpaymentReport : BaseReport
 {
     private readonly List<CommissionOverpaymentItem> _overpayments;
 
-    public CommissionOverpaymentReport(List<CommissionOverpaymentItem> overpayments)
+    public CommissionOverpaymentReport(List<CommissionOverpaymentItem> overpayments, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _overpayments = overpayments;
     }
 

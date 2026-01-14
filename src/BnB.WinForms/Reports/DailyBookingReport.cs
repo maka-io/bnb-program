@@ -14,8 +14,9 @@ public class DailyBookingReport : BaseReport
     private readonly DateTime _endDate;
     private readonly List<Accommodation> _bookings;
 
-    public DailyBookingReport(DateTime startDate, DateTime endDate, List<Accommodation> bookings)
+    public DailyBookingReport(DateTime startDate, DateTime endDate, List<Accommodation> bookings, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _bookings = bookings;

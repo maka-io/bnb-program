@@ -12,8 +12,9 @@ public class RefundListReport : BaseReport
 {
     private readonly List<Payment> _payments;
 
-    public RefundListReport(List<Payment> payments)
+    public RefundListReport(List<Payment> payments, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _payments = payments;
     }
 

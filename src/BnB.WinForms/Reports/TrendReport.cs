@@ -1,3 +1,4 @@
+using BnB.Core.Models;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -13,8 +14,9 @@ public class TrendReport : BaseReport
     private readonly DateTime _endDate;
     private readonly List<TrendDataItem> _trendData;
 
-    public TrendReport(DateTime startDate, DateTime endDate, List<TrendDataItem> trendData)
+    public TrendReport(DateTime startDate, DateTime endDate, List<TrendDataItem> trendData, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _trendData = trendData;

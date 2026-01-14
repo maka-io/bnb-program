@@ -15,8 +15,9 @@ public class BookingListReport : BaseReport
     private readonly string _dateField;
     private readonly List<Accommodation> _bookings;
 
-    public BookingListReport(DateTime startDate, DateTime endDate, string dateField, List<Accommodation> bookings)
+    public BookingListReport(DateTime startDate, DateTime endDate, string dateField, List<Accommodation> bookings, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _dateField = dateField;
@@ -62,15 +63,15 @@ public class BookingListReport : BaseReport
             {
                 table.ColumnsDefinition(columns =>
                 {
-                    columns.ConstantColumn(60);  // Conf #
-                    columns.RelativeColumn(1);   // First Name
-                    columns.RelativeColumn(1);   // Last Name
-                    columns.RelativeColumn(1.2f); // Property
-                    columns.ConstantColumn(70);  // Arrival
-                    columns.ConstantColumn(70);  // Departure
-                    columns.ConstantColumn(50);  // Nights
-                    columns.ConstantColumn(50);  // Guests
-                    columns.ConstantColumn(80);  // Total
+                    columns.ConstantColumn(45);  // Conf #
+                    columns.ConstantColumn(85);  // First Name
+                    columns.ConstantColumn(85);  // Last Name
+                    columns.RelativeColumn(1);   // Property (takes remaining space)
+                    columns.ConstantColumn(65);  // Arrival
+                    columns.ConstantColumn(65);  // Departure
+                    columns.ConstantColumn(40);  // Nights
+                    columns.ConstantColumn(40);  // Guests
+                    columns.ConstantColumn(70);  // Total
                 });
 
                 table.Header(header =>

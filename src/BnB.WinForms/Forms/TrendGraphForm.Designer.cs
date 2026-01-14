@@ -29,6 +29,7 @@ partial class TrendGraphForm
         pnlChart = new Panel();
         dgvData = new DataGridView();
         pnlBottom = new Panel();
+        btnPreview = new Button();
         btnPrint = new Button();
         btnClose = new Button();
         pnlTop.SuspendLayout();
@@ -136,27 +137,37 @@ partial class TrendGraphForm
         //
         // pnlBottom
         //
+        pnlBottom.Controls.Add(btnPreview);
         pnlBottom.Controls.Add(btnPrint);
         pnlBottom.Controls.Add(btnClose);
         pnlBottom.Dock = DockStyle.Bottom;
         pnlBottom.Location = new Point(0, 460);
         pnlBottom.Size = new Size(850, 40);
         //
+        // btnPreview
+        //
+        btnPreview.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        btnPreview.Location = new Point(605, 7);
+        btnPreview.Size = new Size(75, 28);
+        btnPreview.TabIndex = 1;
+        btnPreview.Text = "Pre&view";
+        btnPreview.Click += btnPreview_Click;
+        //
         // btnPrint
         //
         btnPrint.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        btnPrint.Location = new Point(687, 7);
+        btnPrint.Location = new Point(686, 7);
         btnPrint.Size = new Size(75, 28);
-        btnPrint.TabIndex = 1;
+        btnPrint.TabIndex = 2;
         btnPrint.Text = "&Print";
         btnPrint.Click += btnPrint_Click;
         //
         // btnClose
         //
         btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        btnClose.Location = new Point(768, 7);
+        btnClose.Location = new Point(767, 7);
         btnClose.Size = new Size(75, 28);
-        btnClose.TabIndex = 2;
+        btnClose.TabIndex = 3;
         btnClose.Text = "&Close";
         btnClose.Click += btnClose_Click;
         //
@@ -198,6 +209,7 @@ partial class TrendGraphForm
     private Panel pnlChart;
     private DataGridView dgvData;
     private Panel pnlBottom;
+    private Button btnPreview;
     private Button btnPrint;
     private Button btnClose;
 }

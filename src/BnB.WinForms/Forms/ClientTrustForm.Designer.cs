@@ -37,6 +37,7 @@ partial class ClientTrustForm
         lblTotalDue = new Label();
         txtTotalDue = new TextBox();
         pnlButtons = new Panel();
+        btnPreview = new Button();
         btnPrint = new Button();
         btnClose = new Button();
         grpDateRange.SuspendLayout();
@@ -190,16 +191,25 @@ partial class ClientTrustForm
         //
         // pnlButtons
         //
+        pnlButtons.Controls.Add(btnPreview);
         pnlButtons.Controls.Add(btnPrint);
         pnlButtons.Controls.Add(btnClose);
         pnlButtons.Dock = DockStyle.Bottom;
         pnlButtons.Location = new Point(0, 320);
         pnlButtons.Size = new Size(424, 40);
         //
+        // btnPreview
+        //
+        btnPreview.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        btnPreview.Location = new Point(178, 7);
+        btnPreview.Size = new Size(75, 28);
+        btnPreview.Text = "Pre&view";
+        btnPreview.Click += btnPreview_Click;
+        //
         // btnPrint
         //
         btnPrint.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        btnPrint.Location = new Point(260, 7);
+        btnPrint.Location = new Point(259, 7);
         btnPrint.Size = new Size(75, 28);
         btnPrint.Text = "&Print";
         btnPrint.Click += btnPrint_Click;
@@ -207,7 +217,7 @@ partial class ClientTrustForm
         // btnClose
         //
         btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        btnClose.Location = new Point(341, 7);
+        btnClose.Location = new Point(340, 7);
         btnClose.Size = new Size(75, 28);
         btnClose.Text = "&Close";
         btnClose.Click += btnClose_Click;
@@ -257,6 +267,7 @@ partial class ClientTrustForm
     private Label lblTotalDue;
     private TextBox txtTotalDue;
     private Panel pnlButtons;
+    private Button btnPreview;
     private Button btnPrint;
     private Button btnClose;
 }

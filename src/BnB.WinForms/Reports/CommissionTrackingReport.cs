@@ -1,3 +1,4 @@
+using BnB.Core.Models;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -13,8 +14,9 @@ public class CommissionTrackingReport : BaseReport
     private readonly string _propertyFilter;
     private readonly bool _unpaidOnly;
 
-    public CommissionTrackingReport(List<CommissionTrackingItem> commissions, string propertyFilter, bool unpaidOnly)
+    public CommissionTrackingReport(List<CommissionTrackingItem> commissions, string propertyFilter, bool unpaidOnly, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _commissions = commissions;
         _propertyFilter = propertyFilter;
         _unpaidOnly = unpaidOnly;

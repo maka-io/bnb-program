@@ -17,8 +17,9 @@ public class Host1099Report : BaseReport
 
     public override string Title => $"Host 1099 Report - Tax Year {_taxYear}";
 
-    public Host1099Report(int taxYear, IEnumerable<Host1099Data> hostData, decimal minimumReportingThreshold = 600)
+    public Host1099Report(int taxYear, IEnumerable<Host1099Data> hostData, decimal minimumReportingThreshold = 600, CompanyInfo? companyInfo = null)
     {
+        CompanyInfo = companyInfo;
         _taxYear = taxYear;
         _hostData = hostData.OrderBy(h => h.HostName).ToList();
         _minimumReportingThreshold = minimumReportingThreshold;
