@@ -29,9 +29,9 @@ partial class TrendsDialogForm
         lblProperty = new Label();
         cboProperty = new ComboBox();
         lblStartDate = new Label();
-        txtStartDate = new TextBox();
+        dtpStartDate = new DateTimePicker();
         lblEndDate = new Label();
-        txtEndDate = new TextBox();
+        dtpEndDate = new DateTimePicker();
         lblFrequency = new Label();
         txtFrequency = new TextBox();
         hsbFrequency = new HScrollBar();
@@ -185,12 +185,13 @@ partial class TrendsDialogForm
         lblStartDate.TabIndex = 2;
         lblStartDate.Text = "Starting Date:";
         //
-        // txtStartDate
+        // dtpStartDate
         //
-        txtStartDate.Location = new Point(416, 12);
-        txtStartDate.Name = "txtStartDate";
-        txtStartDate.Size = new Size(90, 23);
-        txtStartDate.TabIndex = 3;
+        dtpStartDate.Format = DateTimePickerFormat.Short;
+        dtpStartDate.Location = new Point(416, 12);
+        dtpStartDate.Name = "dtpStartDate";
+        dtpStartDate.Size = new Size(110, 23);
+        dtpStartDate.TabIndex = 3;
         //
         // lblEndDate
         //
@@ -201,12 +202,13 @@ partial class TrendsDialogForm
         lblEndDate.TabIndex = 4;
         lblEndDate.Text = "Ending Date:";
         //
-        // txtEndDate
+        // dtpEndDate
         //
-        txtEndDate.Location = new Point(416, 41);
-        txtEndDate.Name = "txtEndDate";
-        txtEndDate.Size = new Size(90, 23);
-        txtEndDate.TabIndex = 5;
+        dtpEndDate.Format = DateTimePickerFormat.Short;
+        dtpEndDate.Location = new Point(416, 41);
+        dtpEndDate.Name = "dtpEndDate";
+        dtpEndDate.Size = new Size(110, 23);
+        dtpEndDate.TabIndex = 5;
         //
         // lblFrequency
         //
@@ -314,9 +316,9 @@ partial class TrendsDialogForm
         Controls.Add(hsbFrequency);
         Controls.Add(txtFrequency);
         Controls.Add(lblFrequency);
-        Controls.Add(txtEndDate);
+        Controls.Add(dtpEndDate);
         Controls.Add(lblEndDate);
-        Controls.Add(txtStartDate);
+        Controls.Add(dtpStartDate);
         Controls.Add(lblStartDate);
         Controls.Add(grpBy);
         Controls.Add(grpShow);
@@ -349,9 +351,9 @@ partial class TrendsDialogForm
     private Label lblProperty;
     private ComboBox cboProperty;
     private Label lblStartDate;
-    private TextBox txtStartDate;
+    private DateTimePicker dtpStartDate;
     private Label lblEndDate;
-    private TextBox txtEndDate;
+    private DateTimePicker dtpEndDate;
     private Label lblFrequency;
     private TextBox txtFrequency;
     private HScrollBar hsbFrequency;

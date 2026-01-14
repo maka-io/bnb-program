@@ -3,6 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using BnB.Data.Context;
 using BnB.WinForms.Forms;
+using BnB.WinForms.Services;
+using BnB.Core.Services;
 using QuestPDF.Infrastructure;
 
 namespace BnB.WinForms;
@@ -86,6 +88,13 @@ static class Program
                 options.UseSqlite($"Data Source={dbPath}");
             }
         });
+
+        // Register business logic services
+        services.AddSingleton<ITaxCalculationService, TaxCalculationService>();
+        services.AddSingleton<ICurrencyToWordsService, CurrencyToWordsService>();
+        services.AddSingleton<IValidationService, ValidationService>();
+        services.AddSingleton<IChartService, ChartService>();
+        services.AddSingleton<FormStateManager>();
 
         // Register forms
         services.AddTransient<MainForm>(sp => new MainForm(sp));

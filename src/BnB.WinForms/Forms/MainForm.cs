@@ -1024,7 +1024,57 @@ public partial class MainForm : Form
     {
         var dbContext = _serviceProvider.GetRequiredService<BnBDbContext>();
         using var dialog = new TrendsDialogForm(dbContext);
-        dialog.ShowDialog(this);
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+            return;
+
+        try
+        {
+            // Query trend data based on dialog settings
+            var startDate = dialog.StartDate;
+            var endDate = dialog.EndDate;
+
+            var query = dbContext.Accommodations
+                .Where(a => a.ArrivalDate >= startDate && a.ArrivalDate <= endDate);
+
+            // Filter by property if selected
+            if (!string.IsNullOrEmpty(dialog.PropertyName))
+            {
+                query = query.Where(a => a.Property != null && a.Property.Location == dialog.PropertyName);
+            }
+
+            // Group data by month
+            var trendData = query
+                .GroupBy(a => new { a.ArrivalDate.Year, a.ArrivalDate.Month })
+                .Select(g => new Reports.TrendDataItem
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    BookingCount = g.Count(),
+                    TotalRevenue = g.Sum(a => a.TotalGrossWithTax ?? 0),
+                    TotalNights = g.Sum(a => a.NumberOfNights)
+                })
+                .OrderBy(t => t.Year)
+                .ThenBy(t => t.Month)
+                .ToList();
+
+            if (!trendData.Any())
+            {
+                MessageBox.Show("No booking data found for the selected date range.", "No Data",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
+            var report = new Reports.TrendReport(startDate, endDate, trendData, companyInfo);
+            using var viewer = new Reports.ReportViewerForm(report);
+            viewer.ShowDialog(this);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error generating Trends report: {ex.Message}", "Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private void mnuMailingLabels_Click(object sender, EventArgs e)

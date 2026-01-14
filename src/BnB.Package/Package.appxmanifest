@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+         xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+         xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+         IgnorableNamespaces="uap rescap">
+
+  <Identity Name="HawaiiBestBnB.BnB"
+            Publisher="CN=HawaiiBestBnB"
+            Version="2.0.1.0"
+            ProcessorArchitecture="x86" />
+
+  <mp:PhoneIdentity PhoneProductId="b7e9c8a5-3d2f-4e1b-a6c8-9d0e2f3a4b5c" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+
+  <Properties>
+    <DisplayName>BnB - Bed and Breakfast Management</DisplayName>
+    <PublisherDisplayName>Hawaii's Best Bed &amp; Breakfasts</PublisherDisplayName>
+    <Logo>Images\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App" Executable="BnB.WinForms\BnB.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements DisplayName="BnB"
+                          Description="Bed and Breakfast reservation and property management system"
+                          Square150x150Logo="Images\Square150x150Logo.scale-200.png"
+                          Square44x44Logo="Images\Square44x44Logo.scale-200.png"
+                          BackgroundColor="transparent">
+        <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.scale-200.png"
+                         Square71x71Logo="Images\Square150x150Logo.scale-200.png"
+                         Square310x310Logo="Images\Square150x150Logo.scale-200.png">
+          <uap:ShowNameOnTiles>
+            <uap:ShowOn Tile="square150x150Logo" />
+            <uap:ShowOn Tile="wide310x150Logo" />
+            <uap:ShowOn Tile="square310x310Logo" />
+          </uap:ShowNameOnTiles>
+        </uap:DefaultTile>
+        <uap:SplashScreen Image="Images\SplashScreen.scale-200.png" />
+        <uap:LockScreen Notification="badge" BadgeLogo="Images\LockScreenLogo.scale-200.png" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+
+</Package>

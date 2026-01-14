@@ -1,4 +1,6 @@
 using BnB.Core.Models;
+using BnB.Core.Services;
+using BnB.WinForms.Services;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -13,6 +15,8 @@ public class TrendReport : BaseReport
     private readonly DateTime _startDate;
     private readonly DateTime _endDate;
     private readonly List<TrendDataItem> _trendData;
+    private readonly byte[]? _revenueChartImage;
+    private readonly byte[]? _bookingsChartImage;
 
     public TrendReport(DateTime startDate, DateTime endDate, List<TrendDataItem> trendData, CompanyInfo? companyInfo = null)
     {
@@ -20,6 +24,45 @@ public class TrendReport : BaseReport
         _startDate = startDate;
         _endDate = endDate;
         _trendData = trendData;
+
+        // Generate chart images
+        if (_trendData.Count > 0)
+        {
+            _revenueChartImage = GenerateRevenueChart();
+            _bookingsChartImage = GenerateBookingsChart();
+        }
+    }
+
+    private byte[] GenerateRevenueChart()
+    {
+        var chartService = new ChartService();
+        var dataPoints = _trendData.Select(t => new ChartDataPoint
+        {
+            Label = t.MonthLabel,
+            Value = (double)t.TotalRevenue
+        });
+
+        var chartData = chartService.CreateLineChart("Revenue Trend", dataPoints);
+        chartData.YAxisTitle = "Revenue ($)";
+        chartData.XAxisTitle = "Month";
+
+        return chartService.ExportToImage(chartData, 700, 300);
+    }
+
+    private byte[] GenerateBookingsChart()
+    {
+        var chartService = new ChartService();
+        var dataPoints = _trendData.Select(t => new ChartDataPoint
+        {
+            Label = t.MonthLabel,
+            Value = t.BookingCount
+        });
+
+        var chartData = chartService.CreateLineChart("Bookings Trend", dataPoints);
+        chartData.YAxisTitle = "Number of Bookings";
+        chartData.XAxisTitle = "Month";
+
+        return chartService.ExportToImage(chartData, 700, 300);
     }
 
     public override string Title => $"Booking Trends Report ({_startDate:MMM yyyy} - {_endDate:MMM yyyy})";
@@ -47,6 +90,22 @@ public class TrendReport : BaseReport
                 column.Item().Text("No trend data available for the selected date range.")
                     .FontSize(11).Italic();
                 return;
+            }
+
+            // Revenue Trend Chart
+            if (_revenueChartImage != null)
+            {
+                column.Item().Text("Revenue Trend").FontSize(12).Bold();
+                column.Item().PaddingTop(5).PaddingBottom(10).AlignCenter()
+                    .Image(_revenueChartImage).FitWidth();
+            }
+
+            // Bookings Trend Chart
+            if (_bookingsChartImage != null)
+            {
+                column.Item().Text("Bookings Trend").FontSize(12).Bold();
+                column.Item().PaddingTop(5).PaddingBottom(15).AlignCenter()
+                    .Image(_bookingsChartImage).FitWidth();
             }
 
             // Overall Summary

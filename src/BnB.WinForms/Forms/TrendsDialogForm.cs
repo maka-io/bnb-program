@@ -11,8 +11,8 @@ public partial class TrendsDialogForm : Form
 {
     private readonly BnBDbContext _dbContext;
 
-    public DateTime? StartDate => string.IsNullOrWhiteSpace(txtStartDate.Text) ? null : DateTime.Parse(txtStartDate.Text);
-    public DateTime? EndDate => string.IsNullOrWhiteSpace(txtEndDate.Text) ? null : DateTime.Parse(txtEndDate.Text);
+    public DateTime StartDate => dtpStartDate.Value.Date;
+    public DateTime EndDate => dtpEndDate.Value.Date;
     public string ShowMetric { get; private set; } = "RoomNights";
     public string GroupBy { get; private set; } = "Property";
     public string? PropertyName => optProperty.Checked && cboProperty.SelectedItem != null ? cboProperty.SelectedItem.ToString() : null;
@@ -35,6 +35,10 @@ public partial class TrendsDialogForm : Form
         txtThreshold.Text = "10";
         hsbFrequency.Value = 1;
         hsbThreshold.Value = 10;
+
+        // Set default date range: 3 months ago to today
+        dtpEndDate.Value = DateTime.Today;
+        dtpStartDate.Value = DateTime.Today.AddMonths(-3);
 
         LoadProperties();
     }
@@ -101,38 +105,13 @@ public partial class TrendsDialogForm : Form
 
     private bool ValidateInput()
     {
-        // Validate dates if provided
-        if (!string.IsNullOrWhiteSpace(txtStartDate.Text))
-        {
-            if (!DateTime.TryParse(txtStartDate.Text, out _))
-            {
-                MessageBox.Show("Invalid start date. Use mm/dd/yy format.", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtStartDate.Focus();
-                return false;
-            }
-        }
-
-        if (!string.IsNullOrWhiteSpace(txtEndDate.Text))
-        {
-            if (!DateTime.TryParse(txtEndDate.Text, out _))
-            {
-                MessageBox.Show("Invalid end date. Use mm/dd/yy format.", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtEndDate.Focus();
-                return false;
-            }
-        }
-
         // Validate date range
-        if (!string.IsNullOrWhiteSpace(txtStartDate.Text) && !string.IsNullOrWhiteSpace(txtEndDate.Text))
+        if (dtpStartDate.Value > dtpEndDate.Value)
         {
-            if (DateTime.Parse(txtStartDate.Text) > DateTime.Parse(txtEndDate.Text))
-            {
-                MessageBox.Show("Starting date cannot be greater than ending date.", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
-            }
+            MessageBox.Show("Starting date cannot be greater than ending date.", "Validation Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            dtpStartDate.Focus();
+            return false;
         }
 
         return true;
