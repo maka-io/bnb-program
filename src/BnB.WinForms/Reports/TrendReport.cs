@@ -17,6 +17,7 @@ public class TrendReport : BaseReport
     private readonly List<TrendDataItem> _trendData;
     private readonly byte[]? _revenueChartImage;
     private readonly byte[]? _bookingsChartImage;
+    private readonly byte[]? _avgRevenueChartImage;
 
     public TrendReport(DateTime startDate, DateTime endDate, List<TrendDataItem> trendData, CompanyInfo? companyInfo = null)
     {
@@ -30,6 +31,13 @@ public class TrendReport : BaseReport
         {
             _revenueChartImage = GenerateRevenueChart();
             _bookingsChartImage = GenerateBookingsChart();
+
+            // Only show monthly average bar chart if range is 2+ years
+            var rangeInYears = (_endDate - _startDate).TotalDays / 365.25;
+            if (rangeInYears >= 2)
+            {
+                _avgRevenueChartImage = GenerateAvgRevenueChart();
+            }
         }
     }
 
@@ -60,6 +68,34 @@ public class TrendReport : BaseReport
 
         var chartData = chartService.CreateLineChart("Bookings Trend", dataPoints);
         chartData.YAxisTitle = "Number of Bookings";
+        chartData.XAxisTitle = "Month";
+
+        return chartService.ExportToImage(chartData, 700, 300);
+    }
+
+    private byte[] GenerateAvgRevenueChart()
+    {
+        var chartService = new ChartService();
+
+        // Group by month number (1-12) and average across all years
+        var monthlyAverages = _trendData
+            .GroupBy(t => t.Month)
+            .Select(g => new
+            {
+                Month = g.Key,
+                AvgRevenue = g.Average(t => t.BookingCount > 0 ? (double)(t.TotalRevenue / t.BookingCount) : 0)
+            })
+            .OrderBy(x => x.Month)
+            .ToList();
+
+        var dataPoints = monthlyAverages.Select(m => new ChartDataPoint
+        {
+            Label = new DateTime(2000, m.Month, 1).ToString("MMM"),  // Jan, Feb, Mar, etc.
+            Value = m.AvgRevenue
+        });
+
+        var chartData = chartService.CreateBarChart("Average Revenue per Booking by Month", dataPoints);
+        chartData.YAxisTitle = "Avg Revenue ($)";
         chartData.XAxisTitle = "Month";
 
         return chartService.ExportToImage(chartData, 700, 300);
@@ -104,8 +140,16 @@ public class TrendReport : BaseReport
             if (_bookingsChartImage != null)
             {
                 column.Item().Text("Bookings Trend").FontSize(12).Bold();
-                column.Item().PaddingTop(5).PaddingBottom(15).AlignCenter()
+                column.Item().PaddingTop(5).PaddingBottom(10).AlignCenter()
                     .Image(_bookingsChartImage).FitWidth();
+            }
+
+            // Average Revenue Bar Chart
+            if (_avgRevenueChartImage != null)
+            {
+                column.Item().Text("Average Revenue per Booking by Month").FontSize(12).Bold();
+                column.Item().PaddingTop(5).PaddingBottom(15).AlignCenter()
+                    .Image(_avgRevenueChartImage).FitWidth();
             }
 
             // Overall Summary
