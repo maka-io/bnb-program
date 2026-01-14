@@ -26,12 +26,18 @@ public partial class RoomTypeForm : Form
     private void RoomTypeForm_Load(object sender, EventArgs e)
     {
         this.ApplyTheme();
+
+        // Temporarily detach event to prevent it firing during setup
+        cboProperty.SelectedIndexChanged -= cboProperty_SelectedIndexChanged;
         LoadProperties();
 
         if (_currentPropertyAccountNum > 0)
         {
             cboProperty.SelectedValue = _currentPropertyAccountNum;
         }
+
+        // Reattach event handler
+        cboProperty.SelectedIndexChanged += cboProperty_SelectedIndexChanged;
 
         LoadRoomTypes();
         UpdateButtonStates();
@@ -42,19 +48,19 @@ public partial class RoomTypeForm : Form
         var properties = _dbContext.Properties
             .Where(p => !p.IsObsolete)
             .OrderBy(p => p.Location)
-            .Select(p => new { p.AccountNumber, Display = $"{p.Location} ({p.AccountNumber})" })
+            .Select(p => new PropertyItem { AccountNumber = p.AccountNumber, Display = $"{p.Location} ({p.AccountNumber})" })
             .ToList();
 
         cboProperty.DataSource = properties;
-        cboProperty.DisplayMember = "Display";
-        cboProperty.ValueMember = nameof(Property.AccountNumber);
+        cboProperty.DisplayMember = nameof(PropertyItem.Display);
+        cboProperty.ValueMember = nameof(PropertyItem.AccountNumber);
     }
 
     private void LoadRoomTypes()
     {
-        if (cboProperty.SelectedValue == null) return;
+        if (cboProperty.SelectedValue == null || cboProperty.SelectedValue is not int accountNum) return;
 
-        _currentPropertyAccountNum = (int)cboProperty.SelectedValue;
+        _currentPropertyAccountNum = accountNum;
 
         _roomTypes = _dbContext.RoomTypes
             .Where(r => r.PropertyAccountNumber == _currentPropertyAccountNum)
@@ -239,5 +245,14 @@ public partial class RoomTypeForm : Form
         var hasSelection = dgvRoomTypes.CurrentRow != null;
         btnEdit.Enabled = hasSelection;
         btnDelete.Enabled = hasSelection;
+    }
+
+    /// <summary>
+    /// Helper class for property ComboBox binding.
+    /// </summary>
+    private class PropertyItem
+    {
+        public int AccountNumber { get; set; }
+        public string Display { get; set; } = string.Empty;
     }
 }
