@@ -179,15 +179,12 @@ partial class MainForm
 
         // === Availability Menu ===
         this.mnuRoomAvailability = new ToolStripMenuItem();
-        this.mnuCarAvailability = new ToolStripMenuItem();
         this.mnuAvailability.DropDownItems.AddRange(new ToolStripItem[] {
-            this.mnuRoomAvailability, this.mnuCarAvailability
+            this.mnuRoomAvailability
         });
         this.mnuAvailability.Text = "A&vailability";
         this.mnuRoomAvailability.Text = "&Room Availability";
         this.mnuRoomAvailability.Click += mnuRoomAvailability_Click;
-        this.mnuCarAvailability.Text = "&Car Availability";
-        this.mnuCarAvailability.Click += mnuCarAvailability_Click;
 
         // === Reports Menu ===
         this.mnuReports.DropDownItems.AddRange(new ToolStripItem[] {
@@ -395,7 +392,6 @@ partial class MainForm
     // Availability Menu
     private ToolStripMenuItem mnuAvailability;
     private ToolStripMenuItem mnuRoomAvailability;
-    private ToolStripMenuItem mnuCarAvailability;
 
     // Reports Menu
     private ToolStripMenuItem mnuReports;

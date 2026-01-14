@@ -397,9 +397,8 @@ public partial class PropertyForm : Form
     {
         if (_bindingSource.Current is Property property)
         {
-            // TODO: Open Room Types form for this property
-            MessageBox.Show($"Room Types for Property #{property.AccountNumber}: {property.Location}",
-                "Room Types", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            using var roomTypeForm = new RoomTypeForm(_dbContext, property.AccountNumber);
+            roomTypeForm.ShowDialog(this);
         }
     }
 

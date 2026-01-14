@@ -232,13 +232,6 @@ public partial class MainForm : Form
         });
     }
 
-    private void mnuCarAvailability_Click(object sender, EventArgs e)
-    {
-        // Car availability is a separate concept - for now show a message
-        MessageBox.Show("Car Availability feature coming soon.", "Car Availability",
-            MessageBoxButtons.OK, MessageBoxIcon.Information);
-    }
-
     #endregion
 
     #region Admin Menu Handlers
