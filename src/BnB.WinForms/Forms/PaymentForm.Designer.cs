@@ -30,7 +30,6 @@ partial class PaymentForm
         this.grpPaymentsDue = new GroupBox();
         this.grpRefund = new GroupBox();
         this.grpOtherCredits = new GroupBox();
-        this.grpTotals = new GroupBox();
 
         // Guest Info controls
         this.lblConfirmationNumber = new Label();
@@ -80,10 +79,15 @@ partial class PaymentForm
         this.lblComments = new Label();
         this.txtComments = new TextBox();
 
-        // Totals
+        // Grid Totals
         this.lblTotalReceived = new Label();
         this.lblTotalDue = new Label();
-        this.lblBalance = new Label();
+        this.lblTotalBalance = new Label();
+
+        // Selected Record Summary
+        this.lblRecordReceived = new Label();
+        this.lblRecordDue = new Label();
+        this.lblRecordBalance = new Label();
 
         // Buttons
         this.btnInsert = new Button();
@@ -181,7 +185,6 @@ partial class PaymentForm
         dtpDepositDueDate.Location = new Point(220, y);
         dtpDepositDueDate.Size = new Size(125, 23);
         dtpDepositDueDate.Format = DateTimePickerFormat.Short;
-        dtpDepositDueDate.ShowCheckBox = true;
         grpPaymentsDue.Controls.Add(dtpDepositDueDate);
 
         y += 28;
@@ -193,7 +196,6 @@ partial class PaymentForm
         dtpPrepaymentDueDate.Location = new Point(220, y);
         dtpPrepaymentDueDate.Size = new Size(125, 23);
         dtpPrepaymentDueDate.Format = DateTimePickerFormat.Short;
-        dtpPrepaymentDueDate.ShowCheckBox = true;
         grpPaymentsDue.Controls.Add(dtpPrepaymentDueDate);
 
         y += 28;
@@ -205,7 +207,6 @@ partial class PaymentForm
         dtpCancellationFeeDueDate.Location = new Point(220, y);
         dtpCancellationFeeDueDate.Size = new Size(125, 23);
         dtpCancellationFeeDueDate.Format = DateTimePickerFormat.Short;
-        dtpCancellationFeeDueDate.ShowCheckBox = true;
         grpPaymentsDue.Controls.Add(dtpCancellationFeeDueDate);
 
         // === Refund Group ===
@@ -240,31 +241,32 @@ partial class PaymentForm
         txtComments.ScrollBars = ScrollBars.Vertical;
         panelForm.Controls.Add(txtComments);
 
-        // === Totals Group ===
-        this.grpTotals.Text = "Summary";
-        this.grpTotals.Location = new Point(370, 260);
-        this.grpTotals.Size = new Size(200, 100);
-        this.panelForm.Controls.Add(this.grpTotals);
+        // === Selected Record Summary ===
+        this.grpRecordSummary = new GroupBox();
+        this.grpRecordSummary.Text = "Summary";
+        this.grpRecordSummary.Location = new Point(370, 260);
+        this.grpRecordSummary.Size = new Size(360, 55);
+        this.panelForm.Controls.Add(this.grpRecordSummary);
 
-        lblTotalReceived.Text = "Total Received: $0.00";
-        lblTotalReceived.Location = new Point(10, 25);
-        lblTotalReceived.AutoSize = true;
-        grpTotals.Controls.Add(lblTotalReceived);
+        lblRecordReceived.Text = "Received: $0.00";
+        lblRecordReceived.Location = new Point(10, 22);
+        lblRecordReceived.AutoSize = true;
+        grpRecordSummary.Controls.Add(lblRecordReceived);
 
-        lblTotalDue.Text = "Total Due: $0.00";
-        lblTotalDue.Location = new Point(10, 48);
-        lblTotalDue.AutoSize = true;
-        grpTotals.Controls.Add(lblTotalDue);
+        lblRecordDue.Text = "Due: $0.00";
+        lblRecordDue.Location = new Point(130, 22);
+        lblRecordDue.AutoSize = true;
+        grpRecordSummary.Controls.Add(lblRecordDue);
 
-        lblBalance.Text = "Balance: $0.00";
-        lblBalance.Location = new Point(10, 71);
-        lblBalance.AutoSize = true;
-        lblBalance.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        grpTotals.Controls.Add(lblBalance);
+        lblRecordBalance.Text = "Balance: $0.00";
+        lblRecordBalance.Location = new Point(230, 22);
+        lblRecordBalance.AutoSize = true;
+        lblRecordBalance.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        grpRecordSummary.Controls.Add(lblRecordBalance);
 
         // === Record Count ===
         this.lblRecordCount.Text = "Record 0 of 0";
-        this.lblRecordCount.Location = new Point(580, 270);
+        this.lblRecordCount.Location = new Point(370, 320);
         this.lblRecordCount.AutoSize = true;
         this.panelForm.Controls.Add(lblRecordCount);
 
@@ -300,6 +302,29 @@ partial class PaymentForm
         btnFind.Click += btnFind_Click;
         btnRefresh.Click += btnRefresh_Click;
         btnGoToGuest.Click += btnGoToGuest_Click;
+
+        // === Summary Panel (above DataGrid) ===
+        this.panelSummary = new Panel();
+        this.panelSummary.Dock = DockStyle.Top;
+        this.panelSummary.Height = 30;
+        this.panelSummary.Padding = new Padding(5, 5, 5, 5);
+        this.splitContainer.Panel2.Controls.Add(this.panelSummary);
+
+        lblTotalReceived.Text = "Total Received: $0.00";
+        lblTotalReceived.Location = new Point(10, 7);
+        lblTotalReceived.AutoSize = true;
+        panelSummary.Controls.Add(lblTotalReceived);
+
+        lblTotalDue.Text = "Total Due: $0.00";
+        lblTotalDue.Location = new Point(180, 7);
+        lblTotalDue.AutoSize = true;
+        panelSummary.Controls.Add(lblTotalDue);
+
+        lblTotalBalance.Text = "Total Balance: $0.00";
+        lblTotalBalance.Location = new Point(330, 7);
+        lblTotalBalance.AutoSize = true;
+        lblTotalBalance.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        panelSummary.Controls.Add(lblTotalBalance);
 
         // === DataGridView ===
         this.dgvPayments.Dock = DockStyle.Fill;
@@ -362,7 +387,7 @@ partial class PaymentForm
     private GroupBox grpPaymentsDue;
     private GroupBox grpRefund;
     private GroupBox grpOtherCredits;
-    private GroupBox grpTotals;
+    private Panel panelSummary;
 
     // Guest Info
     private Label lblConfirmationNumber;
@@ -412,10 +437,16 @@ partial class PaymentForm
     private Label lblComments;
     private TextBox txtComments;
 
-    // Totals
+    // Grid Totals (above datagrid)
     private Label lblTotalReceived;
     private Label lblTotalDue;
-    private Label lblBalance;
+    private Label lblTotalBalance;
+
+    // Selected Record Summary (in form area)
+    private GroupBox grpRecordSummary;
+    private Label lblRecordReceived;
+    private Label lblRecordDue;
+    private Label lblRecordBalance;
 
     // Buttons
     private Button btnInsert;

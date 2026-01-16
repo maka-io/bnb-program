@@ -42,6 +42,10 @@ public class Payment
 
     public string? Comments { get; set; }
 
+    // Calculated property for outstanding balance
+    [NotMapped]
+    public decimal Balance => (DepositDue ?? 0) + (PrepaymentDue ?? 0) + (CancellationFee ?? 0) - Amount;
+
     // Navigation properties
     public virtual Guest Guest { get; set; } = null!;
 }

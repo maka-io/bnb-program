@@ -71,7 +71,14 @@ public partial class PaymentForm : Form
         dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
         {
             DataPropertyName = nameof(Payment.Amount),
-            HeaderText = "Amount",
+            HeaderText = "Amt Received",
+            Width = 100,
+            DefaultCellStyle = new DataGridViewCellStyle { Format = "C2", Alignment = DataGridViewContentAlignment.MiddleRight }
+        });
+        dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = nameof(Payment.Balance),
+            HeaderText = "Balance",
             Width = 80,
             DefaultCellStyle = new DataGridViewCellStyle { Format = "C2", Alignment = DataGridViewContentAlignment.MiddleRight }
         });
@@ -98,13 +105,13 @@ public partial class PaymentForm : Form
         {
             DataPropertyName = nameof(Payment.ReceivedFrom),
             HeaderText = "Received From",
-            Width = 100
+            Width = 115
         });
         dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
         {
             DataPropertyName = nameof(Payment.DepositDue),
             HeaderText = "Deposit Due",
-            Width = 85,
+            Width = 95,
             DefaultCellStyle = new DataGridViewCellStyle { Format = "C2", Alignment = DataGridViewContentAlignment.MiddleRight }
         });
         dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
@@ -125,7 +132,7 @@ public partial class PaymentForm : Form
         {
             DataPropertyName = nameof(Payment.PrepaymentDueDate),
             HeaderText = "Prepay Date",
-            Width = 85,
+            Width = 95,
             DefaultCellStyle = new DataGridViewCellStyle { Format = "MM/dd/yyyy" }
         });
         dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
@@ -238,7 +245,8 @@ public partial class PaymentForm : Form
             }
 
             UpdateRecordCount();
-            UpdateTotals();
+            UpdateGridTotals();
+            UpdateSelectedRecordSummary();
         }
         catch (Exception ex)
         {
@@ -314,23 +322,41 @@ public partial class PaymentForm : Form
         lblRecordCount.Text = $"Record {_bindingSource.Position + 1} of {_bindingSource.Count}";
     }
 
-    private void UpdateTotals()
+    private void UpdateGridTotals()
     {
         if (_bindingSource.DataSource is List<Payment> payments && payments.Count > 0)
         {
             var totalReceived = payments.Sum(p => p.Amount);
-            var totalDue = payments.Sum(p => (p.DepositDue ?? 0) + (p.PrepaymentDue ?? 0));
-            var balance = totalDue - totalReceived;
+            var totalDue = payments.Sum(p => (p.DepositDue ?? 0) + (p.PrepaymentDue ?? 0) + (p.CancellationFee ?? 0));
+            var totalBalance = payments.Sum(p => p.Balance);
 
             lblTotalReceived.Text = $"Total Received: {totalReceived:C2}";
             lblTotalDue.Text = $"Total Due: {totalDue:C2}";
-            lblBalance.Text = $"Balance: {balance:C2}";
+            lblTotalBalance.Text = $"Total Balance: {totalBalance:C2}";
         }
         else
         {
             lblTotalReceived.Text = "Total Received: $0.00";
             lblTotalDue.Text = "Total Due: $0.00";
-            lblBalance.Text = "Balance: $0.00";
+            lblTotalBalance.Text = "Total Balance: $0.00";
+        }
+    }
+
+    private void UpdateSelectedRecordSummary()
+    {
+        if (_bindingSource.Current is Payment payment)
+        {
+            var totalDue = (payment.DepositDue ?? 0) + (payment.PrepaymentDue ?? 0) + (payment.CancellationFee ?? 0);
+
+            lblRecordReceived.Text = $"Received: {payment.Amount:C2}";
+            lblRecordDue.Text = $"Due: {totalDue:C2}";
+            lblRecordBalance.Text = $"Balance: {payment.Balance:C2}";
+        }
+        else
+        {
+            lblRecordReceived.Text = "Received: $0.00";
+            lblRecordDue.Text = "Due: $0.00";
+            lblRecordBalance.Text = "Balance: $0.00";
         }
     }
 
@@ -552,7 +578,8 @@ public partial class PaymentForm : Form
             else
             {
                 SetMode(FormMode.Browse);
-                UpdateTotals();
+                UpdateGridTotals();
+                UpdateSelectedRecordSummary();
             }
         }
     }
@@ -600,6 +627,7 @@ public partial class PaymentForm : Form
         if (_currentMode == FormMode.Browse)
         {
             UpdateRecordCount();
+            UpdateSelectedRecordSummary();
         }
     }
 
