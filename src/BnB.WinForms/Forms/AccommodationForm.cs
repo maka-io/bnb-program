@@ -919,6 +919,80 @@ public partial class AccommodationForm : Form
             return false;
         }
 
+        // Check for double booking
+        if (!CheckRoomAvailability())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Checks if the selected room type has availability for the requested dates.
+    /// Returns true if available, false if double-booked.
+    /// </summary>
+    private bool CheckRoomAvailability()
+    {
+        if (_currentAccommodation == null) return true;
+
+        // Get the selected room type
+        var selectedRoomType = cboRoomType.SelectedItem as RoomTypeItem;
+        if (selectedRoomType == null || string.IsNullOrEmpty(selectedRoomType.Name))
+        {
+            // No room type selected, skip check
+            return true;
+        }
+
+        var propertyAccountNum = _currentAccommodation.PropertyAccountNumber;
+        var roomTypeName = selectedRoomType.Name;
+        var arrivalDate = dtpArrivalDate.Value.Date;
+        var departureDate = dtpDepartureDate.Value.Date;
+
+        // Get the room type to find how many rooms are available
+        var roomType = _dbContext.RoomTypes
+            .FirstOrDefault(rt => rt.PropertyAccountNumber == propertyAccountNum && rt.Name == roomTypeName);
+
+        if (roomType == null)
+        {
+            // Room type not found in database, skip check
+            return true;
+        }
+
+        int totalRoomsAvailable = roomType.RoomCount;
+
+        // Count overlapping accommodations for this property and room type
+        // Overlap: existing.ArrivalDate < requested.DepartureDate AND existing.DepartureDate > requested.ArrivalDate
+        var overlappingBookingsQuery = _dbContext.Accommodations
+            .Where(a => a.PropertyAccountNumber == propertyAccountNum
+                && a.UnitName == roomTypeName
+                && a.ArrivalDate < departureDate
+                && a.DepartureDate > arrivalDate);
+
+        // Exclude the current accommodation if we're updating an existing record
+        if (_currentMode == FormMode.Update && _currentAccommodation.Id > 0)
+        {
+            overlappingBookingsQuery = overlappingBookingsQuery.Where(a => a.Id != _currentAccommodation.Id);
+        }
+
+        int overlappingCount = overlappingBookingsQuery.Count();
+
+        if (overlappingCount >= totalRoomsAvailable)
+        {
+            // All rooms are booked
+            var message = $"Cannot book this room type.\n\n" +
+                $"Room Type: {selectedRoomType.Description}\n" +
+                $"Available Rooms: {totalRoomsAvailable}\n" +
+                $"Already Booked: {overlappingCount}\n" +
+                $"Dates: {arrivalDate:MM/dd/yyyy} - {departureDate:MM/dd/yyyy}\n\n" +
+                $"All rooms of this type are already booked during this period.";
+
+            MessageBox.Show(message, "Room Not Available",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            cboRoomType.Focus();
+            return false;
+        }
+
         return true;
     }
 
