@@ -58,6 +58,9 @@ static class Program
             {
                 // For SQLite, use Migrate to apply migrations
                 dbContext.Database.Migrate();
+
+                // Apply schema updates for columns that may be missing
+                ApplySqliteSchemaUpdates(dbContext);
             }
         }
 
@@ -195,6 +198,53 @@ static class Program
         catch
         {
             // Ignore errors - columns may already exist or table may not exist yet
+        }
+
+        try
+        {
+            // Add RoomCount column to RoomTypes if it doesn't exist
+            dbContext.Database.ExecuteSqlRaw(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = 'RoomTypes' AND column_name = 'RoomCount'
+                    ) THEN
+                        ALTER TABLE ""RoomTypes"" ADD COLUMN ""RoomCount"" INTEGER DEFAULT 1 NOT NULL;
+                    END IF;
+                END $$;
+            ");
+        }
+        catch
+        {
+            // Ignore errors - column may already exist or table may not exist yet
+        }
+    }
+
+    /// <summary>
+    /// Apply schema updates for SQLite that migrations may have missed
+    /// </summary>
+    private static void ApplySqliteSchemaUpdates(BnBDbContext dbContext)
+    {
+        // SQLite doesn't support checking if column exists easily, so we try to add and catch errors
+        try
+        {
+            // Add Category column to Checks if it doesn't exist
+            dbContext.Database.ExecuteSqlRaw("ALTER TABLE Checks ADD COLUMN Category TEXT");
+        }
+        catch
+        {
+            // Column already exists
+        }
+
+        try
+        {
+            // Add ConfirmationNumber column to Checks if it doesn't exist
+            dbContext.Database.ExecuteSqlRaw("ALTER TABLE Checks ADD COLUMN ConfirmationNumber INTEGER DEFAULT 0");
+        }
+        catch
+        {
+            // Column already exists
         }
     }
 }

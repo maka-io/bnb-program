@@ -299,8 +299,15 @@ namespace BnB.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Category")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Comments")
                         .HasColumnType("TEXT");
+
+                    b.Property<long>("ConfirmationNumber")
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsVoid")
                         .HasColumnType("INTEGER");
@@ -764,6 +771,11 @@ namespace BnB.Data.Migrations
 
                     b.Property<int>("PropertyAccountNumber")
                         .HasColumnType("INTEGER");
+
+                    b.Property<int>("RoomCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(1);
 
                     b.HasKey("Id");
 
