@@ -12,6 +12,7 @@ public class RoomType
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public decimal? DefaultRate { get; set; }
+    public int RoomCount { get; set; } = 1;  // Number of rooms of this type
 
     [NotMapped]
     public bool IsActive { get; set; } = true;  // Not in database

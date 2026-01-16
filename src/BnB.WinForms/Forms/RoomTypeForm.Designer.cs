@@ -26,6 +26,10 @@ partial class RoomTypeForm
         txtRoomType = new TextBox();
         lblDescription = new Label();
         txtDescription = new TextBox();
+        lblDefaultRate = new Label();
+        txtDefaultRate = new TextBox();
+        lblRoomCount = new Label();
+        nudRoomCount = new NumericUpDown();
         pnlButtons = new Panel();
         btnAdd = new Button();
         btnEdit = new Button();
@@ -36,6 +40,7 @@ partial class RoomTypeForm
         grpRoomTypes.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dgvRoomTypes).BeginInit();
         grpDetails.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)nudRoomCount).BeginInit();
         pnlButtons.SuspendLayout();
         SuspendLayout();
         //
@@ -49,10 +54,11 @@ partial class RoomTypeForm
         //
         // cboProperty
         //
+        cboProperty.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
         cboProperty.DropDownStyle = ComboBoxStyle.DropDownList;
         cboProperty.Location = new Point(80, 12);
         cboProperty.Name = "cboProperty";
-        cboProperty.Size = new Size(300, 23);
+        cboProperty.Size = new Size(400, 23);
         cboProperty.TabIndex = 0;
         cboProperty.SelectedIndexChanged += cboProperty_SelectedIndexChanged;
         //
@@ -62,7 +68,7 @@ partial class RoomTypeForm
         grpRoomTypes.Controls.Add(dgvRoomTypes);
         grpRoomTypes.Location = new Point(12, 45);
         grpRoomTypes.Name = "grpRoomTypes";
-        grpRoomTypes.Size = new Size(410, 200);
+        grpRoomTypes.Size = new Size(476, 240);
         grpRoomTypes.TabIndex = 1;
         grpRoomTypes.TabStop = false;
         grpRoomTypes.Text = "Room Types";
@@ -80,7 +86,7 @@ partial class RoomTypeForm
         dgvRoomTypes.ReadOnly = true;
         dgvRoomTypes.RowHeadersWidth = 25;
         dgvRoomTypes.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        dgvRoomTypes.Size = new Size(390, 168);
+        dgvRoomTypes.Size = new Size(456, 208);
         dgvRoomTypes.TabIndex = 0;
         dgvRoomTypes.SelectionChanged += dgvRoomTypes_SelectionChanged;
         //
@@ -91,9 +97,13 @@ partial class RoomTypeForm
         grpDetails.Controls.Add(txtRoomType);
         grpDetails.Controls.Add(lblDescription);
         grpDetails.Controls.Add(txtDescription);
-        grpDetails.Location = new Point(12, 251);
+        grpDetails.Controls.Add(lblDefaultRate);
+        grpDetails.Controls.Add(txtDefaultRate);
+        grpDetails.Controls.Add(lblRoomCount);
+        grpDetails.Controls.Add(nudRoomCount);
+        grpDetails.Location = new Point(12, 291);
         grpDetails.Name = "grpDetails";
-        grpDetails.Size = new Size(410, 100);
+        grpDetails.Size = new Size(476, 100);
         grpDetails.TabIndex = 2;
         grpDetails.TabStop = false;
         grpDetails.Text = "Room Type Details";
@@ -130,8 +140,45 @@ partial class RoomTypeForm
         txtDescription.Location = new Point(100, 57);
         txtDescription.MaxLength = 100;
         txtDescription.Name = "txtDescription";
-        txtDescription.Size = new Size(300, 23);
+        txtDescription.Size = new Size(366, 23);
         txtDescription.TabIndex = 1;
+        //
+        // lblDefaultRate
+        //
+        lblDefaultRate.AutoSize = true;
+        lblDefaultRate.Location = new Point(230, 28);
+        lblDefaultRate.Name = "lblDefaultRate";
+        lblDefaultRate.Size = new Size(75, 15);
+        lblDefaultRate.Text = "Default Rate:";
+        //
+        // txtDefaultRate
+        //
+        txtDefaultRate.Enabled = false;
+        txtDefaultRate.Location = new Point(310, 25);
+        txtDefaultRate.MaxLength = 10;
+        txtDefaultRate.Name = "txtDefaultRate";
+        txtDefaultRate.Size = new Size(80, 23);
+        txtDefaultRate.TabIndex = 2;
+        txtDefaultRate.TextAlign = HorizontalAlignment.Right;
+        //
+        // lblRoomCount
+        //
+        lblRoomCount.AutoSize = true;
+        lblRoomCount.Location = new Point(400, 28);
+        lblRoomCount.Name = "lblRoomCount";
+        lblRoomCount.Size = new Size(41, 15);
+        lblRoomCount.Text = "Rooms:";
+        //
+        // nudRoomCount
+        //
+        nudRoomCount.Enabled = false;
+        nudRoomCount.Location = new Point(445, 25);
+        nudRoomCount.Maximum = new decimal(new int[] { 999, 0, 0, 0 });
+        nudRoomCount.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+        nudRoomCount.Name = "nudRoomCount";
+        nudRoomCount.Size = new Size(50, 23);
+        nudRoomCount.TabIndex = 3;
+        nudRoomCount.Value = new decimal(new int[] { 1, 0, 0, 0 });
         //
         // pnlButtons
         //
@@ -142,9 +189,9 @@ partial class RoomTypeForm
         pnlButtons.Controls.Add(btnSave);
         pnlButtons.Controls.Add(btnCancel);
         pnlButtons.Controls.Add(btnClose);
-        pnlButtons.Location = new Point(12, 357);
+        pnlButtons.Location = new Point(12, 397);
         pnlButtons.Name = "pnlButtons";
-        pnlButtons.Size = new Size(410, 35);
+        pnlButtons.Size = new Size(476, 40);
         pnlButtons.TabIndex = 3;
         //
         // btnAdd
@@ -196,9 +243,10 @@ partial class RoomTypeForm
         //
         // btnClose
         //
-        btnClose.Location = new Point(350, 5);
+        btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        btnClose.Location = new Point(406, 5);
         btnClose.Name = "btnClose";
-        btnClose.Size = new Size(60, 28);
+        btnClose.Size = new Size(70, 28);
         btnClose.TabIndex = 5;
         btnClose.Text = "C&lose";
         btnClose.Click += btnClose_Click;
@@ -207,15 +255,16 @@ partial class RoomTypeForm
         //
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(434, 401);
+        ClientSize = new Size(500, 450);
         Controls.Add(lblProperty);
         Controls.Add(cboProperty);
         Controls.Add(grpRoomTypes);
         Controls.Add(grpDetails);
         Controls.Add(pnlButtons);
-        FormBorderStyle = FormBorderStyle.FixedSingle;
-        MaximizeBox = false;
-        MinimizeBox = false;
+        FormBorderStyle = FormBorderStyle.Sizable;
+        MaximizeBox = true;
+        MinimizeBox = true;
+        MinimumSize = new Size(450, 400);
         Name = "RoomTypeForm";
         StartPosition = FormStartPosition.CenterParent;
         Text = "Room Types";
@@ -224,6 +273,7 @@ partial class RoomTypeForm
         ((System.ComponentModel.ISupportInitialize)dgvRoomTypes).EndInit();
         grpDetails.ResumeLayout(false);
         grpDetails.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)nudRoomCount).EndInit();
         pnlButtons.ResumeLayout(false);
         ResumeLayout(false);
         PerformLayout();
@@ -240,6 +290,10 @@ partial class RoomTypeForm
     private TextBox txtRoomType;
     private Label lblDescription;
     private TextBox txtDescription;
+    private Label lblDefaultRate;
+    private TextBox txtDefaultRate;
+    private Label lblRoomCount;
+    private NumericUpDown nudRoomCount;
     private Panel pnlButtons;
     private Button btnAdd;
     private Button btnEdit;

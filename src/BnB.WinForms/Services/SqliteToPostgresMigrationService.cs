@@ -155,7 +155,38 @@ public class SqliteToPostgresMigrationService
 
     private void MigrateCompanyInfo(BnBDbContext source, BnBDbContext target)
     {
-        var items = FixDateTimeKinds(source.CompanyInfo.AsNoTracking().ToList());
+        // Use raw SQL to handle missing Logo column in older databases
+        var connection = source.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT Id, CompanyName, Address, City, State, ZipCode, Phone, Fax, Email, WebUrl
+            FROM CompanyInfo";
+
+        var items = new List<CompanyInfo>();
+        using (var reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                items.Add(new CompanyInfo
+                {
+                    Id = reader.GetInt32(0),
+                    CompanyName = reader.IsDBNull(1) ? null : reader.GetString(1),
+                    Address = reader.IsDBNull(2) ? null : reader.GetString(2),
+                    City = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    State = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    ZipCode = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    Phone = reader.IsDBNull(6) ? null : reader.GetString(6),
+                    Fax = reader.IsDBNull(7) ? null : reader.GetString(7),
+                    Email = reader.IsDBNull(8) ? null : reader.GetString(8),
+                    WebUrl = reader.IsDBNull(9) ? null : reader.GetString(9),
+                    Logo = null // Logo column may not exist in source
+                });
+            }
+        }
+
         if (items.Count == 0) return;
 
         foreach (var item in items)
@@ -275,7 +306,50 @@ public class SqliteToPostgresMigrationService
 
     private void MigrateRoomTypes(BnBDbContext source, BnBDbContext target)
     {
-        var items = FixDateTimeKinds(source.RoomTypes.AsNoTracking().ToList());
+        // Use raw SQL to handle missing RoomCount column in older databases
+        var connection = source.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            connection.Open();
+
+        // Check if RoomCount column exists in source database
+        bool hasRoomCount = false;
+        using (var checkCmd = connection.CreateCommand())
+        {
+            checkCmd.CommandText = "PRAGMA table_info(RoomTypes)";
+            using var checkReader = checkCmd.ExecuteReader();
+            while (checkReader.Read())
+            {
+                var columnName = checkReader.GetString(1);
+                if (columnName.Equals("RoomCount", StringComparison.OrdinalIgnoreCase))
+                {
+                    hasRoomCount = true;
+                    break;
+                }
+            }
+        }
+
+        using var command = connection.CreateCommand();
+        command.CommandText = hasRoomCount
+            ? "SELECT Id, PropertyAccountNumber, Name, Description, DefaultRate, RoomCount FROM RoomTypes"
+            : "SELECT Id, PropertyAccountNumber, Name, Description, DefaultRate FROM RoomTypes";
+
+        var items = new List<RoomType>();
+        using (var reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                items.Add(new RoomType
+                {
+                    Id = reader.GetInt32(0),
+                    PropertyAccountNumber = reader.GetInt32(1),
+                    Name = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                    Description = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    DefaultRate = reader.IsDBNull(4) ? null : reader.GetDecimal(4),
+                    RoomCount = hasRoomCount && !reader.IsDBNull(5) ? reader.GetInt32(5) : 1
+                });
+            }
+        }
+
         if (items.Count == 0) return;
 
         foreach (var item in items)
@@ -320,7 +394,42 @@ public class SqliteToPostgresMigrationService
 
     private void MigrateChecks(BnBDbContext source, BnBDbContext target)
     {
-        var items = FixDateTimeKinds(source.Checks.AsNoTracking().ToList());
+        // Use raw SQL to handle missing Category/ConfirmationNumber columns in older databases
+        var connection = source.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            connection.Open();
+
+        using var command = connection.CreateCommand();
+        // Join with Accommodations to get ConfirmationNumber since it may not exist in Checks table
+        command.CommandText = @"
+            SELECT c.Id, c.AccommodationId, a.ConfirmationNumber, c.CheckNumber, c.Amount,
+                   c.CheckDate, c.PayableTo, c.Memo, c.IsVoid, c.Comments
+            FROM Checks c
+            LEFT JOIN Accommodations a ON c.AccommodationId = a.Id";
+
+        var items = new List<Check>();
+        using (var reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                items.Add(new Check
+                {
+                    Id = reader.GetInt32(0),
+                    AccommodationId = reader.GetInt32(1),
+                    ConfirmationNumber = reader.IsDBNull(2) ? 0 : reader.GetInt64(2),
+                    CheckNumber = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                    Amount = reader.GetDecimal(4),
+                    CheckDate = reader.IsDBNull(5) ? null : reader.GetDateTime(5),
+                    PayableTo = reader.IsDBNull(6) ? null : reader.GetString(6),
+                    Memo = reader.IsDBNull(7) ? null : reader.GetString(7),
+                    IsVoid = !reader.IsDBNull(8) && reader.GetBoolean(8),
+                    Comments = reader.IsDBNull(9) ? null : reader.GetString(9),
+                    Category = null // Category column may not exist in source
+                });
+            }
+        }
+
+        items = FixDateTimeKinds(items);
         if (items.Count == 0) return;
 
         foreach (var item in items)

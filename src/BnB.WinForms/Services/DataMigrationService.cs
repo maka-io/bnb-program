@@ -290,24 +290,49 @@ public class DataMigrationService
         // Get valid property account numbers
         var validProperties = await _context.Properties.Select(p => p.AccountNumber).ToListAsync();
 
-        DataTable table;
+        DataTable? table = null;
+        bool isLinkTable = false;
+        string? tableUsed = null;
+        var errors = new List<string>();
+
+        // Try HostAccount_RoomType_Link first (the actual table name used in original VB5 app)
         try
         {
-            // Try roomtbl first
-            table = reader.ReadTable("roomtbl");
+            table = reader.ReadTable("HostAccount_RoomType_Link");
+            isLinkTable = true;
+            tableUsed = "HostAccount_RoomType_Link";
         }
-        catch
+        catch (Exception ex)
         {
+            errors.Add($"HostAccount_RoomType_Link: {ex.Message}");
+            // Fall back to other possible table names
             try
             {
-                // Try hostaccount_roomtype_link
-                table = reader.ReadTable("hostaccount_roomtype_link");
+                table = reader.ReadTable("roomtbl");
+                tableUsed = "roomtbl";
             }
-            catch
+            catch (Exception ex2)
             {
-                return 0;
+                errors.Add($"roomtbl: {ex2.Message}");
+                try
+                {
+                    table = reader.ReadTable("hostaccount_roomtype_link");
+                    isLinkTable = true;
+                    tableUsed = "hostaccount_roomtype_link";
+                }
+                catch (Exception ex3)
+                {
+                    errors.Add($"hostaccount_roomtype_link: {ex3.Message}");
+                    // Log all errors for debugging
+                    System.Diagnostics.Debug.WriteLine($"Room Types migration - no table found. Errors: {string.Join("; ", errors)}");
+                    return 0;
+                }
             }
         }
+
+        if (table == null) return 0;
+
+        System.Diagnostics.Debug.WriteLine($"Room Types migration - using table: {tableUsed}, rows: {table.Rows.Count}, columns: {string.Join(", ", table.Columns.Cast<DataColumn>().Select(c => c.ColumnName))}");
 
         var count = 0;
         var total = table.Rows.Count;
@@ -317,12 +342,30 @@ public class DataMigrationService
             var accountNum = AccessDataReader.GetInt(row, "accountnum");
             if (!validProperties.Contains(accountNum)) continue;
 
+            string? name;
+            string? description;
+
+            if (isLinkTable)
+            {
+                // HostAccount_RoomType_Link uses RoomType (integer) and RoomType_Desc columns
+                var roomTypeNum = AccessDataReader.GetInt(row, "roomtype", 0);
+                name = roomTypeNum > 0 ? roomTypeNum.ToString() : "Room";
+                description = AccessDataReader.GetString(row, "roomtype_desc");
+            }
+            else
+            {
+                // Other table formats use unitname/roomname columns
+                name = AccessDataReader.GetString(row, "unitname") ?? AccessDataReader.GetString(row, "roomname") ?? "Room";
+                description = AccessDataReader.GetString(row, "description") ?? AccessDataReader.GetString(row, "unitnamedesc");
+            }
+
             var roomType = new RoomType
             {
                 PropertyAccountNumber = accountNum,
-                Name = AccessDataReader.GetString(row, "unitname") ?? AccessDataReader.GetString(row, "roomname") ?? "Room",
-                Description = AccessDataReader.GetString(row, "description") ?? AccessDataReader.GetString(row, "unitnamedesc"),
-                DefaultRate = AccessDataReader.GetNullableDecimal(row, "rate") ?? AccessDataReader.GetNullableDecimal(row, "defaultrate")
+                Name = name ?? "Room",
+                Description = description,
+                DefaultRate = AccessDataReader.GetNullableDecimal(row, "rate") ?? AccessDataReader.GetNullableDecimal(row, "defaultrate"),
+                RoomCount = 1 // Default to 1, user can adjust as needed
             };
 
             _context.RoomTypes.Add(roomType);

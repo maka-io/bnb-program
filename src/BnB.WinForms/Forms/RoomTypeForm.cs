@@ -58,9 +58,26 @@ public partial class RoomTypeForm : Form
 
     private void LoadRoomTypes()
     {
-        if (cboProperty.SelectedValue == null || cboProperty.SelectedValue is not int accountNum) return;
+        if (cboProperty.SelectedValue == null) return;
+
+        // Handle both int and boxed int types
+        int accountNum;
+        if (cboProperty.SelectedValue is int intVal)
+            accountNum = intVal;
+        else if (int.TryParse(cboProperty.SelectedValue.ToString(), out int parsed))
+            accountNum = parsed;
+        else
+            return;
 
         _currentPropertyAccountNum = accountNum;
+
+        // Check total room types in database for debugging
+        var totalRoomTypes = _dbContext.RoomTypes.Count();
+        var roomTypesForProperty = _dbContext.RoomTypes
+            .Where(r => r.PropertyAccountNumber == _currentPropertyAccountNum)
+            .Count();
+
+        System.Diagnostics.Debug.WriteLine($"RoomTypeForm: Total room types in DB: {totalRoomTypes}, For property {_currentPropertyAccountNum}: {roomTypesForProperty}");
 
         _roomTypes = _dbContext.RoomTypes
             .Where(r => r.PropertyAccountNumber == _currentPropertyAccountNum)
@@ -72,6 +89,9 @@ public partial class RoomTypeForm : Form
 
         ConfigureGrid();
         UpdateButtonStates();
+
+        // Update group box title to show count
+        grpRoomTypes.Text = $"Room Types ({_roomTypes.Count})";
     }
 
     private void ConfigureGrid()
@@ -111,6 +131,8 @@ public partial class RoomTypeForm : Form
 
         txtRoomType.Clear();
         txtDescription.Clear();
+        txtDefaultRate.Clear();
+        nudRoomCount.Value = 1;
         txtRoomType.Focus();
         SetEditMode(true);
     }
@@ -124,6 +146,8 @@ public partial class RoomTypeForm : Form
 
         txtRoomType.Text = roomType.Name;
         txtDescription.Text = roomType.Description;
+        txtDefaultRate.Text = roomType.DefaultRate?.ToString("F2") ?? "";
+        nudRoomCount.Value = roomType.RoomCount > 0 ? roomType.RoomCount : 1;
         SetEditMode(true);
     }
 
@@ -166,6 +190,20 @@ public partial class RoomTypeForm : Form
             return;
         }
 
+        // Parse default rate
+        decimal? defaultRate = null;
+        if (!string.IsNullOrWhiteSpace(txtDefaultRate.Text))
+        {
+            if (!decimal.TryParse(txtDefaultRate.Text, out var rate))
+            {
+                MessageBox.Show("Please enter a valid default rate.", "Validation",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtDefaultRate.Focus();
+                return;
+            }
+            defaultRate = rate;
+        }
+
         try
         {
             RoomType? roomType = null;
@@ -199,6 +237,8 @@ public partial class RoomTypeForm : Form
             }
 
             roomType.Description = txtDescription.Text.Trim();
+            roomType.DefaultRate = defaultRate;
+            roomType.RoomCount = (int)nudRoomCount.Value;
             _dbContext.SaveChanges();
 
             LoadRoomTypes();
@@ -215,6 +255,8 @@ public partial class RoomTypeForm : Form
     {
         txtRoomType.Clear();
         txtDescription.Clear();
+        txtDefaultRate.Clear();
+        nudRoomCount.Value = 1;
         SetEditMode(false);
     }
 
@@ -232,6 +274,8 @@ public partial class RoomTypeForm : Form
     {
         txtRoomType.Enabled = editing;
         txtDescription.Enabled = editing;
+        txtDefaultRate.Enabled = editing;
+        nudRoomCount.Enabled = editing;
         btnSave.Enabled = editing;
         btnCancel.Enabled = editing;
         btnAdd.Enabled = !editing;

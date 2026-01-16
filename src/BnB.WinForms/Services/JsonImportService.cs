@@ -368,22 +368,47 @@ public class JsonImportService
         Report("Importing Room Types...");
         var validProperties = await _context.Properties.Select(p => p.AccountNumber).ToListAsync();
 
+        // Try roomtbl first
         var items = await ReadJsonFileAsync("roomtbl");
+        bool isLinkTable = false;
+
         if (items.Count == 0)
+        {
+            // Try HostAccount_RoomType_Link table (actual table name used in original VB5 app)
             items = await ReadJsonFileAsync("hostaccount_roomtype_link");
+            isLinkTable = true;
+        }
 
         var count = 0;
         foreach (var el in items)
         {
-            var accountNum = GetInt(el, "accountnum", "AccountNumber");
+            var accountNum = GetInt(el, "accountnum", "AccountNum", "AccountNumber");
             if (!validProperties.Contains(accountNum)) continue;
+
+            string name;
+            string? description;
+
+            if (isLinkTable)
+            {
+                // HostAccount_RoomType_Link uses RoomType (integer) and RoomType_Desc columns
+                var roomTypeNum = GetInt(el, "RoomType", "roomtype");
+                name = roomTypeNum > 0 ? roomTypeNum.ToString() : "Room";
+                description = GetString(el, "RoomType_Desc", "roomtype_desc", "Description");
+            }
+            else
+            {
+                // Other table formats use unitname/roomname columns
+                name = GetString(el, "unitname", "roomname", "Name") ?? "Room";
+                description = GetString(el, "description", "unitnamedesc", "Description");
+            }
 
             var roomType = new RoomType
             {
                 PropertyAccountNumber = accountNum,
-                Name = GetString(el, "unitname", "roomname", "Name") ?? "Room",
-                Description = GetString(el, "description", "unitnamedesc", "Description"),
-                DefaultRate = GetNullableDecimal(el, "rate", "defaultrate", "DefaultRate")
+                Name = name,
+                Description = description,
+                DefaultRate = GetNullableDecimal(el, "rate", "defaultrate", "DefaultRate"),
+                RoomCount = 1
             };
             _context.RoomTypes.Add(roomType);
             count++;

@@ -246,5 +246,15 @@ static class Program
         {
             // Column already exists
         }
+
+        try
+        {
+            // Add RoomCount column to RoomTypes if it doesn't exist
+            dbContext.Database.ExecuteSqlRaw("ALTER TABLE RoomTypes ADD COLUMN RoomCount INTEGER DEFAULT 1");
+        }
+        catch
+        {
+            // Column already exists
+        }
     }
 }
