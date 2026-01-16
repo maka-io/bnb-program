@@ -1,3 +1,5 @@
+using BnB.WinForms.UI;
+
 namespace BnB.WinForms.Forms;
 
 /// <summary>
@@ -29,6 +31,8 @@ public partial class ExportDialogForm : Form
 
     private void ExportDialogForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
+
         // Set default file name
         var defaultPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),

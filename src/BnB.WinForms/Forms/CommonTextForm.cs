@@ -1,5 +1,6 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -24,6 +25,8 @@ public partial class CommonTextForm : Form
 
     private void CommonTextForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
+
         LoadCommonTexts();
         SetEditMode(false);
     }

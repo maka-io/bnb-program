@@ -1,3 +1,5 @@
+using BnB.WinForms.UI;
+
 namespace BnB.WinForms.Forms;
 
 /// <summary>
@@ -23,6 +25,8 @@ public partial class ListingSortOptionsForm : Form
 
     private void ListingSortOptionsForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
+
         // Store original descending state
         _originalDescending = chkDescending.Checked;
 

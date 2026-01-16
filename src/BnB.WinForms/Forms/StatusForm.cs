@@ -1,5 +1,6 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -20,6 +21,8 @@ public partial class StatusForm : Form
 
     private void StatusForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
+
         LoadStatus();
     }
 

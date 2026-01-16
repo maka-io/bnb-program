@@ -2,6 +2,7 @@ using BnB.Core.Enums;
 using BnB.Core.Models;
 using BnB.Data.Context;
 using BnB.WinForms.Services;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -31,6 +32,8 @@ public partial class CarRentalBookingForm : Form
 
     private void CarRentalBookingForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
+
         LoadRentals();
         SetupDataBindings();
         SetMode(FormMode.Browse);

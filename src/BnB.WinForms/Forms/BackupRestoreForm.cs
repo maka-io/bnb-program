@@ -1,3 +1,5 @@
+using BnB.WinForms.UI;
+
 namespace BnB.WinForms.Forms;
 
 /// <summary>
@@ -19,6 +21,8 @@ public partial class BackupRestoreForm : Form
 
     private void BackupRestoreForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
+
         if (_isRestoreMode)
         {
             Text = "Database Restore Dialog Box";

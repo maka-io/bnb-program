@@ -1,6 +1,7 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
 using BnB.WinForms.Reports;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -22,6 +23,8 @@ public partial class RefundForm : Form
 
     private void RefundForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
+
         LoadRefunds();
     }
 

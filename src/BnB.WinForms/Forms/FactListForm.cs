@@ -1,5 +1,6 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -22,6 +23,8 @@ public partial class FactListForm : Form
 
     private void FactListForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
+
         LoadCategories();
         LoadFacts();
     }

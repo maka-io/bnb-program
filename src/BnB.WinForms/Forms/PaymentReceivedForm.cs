@@ -1,6 +1,7 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
 using BnB.WinForms.Reports;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -22,6 +23,8 @@ public partial class PaymentReceivedForm : Form
 
     private void PaymentReceivedForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
+
         // Default to current month
         dtpStartDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
         dtpEndDate.Value = dtpStartDate.Value.AddMonths(1).AddDays(-1);

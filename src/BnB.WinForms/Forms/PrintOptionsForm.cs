@@ -1,3 +1,5 @@
+using BnB.WinForms.UI;
+
 namespace BnB.WinForms.Forms;
 
 /// <summary>
@@ -30,6 +32,8 @@ public partial class PrintOptionsForm : Form
 
     private void PrintOptionsForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
+
         // Set default range
         txtFirstRow.Text = "1";
         txtLastRow.Text = _maxRows.ToString();

@@ -1,6 +1,7 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
 using BnB.WinForms.Reports;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -240,6 +241,8 @@ public partial class MailingLabelsForm : Form
 
     private void MailingLabelsForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
+
         UpdateFilterVisibility();
     }
 

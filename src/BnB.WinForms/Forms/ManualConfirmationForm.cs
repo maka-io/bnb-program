@@ -1,4 +1,5 @@
 using BnB.Data.Context;
+using BnB.WinForms.UI;
 
 namespace BnB.WinForms.Forms;
 
@@ -21,6 +22,8 @@ public partial class ManualConfirmationForm : Form
 
     private void ManualConfirmationForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
+
         UpdateButtons();
     }
 

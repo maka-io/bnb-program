@@ -1,5 +1,6 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
+using BnB.WinForms.UI;
 
 namespace BnB.WinForms.Forms;
 
@@ -21,6 +22,8 @@ public partial class CheckNumberForm : Form
 
     private void CheckNumberForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
+
         LoadConfig();
         SetEditMode(false);
     }

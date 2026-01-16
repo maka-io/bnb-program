@@ -1,6 +1,7 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
 using BnB.WinForms.Reports;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -22,6 +23,8 @@ public partial class TrendGraphForm : Form
 
     private void TrendGraphForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
+
         // Default to past 12 months
         dtpStartDate.Value = DateTime.Now.AddMonths(-11);
         dtpEndDate.Value = DateTime.Now;

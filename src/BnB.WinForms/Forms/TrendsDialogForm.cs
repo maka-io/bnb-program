@@ -1,4 +1,5 @@
 using BnB.Data.Context;
+using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
 namespace BnB.WinForms.Forms;
@@ -28,6 +29,8 @@ public partial class TrendsDialogForm : Form
 
     private void TrendsDialogForm_Load(object sender, EventArgs e)
     {
+        this.ApplyTheme();
+
         // Set defaults
         optRoomNights.Checked = true;
         optProperty.Checked = true;
