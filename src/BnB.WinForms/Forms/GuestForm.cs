@@ -18,12 +18,14 @@ public partial class GuestForm : Form
 
     private FormMode _currentMode = FormMode.Browse;
     private Guest? _currentGuest;
+    private long? _initialConfirmationNumber;
 
-    public GuestForm(BnBDbContext dbContext)
+    public GuestForm(BnBDbContext dbContext, long? confirmationNumber = null)
     {
         _dbContext = dbContext;
         _stateManager = new FormStateManager();
         _bindingSource = new BindingSource();
+        _initialConfirmationNumber = confirmationNumber;
 
         InitializeComponent();
     }
@@ -36,6 +38,24 @@ public partial class GuestForm : Form
         LoadGuests();
         SetupDataBindings();
         SetMode(FormMode.Browse);
+
+        // Navigate to specific guest if confirmation number was provided
+        if (_initialConfirmationNumber.HasValue)
+        {
+            NavigateToGuest(_initialConfirmationNumber.Value);
+        }
+    }
+
+    private void NavigateToGuest(long confirmationNumber)
+    {
+        for (int i = 0; i < _bindingSource.Count; i++)
+        {
+            if (_bindingSource[i] is Guest guest && guest.ConfirmationNumber == confirmationNumber)
+            {
+                _bindingSource.Position = i;
+                break;
+            }
+        }
     }
 
     private void SetupDataBindings()

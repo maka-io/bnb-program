@@ -1,4 +1,5 @@
 using BnB.Core.Models;
+using BnB.WinForms.Forms;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -10,9 +11,9 @@ namespace BnB.WinForms.Reports;
 /// </summary>
 public class PaymentReceivableReport : BaseReport
 {
-    private readonly List<Accommodation> _receivables;
+    private readonly List<PaymentReceivableData> _receivables;
 
-    public PaymentReceivableReport(List<Accommodation> receivables, CompanyInfo? companyInfo = null)
+    public PaymentReceivableReport(List<PaymentReceivableData> receivables, CompanyInfo? companyInfo = null)
     {
         CompanyInfo = companyInfo;
         _receivables = receivables;
@@ -45,9 +46,8 @@ public class PaymentReceivableReport : BaseReport
                 return;
             }
 
-            var today = DateTime.Today;
-            var pastDue = _receivables.Where(a => a.ArrivalDate < today).ToList();
-            var upcoming = _receivables.Where(a => a.ArrivalDate >= today).ToList();
+            var pastDue = _receivables.Where(a => a.DaysUntilArrival < 0).ToList();
+            var upcoming = _receivables.Where(a => a.DaysUntilArrival >= 0).ToList();
 
             column.Item().PaddingBottom(10).Row(row =>
             {
@@ -81,17 +81,17 @@ public class PaymentReceivableReport : BaseReport
                     header.Cell().TableHeader().AlignRight().Text("Total").TableHeaderText();
                     header.Cell().TableHeader().AlignRight().Text("Paid").TableHeaderText();
                     header.Cell().TableHeader().AlignRight().Text("Balance").TableHeaderText();
-                    header.Cell().TableHeader().AlignCenter().Text("Days").TableHeaderText();
+                    header.Cell().TableHeader().AlignCenter().Text("Days Until").TableHeaderText();
                 });
 
                 bool alternate = false;
+                decimal totalCharges = 0;
+                decimal totalPaid = 0;
                 decimal totalBalance = 0;
 
                 foreach (var rec in _receivables.OrderBy(a => a.ArrivalDate))
                 {
-                    var daysUntil = (rec.ArrivalDate - today).Days;
-                    var isPastDue = daysUntil < 0;
-                    var balance = rec.BalanceDue ?? 0;
+                    var isPastDue = rec.DaysUntilArrival < 0;
 
                     var textContainer = table.Cell().TableCell(alternate);
                     if (isPastDue)
@@ -106,7 +106,7 @@ public class PaymentReceivableReport : BaseReport
                     textContainer = table.Cell().TableCell(alternate);
                     if (isPastDue)
                         textContainer = textContainer.Background("#ffeeee");
-                    textContainer.Text(SafeString(rec.Property?.Location)).TableCellText();
+                    textContainer.Text(SafeString(rec.PropertyName)).TableCellText();
 
                     textContainer = table.Cell().TableCell(alternate);
                     if (isPastDue)
@@ -131,19 +131,23 @@ public class PaymentReceivableReport : BaseReport
                     textContainer = table.Cell().CurrencyCell(alternate);
                     if (isPastDue)
                         textContainer = textContainer.Background("#ffeeee");
-                    textContainer.Text(FormatCurrency(balance)).FontColor("#cc0000").TableCellText();
+                    textContainer.Text(FormatCurrency(rec.BalanceDue)).FontColor("#cc0000").TableCellText();
 
                     textContainer = table.Cell().TableCell(alternate);
                     if (isPastDue)
                         textContainer = textContainer.Background("#ffeeee");
-                    textContainer.AlignCenter().Text(daysUntil.ToString()).TableCellText();
+                    textContainer.AlignCenter().Text(rec.DaysUntilArrival.ToString()).TableCellText();
 
-                    totalBalance += balance;
+                    totalCharges += rec.TotalCharges;
+                    totalPaid += rec.TotalPaid;
+                    totalBalance += rec.BalanceDue;
                     alternate = !alternate;
                 }
 
-                // Total row
-                table.Cell().ColumnSpan(7).TotalsRow().AlignRight().Text("Total Balance Due:").Bold();
+                // Totals rows
+                table.Cell().ColumnSpan(5).TotalsRow().AlignRight().Text("Totals:").Bold();
+                table.Cell().TotalsRow().AlignRight().Text(FormatCurrency(totalCharges)).Bold();
+                table.Cell().TotalsRow().AlignRight().Text(FormatCurrency(totalPaid)).Bold();
                 table.Cell().TotalsRow().AlignRight().Text(FormatCurrency(totalBalance)).Bold().FontColor("#cc0000");
                 table.Cell().TotalsRow();
             });

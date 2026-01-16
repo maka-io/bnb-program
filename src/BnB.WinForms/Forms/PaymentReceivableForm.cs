@@ -7,6 +7,23 @@ using Microsoft.EntityFrameworkCore;
 namespace BnB.WinForms.Forms;
 
 /// <summary>
+/// Data transfer object for payment receivable records
+/// </summary>
+public class PaymentReceivableData
+{
+    public long ConfirmationNumber { get; set; }
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public DateTime ArrivalDate { get; set; }
+    public DateTime DepartureDate { get; set; }
+    public string? PropertyName { get; set; }
+    public decimal TotalCharges { get; set; }
+    public decimal TotalPaid { get; set; }
+    public decimal BalanceDue { get; set; }
+    public int DaysUntilArrival { get; set; }
+}
+
+/// <summary>
 /// Payments receivable form - migrated from PayRecv.frm
 /// Shows payments that are due/receivable.
 /// </summary>
@@ -24,7 +41,26 @@ public partial class PaymentReceivableForm : Form
     private void PaymentReceivableForm_Load(object sender, EventArgs e)
     {
         this.ApplyTheme();
+
+        // Default date range to current year
+        var currentYear = DateTime.Today.Year;
+        dtpDateFrom.Value = new DateTime(currentYear, 1, 1);
+        dtpDateTo.Value = new DateTime(currentYear, 12, 31);
+
         LoadPaymentsReceivable();
+    }
+
+    private void dtpDateRange_ValueChanged(object sender, EventArgs e)
+    {
+        LoadPaymentsReceivable();
+    }
+
+    private void btnReset_Click(object sender, EventArgs e)
+    {
+        var currentYear = DateTime.Today.Year;
+        dtpDateFrom.Value = new DateTime(currentYear, 1, 1);
+        dtpDateTo.Value = new DateTime(currentYear, 12, 31);
+        chkIncludePastArrivals.Checked = false;
     }
 
     private void LoadPaymentsReceivable()
@@ -32,14 +68,23 @@ public partial class PaymentReceivableForm : Form
         // Note: BalanceDue and TotalCharges are computed properties not in DB
         // We compute balance by comparing TotalGrossWithTax against payments
         var today = DateTime.Today;
+        var includePastArrivals = chkIncludePastArrivals.Checked;
+        var dateFrom = dtpDateFrom.Value.Date;
+        var dateTo = dtpDateTo.Value.Date;
 
-        // Get all accommodations first (SQLite can't do Sum on decimal in subquery)
-        var accommodations = _dbContext.Accommodations
+        // Get accommodations - filter by date range and arrival date
+        var accommodationsQuery = _dbContext.Accommodations
             .Include(a => a.Property)
             .Include(a => a.Guest)
-            .Where(a => a.ArrivalDate >= today.AddMonths(-6)) // Reasonable date range
-            .OrderBy(a => a.ArrivalDate)
-            .ToList();
+            .Where(a => a.ArrivalDate >= dateFrom && a.ArrivalDate <= dateTo)
+            .AsQueryable();
+
+        if (!includePastArrivals)
+        {
+            accommodationsQuery = accommodationsQuery.Where(a => a.ArrivalDate >= today);
+        }
+
+        var accommodations = accommodationsQuery.ToList();
 
         // Get all payments and group by confirmation number (client-side)
         var paymentsByConf = _dbContext.Payments
@@ -48,7 +93,7 @@ public partial class PaymentReceivableForm : Form
             .ToDictionary(g => g.Key, g => g.Sum(p => p.Amount));
 
         // Build the result with computed values (all on client side)
-        var receivables = accommodations
+        var allReceivables = accommodations
             .Select(a => new
             {
                 a.Id,
@@ -66,6 +111,11 @@ public partial class PaymentReceivableForm : Form
             .Where(a => a.BalanceDue > 0)
             .ToList();
 
+        // Sort: upcoming arrivals first (soonest first), then past arrivals (most recent first)
+        var upcoming = allReceivables.Where(a => a.DaysUntilArrival >= 0).OrderBy(a => a.ArrivalDate);
+        var past = allReceivables.Where(a => a.DaysUntilArrival < 0).OrderByDescending(a => a.ArrivalDate);
+        var receivables = upcoming.Concat(past).ToList();
+
         _bindingSource.DataSource = receivables;
         dgvReceivables.DataSource = _bindingSource;
         ConfigureGrid();
@@ -75,6 +125,12 @@ public partial class PaymentReceivableForm : Form
     private void ConfigureGrid()
     {
         if (dgvReceivables.Columns.Count == 0) return;
+
+        // Disable automatic sorting on all columns to preserve our custom sort order
+        foreach (DataGridViewColumn column in dgvReceivables.Columns)
+        {
+            column.SortMode = DataGridViewColumnSortMode.NotSortable;
+        }
 
         if (dgvReceivables.Columns.Contains("Id"))
             dgvReceivables.Columns["Id"].Visible = false;
@@ -176,6 +232,11 @@ public partial class PaymentReceivableForm : Form
         lblSummary.Text = $"Receivables: {count} | Total Due: {totalReceivable:C2}";
     }
 
+    private void chkIncludePastArrivals_CheckedChanged(object sender, EventArgs e)
+    {
+        LoadPaymentsReceivable();
+    }
+
     private void btnRefresh_Click(object sender, EventArgs e)
     {
         LoadPaymentsReceivable();
@@ -193,18 +254,28 @@ public partial class PaymentReceivableForm : Form
 
     private void ShowReport(bool autoPrint)
     {
-        // Note: BalanceDue is computed, so we fetch all recent accommodations
-        // and the report will handle filtering/display
-        var today = DateTime.Today;
-        var receivables = _dbContext.Accommodations
-            .Include(a => a.Property)
-            .Include(a => a.Guest)
-            .Where(a => a.ArrivalDate >= today.AddMonths(-6))
-            .OrderBy(a => a.ArrivalDate)
-            .ToList();
+        // Use the same data that's displayed in the form grid
+        var receivableData = new List<PaymentReceivableData>();
+        foreach (var item in _bindingSource.List)
+        {
+            var type = item.GetType();
+            receivableData.Add(new PaymentReceivableData
+            {
+                ConfirmationNumber = (long)(type.GetProperty("ConfirmationNumber")?.GetValue(item) ?? 0),
+                FirstName = type.GetProperty("FirstName")?.GetValue(item)?.ToString(),
+                LastName = type.GetProperty("LastName")?.GetValue(item)?.ToString(),
+                ArrivalDate = (DateTime)(type.GetProperty("ArrivalDate")?.GetValue(item) ?? DateTime.MinValue),
+                DepartureDate = (DateTime)(type.GetProperty("DepartureDate")?.GetValue(item) ?? DateTime.MinValue),
+                PropertyName = type.GetProperty("PropertyName")?.GetValue(item)?.ToString(),
+                TotalCharges = (decimal)(type.GetProperty("TotalCharges")?.GetValue(item) ?? 0m),
+                TotalPaid = (decimal)(type.GetProperty("TotalPaid")?.GetValue(item) ?? 0m),
+                BalanceDue = (decimal)(type.GetProperty("BalanceDue")?.GetValue(item) ?? 0m),
+                DaysUntilArrival = (int)(type.GetProperty("DaysUntilArrival")?.GetValue(item) ?? 0)
+            });
+        }
 
         var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
-        var report = new PaymentReceivableReport(receivables, companyInfo);
+        var report = new PaymentReceivableReport(receivableData, companyInfo);
         using var viewer = new ReportViewerForm(report, autoPrint);
         viewer.ShowDialog(this);
     }
@@ -212,5 +283,70 @@ public partial class PaymentReceivableForm : Form
     private void btnClose_Click(object sender, EventArgs e)
     {
         Close();
+    }
+
+    private long? GetSelectedConfirmationNumber()
+    {
+        if (dgvReceivables.SelectedRows.Count == 0) return null;
+
+        var selectedRow = dgvReceivables.SelectedRows[0];
+        if (selectedRow.DataBoundItem == null) return null;
+
+        var type = selectedRow.DataBoundItem.GetType();
+        var confProp = type.GetProperty("ConfirmationNumber");
+        if (confProp?.GetValue(selectedRow.DataBoundItem) is long confNum)
+        {
+            return confNum;
+        }
+        return null;
+    }
+
+    private void mnuGoToGuestInfo_Click(object sender, EventArgs e)
+    {
+        var confNum = GetSelectedConfirmationNumber();
+        if (confNum == null)
+        {
+            MessageBox.Show("Please select a record first.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        var guest = _dbContext.Guests.FirstOrDefault(g => g.ConfirmationNumber == confNum);
+        if (guest == null)
+        {
+            MessageBox.Show($"Guest with Conf# {confNum} not found.", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var form = new GuestForm(_dbContext, confNum);
+        form.MdiParent = this.MdiParent;
+        form.Show();
+    }
+
+    private void mnuGoToAccommodations_Click(object sender, EventArgs e)
+    {
+        var confNum = GetSelectedConfirmationNumber();
+        if (confNum == null)
+        {
+            MessageBox.Show("Please select a record first.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        var form = new AccommodationForm(_dbContext, confNum);
+        form.MdiParent = this.MdiParent;
+        form.Show();
+    }
+
+    private void mnuGoToPayments_Click(object sender, EventArgs e)
+    {
+        var confNum = GetSelectedConfirmationNumber();
+        if (confNum == null)
+        {
+            MessageBox.Show("Please select a record first.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        var form = new PaymentForm(_dbContext, confNum);
+        form.MdiParent = this.MdiParent;
+        form.Show();
     }
 }

@@ -39,6 +39,44 @@ public partial class PaymentForm : Form
         LoadPayments();
         SetupDataBindings();
         SetMode(FormMode.Browse);
+
+        // If opened with a confirmation number filter but no payments exist,
+        // automatically start insert mode with guest info pre-populated
+        if (_filterConfirmationNumber.HasValue && _bindingSource.Count == 0)
+        {
+            StartInsertWithGuestInfo(_filterConfirmationNumber.Value);
+        }
+    }
+
+    private void StartInsertWithGuestInfo(long confirmationNumber)
+    {
+        // Look up the guest info
+        var guest = _dbContext.Guests.FirstOrDefault(g => g.ConfirmationNumber == confirmationNumber);
+
+        SetMode(FormMode.Insert);
+
+        _currentPayment = new Payment
+        {
+            ConfirmationNumber = confirmationNumber,
+            PaymentDate = DateTime.Today,
+            Amount = 0,
+            FirstName = guest?.FirstName,
+            LastName = guest?.LastName
+        };
+
+        _bindingSource.Add(_currentPayment);
+        _bindingSource.Position = _bindingSource.Count - 1;
+
+        // Set up the form fields
+        txtConfirmationNumber.DataBindings.Clear();
+        txtConfirmationNumber.Text = confirmationNumber.ToString();
+        txtConfirmationNumber.ReadOnly = true; // Keep it read-only since we know the guest
+        txtFirstName.Text = guest?.FirstName ?? "";
+        txtFirstName.ReadOnly = true;
+        txtLastName.Text = guest?.LastName ?? "";
+        txtLastName.ReadOnly = true;
+
+        txtAmount.Focus();
     }
 
     private void ConfigureDataGridView()
