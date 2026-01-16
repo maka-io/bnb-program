@@ -25,6 +25,7 @@ public partial class AccommodationForm : Form
     private long? _filterConfirmationNumber;
     private ContextMenuStrip _goToMenu;
     private bool _isLoadingRoomTypes = false;
+    private bool _isLoadingData = false;
 
     public AccommodationForm(BnBDbContext dbContext, long? confirmationNumber = null)
     {
@@ -37,6 +38,37 @@ public partial class AccommodationForm : Form
         InitializeComponent();
         InitializeGoToMenu();
         SetupRoomTypeComboBox();
+        SetupCalculationEvents();
+    }
+
+    private void SetupCalculationEvents()
+    {
+        // When gross rate changes, recalculate
+        txtDailyGrossRate.Leave += (s, e) =>
+        {
+            if (_currentMode == FormMode.Insert || _currentMode == FormMode.Update)
+            {
+                // Parse the value and update the accommodation
+                if (_currentAccommodation != null && decimal.TryParse(txtDailyGrossRate.Text, System.Globalization.NumberStyles.Currency, null, out var rate))
+                {
+                    _currentAccommodation.DailyGrossRate = rate;
+                    CalculateAmounts();
+                }
+            }
+        };
+
+        // When number of nights changes, recalculate
+        txtNights.Leave += (s, e) =>
+        {
+            if (_currentMode == FormMode.Insert || _currentMode == FormMode.Update)
+            {
+                if (_currentAccommodation != null && int.TryParse(txtNights.Text, out var nights))
+                {
+                    _currentAccommodation.NumberOfNights = nights;
+                    CalculateAmounts();
+                }
+            }
+        };
     }
 
     private void InitializeGoToMenu()
@@ -69,6 +101,20 @@ public partial class AccommodationForm : Form
         if (_currentMode == FormMode.Insert || _currentMode == FormMode.Update)
         {
             LoadRoomTypesForProperty();
+
+            // Update current accommodation with the selected property
+            if (_currentAccommodation != null && cboProperty.SelectedValue is int accountNum)
+            {
+                _currentAccommodation.PropertyAccountNumber = accountNum;
+                var property = _dbContext.Properties.Find(accountNum);
+                if (property != null)
+                {
+                    _currentAccommodation.Location = property.Location;
+                }
+
+                // Recalculate with the new property's tax plan
+                CalculateAmounts();
+            }
         }
     }
 
@@ -116,13 +162,21 @@ public partial class AccommodationForm : Form
         if (_isLoadingRoomTypes) return;
         if (_currentMode != FormMode.Insert && _currentMode != FormMode.Update) return;
 
-        if (cboRoomType.SelectedItem is RoomTypeItem selectedRoom && selectedRoom.DefaultRate.HasValue)
+        if (cboRoomType.SelectedItem is RoomTypeItem selectedRoom && _currentAccommodation != null)
         {
-            if (_currentAccommodation != null)
+            // Always set room type info
+            _currentAccommodation.UnitName = selectedRoom.Name;
+            _currentAccommodation.UnitNameDescription = selectedRoom.Description;
+
+            // Apply default rate if room type has one
+            if (selectedRoom.DefaultRate.HasValue)
             {
                 _currentAccommodation.DailyGrossRate = selectedRoom.DefaultRate.Value;
-                CalculateAmounts();
             }
+
+            // Refresh bindings and recalculate
+            _bindingSource.ResetCurrentItem();
+            CalculateAmounts();
         }
     }
 
@@ -314,6 +368,7 @@ public partial class AccommodationForm : Form
 
     private void LoadAccommodations()
     {
+        _isLoadingData = true;
         try
         {
             var query = _dbContext.Accommodations
@@ -348,6 +403,10 @@ public partial class AccommodationForm : Form
             MessageBox.Show($"Error loading accommodations: {ex.Message}", "Error",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+        finally
+        {
+            _isLoadingData = false;
+        }
     }
 
     private void SetMode(FormMode mode)
@@ -355,6 +414,11 @@ public partial class AccommodationForm : Form
         _currentMode = mode;
         _stateManager.SetMode(this, mode);
         UpdateButtonStates();
+
+        // Explicitly set date picker enabled state (FormStateManager may not reach them)
+        bool editable = (mode == FormMode.Insert || mode == FormMode.Update);
+        dtpArrivalDate.Enabled = editable;
+        dtpDepartureDate.Enabled = editable;
     }
 
     private void UpdateButtonStates()
@@ -685,6 +749,15 @@ public partial class AccommodationForm : Form
 
     private void btnCalculate_Click(object sender, EventArgs e)
     {
+        // Sync binding source with current control values before calculating
+        _bindingSource.EndEdit();
+
+        // If gross rate was manually entered, parse and update the accommodation
+        if (_currentAccommodation != null && decimal.TryParse(txtDailyGrossRate.Text, System.Globalization.NumberStyles.Currency, null, out var rate))
+        {
+            _currentAccommodation.DailyGrossRate = rate;
+        }
+
         CalculateAmounts();
     }
 
@@ -743,6 +816,34 @@ public partial class AccommodationForm : Form
 
         // Get tax plan by code to get the rates
         var taxPlan = _dbContext.TaxPlans.FirstOrDefault(tp => tp.PlanCode == taxPlanCode);
+
+        // If exact tax plan not found, try to use any existing tax plan's rates with the requested code
+        if (taxPlan == null)
+        {
+            var anyTaxPlan = _dbContext.TaxPlans.FirstOrDefault();
+            if (anyTaxPlan != null)
+            {
+                // Create a temporary tax plan with the rates from existing plan but the requested code
+                taxPlan = new TaxPlan
+                {
+                    PlanCode = taxPlanCode,
+                    Tax1Rate = anyTaxPlan.Tax1Rate,
+                    Tax1Description = anyTaxPlan.Tax1Description,
+                    FutureTax1Rate = anyTaxPlan.FutureTax1Rate,
+                    FutureTax1EffectiveDate = anyTaxPlan.FutureTax1EffectiveDate,
+                    Tax2Rate = anyTaxPlan.Tax2Rate,
+                    Tax2Description = anyTaxPlan.Tax2Description,
+                    FutureTax2Rate = anyTaxPlan.FutureTax2Rate,
+                    FutureTax2EffectiveDate = anyTaxPlan.FutureTax2EffectiveDate,
+                    Tax3Rate = anyTaxPlan.Tax3Rate,
+                    Tax3Description = anyTaxPlan.Tax3Description,
+                    FutureTax3Rate = anyTaxPlan.FutureTax3Rate,
+                    FutureTax3EffectiveDate = anyTaxPlan.FutureTax3EffectiveDate
+                };
+                // Parse the code to set application settings
+                taxPlan.ParsePlanCode(taxPlanCode);
+            }
+        }
 
         if (taxPlan == null || accommodation.DailyGrossRate == null || accommodation.DailyGrossRate == 0)
         {
@@ -823,18 +924,30 @@ public partial class AccommodationForm : Form
 
     private void dtpArrivalDate_ValueChanged(object sender, EventArgs e)
     {
-        if (_currentMode == FormMode.Insert || _currentMode == FormMode.Update)
+        if (_isLoadingData) return;
+        if (_currentMode != FormMode.Insert && _currentMode != FormMode.Update) return;
+
+        // Update the accommodation with the new date
+        if (_currentAccommodation != null)
         {
-            CalculateAmounts();
+            _currentAccommodation.ArrivalDate = dtpArrivalDate.Value;
         }
+
+        CalculateAmounts();
     }
 
     private void dtpDepartureDate_ValueChanged(object sender, EventArgs e)
     {
-        if (_currentMode == FormMode.Insert || _currentMode == FormMode.Update)
+        if (_isLoadingData) return;
+        if (_currentMode != FormMode.Insert && _currentMode != FormMode.Update) return;
+
+        // Update the accommodation with the new date
+        if (_currentAccommodation != null)
         {
-            CalculateAmounts();
+            _currentAccommodation.DepartureDate = dtpDepartureDate.Value;
         }
+
+        CalculateAmounts();
     }
 
     private void dgvAccommodations_SelectionChanged(object sender, EventArgs e)

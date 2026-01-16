@@ -98,6 +98,10 @@ public class FormStateManager
                     radioButton.Enabled = false;
                     break;
 
+                case DateTimePicker dateTimePicker:
+                    dateTimePicker.Enabled = false;
+                    break;
+
                 case Button button:
                     SetButtonStateForBrowse(button);
                     break;
@@ -141,6 +145,10 @@ public class FormStateManager
 
                 case RadioButton radioButton:
                     radioButton.Enabled = true;
+                    break;
+
+                case DateTimePicker dateTimePicker:
+                    dateTimePicker.Enabled = true;
                     break;
 
                 case Button button:
@@ -188,6 +196,10 @@ public class FormStateManager
                     radioButton.Enabled = true;
                     break;
 
+                case DateTimePicker dateTimePicker:
+                    dateTimePicker.Enabled = true;
+                    break;
+
                 case Button button:
                     SetButtonStateForEdit(button);
                     break;
@@ -221,6 +233,10 @@ public class FormStateManager
 
                 case RadioButton radioButton:
                     radioButton.Enabled = false;
+                    break;
+
+                case DateTimePicker dateTimePicker:
+                    dateTimePicker.Enabled = false;
                     break;
 
                 case Button button:
@@ -260,6 +276,10 @@ public class FormStateManager
                     radioButton.Enabled = false;
                     break;
 
+                case DateTimePicker dateTimePicker:
+                    dateTimePicker.Enabled = true;
+                    break;
+
                 case Button button:
                     SetButtonStateForFind(button);
                     break;
@@ -294,6 +314,10 @@ public class FormStateManager
 
                 case RadioButton radioButton:
                     radioButton.Enabled = false;
+                    break;
+
+                case DateTimePicker dateTimePicker:
+                    dateTimePicker.Enabled = false;
                     break;
 
                 case Button button:

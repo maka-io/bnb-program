@@ -351,9 +351,14 @@ public class JsonImportService
         await _context.Database.ExecuteSqlRawAsync("DELETE FROM RoomTypes");
         await _context.Database.ExecuteSqlRawAsync("DELETE FROM Properties");
 
+        var propertyTaxCodes = new HashSet<string>();
         var items = await ReadJsonFileAsync("proptbl");
         foreach (var el in items)
         {
+            var taxPlanCode = GetString(el, "tax_plan_code", "TaxPlanCode");
+            if (!string.IsNullOrEmpty(taxPlanCode))
+                propertyTaxCodes.Add(taxPlanCode);
+
             var property = new Property
             {
                 AccountNumber = GetInt(el, "accountnum", "AccountNumber"),
@@ -381,7 +386,7 @@ public class JsonImportService
                 FuturePercentDate = GetDateTime(el, "futuredate", "FuturePercentDate"),
                 GrossRatePercent = GetNullableDecimal(el, "grosratepercent", "grosspercent", "GrossRatePercent"),
                 FederalTaxId = GetString(el, "federaltaxid", "fedtaxid", "FederalTaxId"),
-                TaxPlanCode = GetString(el, "tax_plan_code", "TaxPlanCode"),
+                TaxPlanCode = taxPlanCode,
                 DepositRequired = GetString(el, "depositreq", "DepositRequired"),
                 Exceptions = GetString(el, "exceptions", "Exceptions"),
                 ExceptionsDescription = GetString(el, "exceptions_desc", "ExceptionsDescription"),
@@ -393,8 +398,57 @@ public class JsonImportService
         }
 
         await _context.SaveChangesAsync();
+
+        // Create missing tax plans for any property tax codes that don't exist
+        await CreateMissingTaxPlansAsync(propertyTaxCodes);
+
         Report($"  Properties: {items.Count} imported");
         return items.Count;
+    }
+
+    private async Task CreateMissingTaxPlansAsync(HashSet<string> requiredCodes)
+    {
+        if (requiredCodes.Count == 0) return;
+
+        var existingCodes = await _context.TaxPlans.Select(tp => tp.PlanCode).ToListAsync();
+        var missingCodes = requiredCodes.Where(c => !existingCodes.Contains(c)).ToList();
+
+        if (missingCodes.Count == 0) return;
+
+        // Get an existing tax plan to copy rates from
+        var templatePlan = await _context.TaxPlans.FirstOrDefaultAsync();
+        if (templatePlan == null)
+        {
+            Report($"  WARNING: Cannot create missing tax plans - no template plan exists");
+            return;
+        }
+
+        foreach (var code in missingCodes)
+        {
+            var newPlan = new TaxPlan
+            {
+                PlanCode = code,
+                PlanTitle = $"Auto-created for code {code}",
+                Tax1Rate = templatePlan.Tax1Rate,
+                Tax1Description = templatePlan.Tax1Description,
+                FutureTax1Rate = templatePlan.FutureTax1Rate,
+                FutureTax1EffectiveDate = templatePlan.FutureTax1EffectiveDate,
+                Tax2Rate = templatePlan.Tax2Rate,
+                Tax2Description = templatePlan.Tax2Description,
+                FutureTax2Rate = templatePlan.FutureTax2Rate,
+                FutureTax2EffectiveDate = templatePlan.FutureTax2EffectiveDate,
+                Tax3Rate = templatePlan.Tax3Rate,
+                Tax3Description = templatePlan.Tax3Description,
+                FutureTax3Rate = templatePlan.FutureTax3Rate,
+                FutureTax3EffectiveDate = templatePlan.FutureTax3EffectiveDate
+            };
+            // Parse the code to set application settings (Net/Gross/N/A)
+            newPlan.ParsePlanCode(code);
+            _context.TaxPlans.Add(newPlan);
+        }
+
+        await _context.SaveChangesAsync();
+        Report($"  Created {missingCodes.Count} missing tax plan(s): {string.Join(", ", missingCodes)}");
     }
 
     private async Task<int> ImportRoomTypesAsync()
