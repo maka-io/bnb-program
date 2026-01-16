@@ -1,9 +1,11 @@
 using BnB.Core.Enums;
 using BnB.Core.Models;
+using BnB.Core.Services;
 using BnB.Data.Context;
 using BnB.WinForms.Services;
 using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BnB.WinForms.Forms;
 
@@ -22,6 +24,7 @@ public partial class AccommodationForm : Form
     private Accommodation? _currentAccommodation;
     private long? _filterConfirmationNumber;
     private ContextMenuStrip _goToMenu;
+    private bool _isLoadingRoomTypes = false;
 
     public AccommodationForm(BnBDbContext dbContext, long? confirmationNumber = null)
     {
@@ -33,6 +36,7 @@ public partial class AccommodationForm : Form
 
         InitializeComponent();
         InitializeGoToMenu();
+        SetupRoomTypeComboBox();
     }
 
     private void InitializeGoToMenu()
@@ -43,6 +47,122 @@ public partial class AccommodationForm : Form
         var mnuPayments = new ToolStripMenuItem("Guest Payments");
         mnuPayments.Click += (s, e) => GoToPayments();
         _goToMenu.Items.AddRange(new ToolStripItem[] { mnuGuestInfo, mnuPayments });
+    }
+
+    private void SetupRoomTypeComboBox()
+    {
+        // Initialize with empty list
+        cboRoomType.DisplayMember = "Description";
+        cboRoomType.ValueMember = "Name";
+        cboRoomType.DataSource = new List<RoomTypeItem>();
+        cboRoomType.SelectedIndexChanged += cboRoomType_SelectedIndexChanged;
+
+        // When property changes, reload room types
+        cboProperty.SelectedIndexChanged += cboProperty_SelectedIndexChanged;
+
+        // When current accommodation changes, sync room type selection
+        _bindingSource.PositionChanged += (s, e) => SyncRoomTypeSelection();
+    }
+
+    private void cboProperty_SelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (_currentMode == FormMode.Insert || _currentMode == FormMode.Update)
+        {
+            LoadRoomTypesForProperty();
+        }
+    }
+
+    private void LoadRoomTypesForProperty()
+    {
+        _isLoadingRoomTypes = true;
+        try
+        {
+            int? accountNum = null;
+            if (cboProperty.SelectedValue is int num)
+                accountNum = num;
+
+            if (accountNum == null)
+            {
+                cboRoomType.DataSource = new List<RoomTypeItem>();
+                return;
+            }
+
+            var roomTypes = _dbContext.RoomTypes
+                .Where(r => r.PropertyAccountNumber == accountNum.Value)
+                .OrderBy(r => r.Name)
+                .Select(r => new RoomTypeItem
+                {
+                    Id = r.Id,
+                    Name = r.Name,
+                    Description = r.Description ?? r.Name,
+                    DefaultRate = r.DefaultRate
+                })
+                .ToList();
+
+            // Add empty option at the beginning
+            roomTypes.Insert(0, new RoomTypeItem { Id = 0, Name = "", Description = "(None)", DefaultRate = null });
+
+            cboRoomType.DataSource = roomTypes;
+        }
+        finally
+        {
+            _isLoadingRoomTypes = false;
+        }
+    }
+
+    private void cboRoomType_SelectedIndexChanged(object? sender, EventArgs e)
+    {
+        // When room type changes, apply the default rate and recalculate
+        if (_isLoadingRoomTypes) return;
+        if (_currentMode != FormMode.Insert && _currentMode != FormMode.Update) return;
+
+        if (cboRoomType.SelectedItem is RoomTypeItem selectedRoom && selectedRoom.DefaultRate.HasValue)
+        {
+            if (_currentAccommodation != null)
+            {
+                _currentAccommodation.DailyGrossRate = selectedRoom.DefaultRate.Value;
+                CalculateAmounts();
+            }
+        }
+    }
+
+    private void SyncRoomTypeSelection()
+    {
+        if (_bindingSource.Current is not Accommodation accommodation) return;
+
+        // Load room types for this accommodation's property
+        var property = _dbContext.Properties.FirstOrDefault(p => p.AccountNumber == accommodation.PropertyAccountNumber);
+        if (property != null)
+        {
+            // Set property selection without triggering reload
+            _isLoadingRoomTypes = true;
+            cboProperty.SelectedValue = accommodation.PropertyAccountNumber;
+            _isLoadingRoomTypes = false;
+
+            // Load room types
+            LoadRoomTypesForProperty();
+
+            // Select the matching room type
+            if (!string.IsNullOrEmpty(accommodation.UnitName))
+            {
+                cboRoomType.SelectedValue = accommodation.UnitName;
+            }
+            else
+            {
+                cboRoomType.SelectedIndex = 0;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Helper class for room type ComboBox binding
+    /// </summary>
+    private class RoomTypeItem
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public decimal? DefaultRate { get; set; }
     }
 
     private void AccommodationForm_Load(object sender, EventArgs e)
@@ -59,6 +179,7 @@ public partial class AccommodationForm : Form
         // Main data bindings
         txtConfirmationNumber.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.ConfirmationNumber), true);
         txtGuestName.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.LastName), true);
+        txtFirstName.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.FirstName), true);
         txtLocation.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.Location), true);
 
         // Date bindings
@@ -67,9 +188,8 @@ public partial class AccommodationForm : Form
         txtNights.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.NumberOfNights), true);
         txtNumberOfGuests.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.NumberInParty), true);
 
-        // Room info
-        txtUnitName.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.UnitName), true);
-        txtUnitNameDescription.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.UnitNameDescription), true);
+        // Room info - UnitNameDescription is read-only (auto-populated from room type selection)
+        // Note: cboRoomType is populated based on selected property and current accommodation
 
         // Rates and amounts
         txtDailyGrossRate.DataBindings.Add("Text", _bindingSource, nameof(Accommodation.DailyGrossRate), true, DataSourceUpdateMode.OnPropertyChanged, "", "C2");
@@ -250,6 +370,7 @@ public partial class AccommodationForm : Form
                 btnCancel.Enabled = false;
                 btnRefresh.Enabled = true;
                 btnGoToGuest.Enabled = _bindingSource.Count > 0;
+                lblLookupGuest.Enabled = false;
                 dgvAccommodations.Enabled = true;
                 break;
 
@@ -263,6 +384,7 @@ public partial class AccommodationForm : Form
                 btnCancel.Enabled = true;
                 btnRefresh.Enabled = false;
                 btnGoToGuest.Enabled = false;
+                lblLookupGuest.Enabled = true;
                 dgvAccommodations.Enabled = false;
                 break;
 
@@ -275,6 +397,7 @@ public partial class AccommodationForm : Form
                 btnCancel.Enabled = true;
                 btnRefresh.Enabled = false;
                 btnGoToGuest.Enabled = false;
+                lblLookupGuest.Enabled = false;
                 dgvAccommodations.Enabled = false;
                 break;
 
@@ -287,6 +410,7 @@ public partial class AccommodationForm : Form
                 btnCancel.Enabled = false;
                 btnRefresh.Enabled = true;
                 btnGoToGuest.Enabled = false;
+                lblLookupGuest.Enabled = false;
                 dgvAccommodations.Enabled = true;
                 break;
         }
@@ -303,8 +427,26 @@ public partial class AccommodationForm : Form
     {
         SetMode(FormMode.Insert);
 
+        // Get next confirmation number
+        long nextConfNum = 1;
+        var maxConf = _dbContext.Accommodations.Max(a => (long?)a.ConfirmationNumber);
+        if (maxConf.HasValue)
+        {
+            nextConfNum = maxConf.Value + 1;
+        }
+        else
+        {
+            // Also check guests table in case no accommodations exist yet
+            var maxGuestConf = _dbContext.Guests.Max(g => (long?)g.ConfirmationNumber);
+            if (maxGuestConf.HasValue)
+            {
+                nextConfNum = maxGuestConf.Value + 1;
+            }
+        }
+
         _currentAccommodation = new Accommodation
         {
+            ConfirmationNumber = nextConfNum,
             ArrivalDate = DateTime.Today,
             DepartureDate = DateTime.Today.AddDays(1),
             NumberOfNights = 1,
@@ -316,6 +458,15 @@ public partial class AccommodationForm : Form
         _bindingSource.Add(_currentAccommodation);
         _bindingSource.Position = _bindingSource.Count - 1;
 
+        // Default to first property and load its room types
+        if (cboProperty.Items.Count > 0)
+        {
+            cboProperty.SelectedIndex = 0;
+            LoadRoomTypesForProperty();
+        }
+
+        // Enable guest lookup button and set focus
+        lblLookupGuest.Enabled = true;
         cboProperty.Focus();
     }
 
@@ -379,6 +530,13 @@ public partial class AccommodationForm : Form
                             }
                         }
 
+                        // Set room type info
+                        if (cboRoomType.SelectedItem is RoomTypeItem selectedRoom && !string.IsNullOrEmpty(selectedRoom.Name))
+                        {
+                            _currentAccommodation.UnitName = selectedRoom.Name;
+                            _currentAccommodation.UnitNameDescription = selectedRoom.Description;
+                        }
+
                         _dbContext.Accommodations.Add(_currentAccommodation);
                     }
                     _dbContext.SaveChanges();
@@ -388,6 +546,20 @@ public partial class AccommodationForm : Form
 
                 case FormMode.Update:
                     _bindingSource.EndEdit();
+                    if (_currentAccommodation != null)
+                    {
+                        // Update room type info
+                        if (cboRoomType.SelectedItem is RoomTypeItem selectedRoom && !string.IsNullOrEmpty(selectedRoom.Name))
+                        {
+                            _currentAccommodation.UnitName = selectedRoom.Name;
+                            _currentAccommodation.UnitNameDescription = selectedRoom.Description;
+                        }
+                        else
+                        {
+                            _currentAccommodation.UnitName = null;
+                            _currentAccommodation.UnitNameDescription = null;
+                        }
+                    }
                     _dbContext.SaveChanges();
                     MessageBox.Show("Accommodation updated successfully.", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -516,6 +688,29 @@ public partial class AccommodationForm : Form
         CalculateAmounts();
     }
 
+    private void lblLookupGuest_Click(object sender, EventArgs e)
+    {
+        if (_currentMode != FormMode.Insert && _currentMode != FormMode.Update)
+            return;
+
+        using var lookupForm = new GuestLookupForm(_dbContext);
+        if (lookupForm.ShowDialog(this) == DialogResult.OK && lookupForm.SelectedGuest != null)
+        {
+            var guest = lookupForm.SelectedGuest;
+
+            if (_currentAccommodation != null)
+            {
+                // Update the accommodation with the selected guest info
+                // Note: Don't change ConfirmationNumber - it's auto-incremented for the accommodation
+                _currentAccommodation.FirstName = guest.FirstName;
+                _currentAccommodation.LastName = guest.LastName;
+
+                // Refresh the bindings to show the updated values
+                _bindingSource.ResetCurrentItem();
+            }
+        }
+    }
+
     #endregion
 
     private void CalculateAmounts()
@@ -523,15 +718,86 @@ public partial class AccommodationForm : Form
         if (_bindingSource.Current is not Accommodation accommodation)
             return;
 
-        // Calculate number of nights
+        // Calculate number of nights from dates
         if (accommodation.DepartureDate > accommodation.ArrivalDate)
         {
             accommodation.NumberOfNights = (int)(accommodation.DepartureDate - accommodation.ArrivalDate).TotalDays;
         }
 
-        // Calculate totals (simplified - would need tax rates from database)
-        accommodation.TotalGrossWithTax = accommodation.DailyGrossRate * accommodation.NumberOfNights;
-        accommodation.TotalNetWithTax = accommodation.DailyNetRate * accommodation.NumberOfNights;
+        // Get property for tax plan and percent to host
+        var property = _dbContext.Properties.FirstOrDefault(p => p.AccountNumber == accommodation.PropertyAccountNumber);
+        if (property == null)
+        {
+            // Simple calculation without taxes if no property
+            accommodation.TotalGrossWithTax = accommodation.DailyGrossRate * accommodation.NumberOfNights;
+            accommodation.TotalNetWithTax = accommodation.DailyNetRate * accommodation.NumberOfNights;
+            _bindingSource.ResetCurrentItem();
+            return;
+        }
+
+        // Get tax rates from database
+        var taxRateRecord = _dbContext.TaxRates.FirstOrDefault();
+        if (taxRateRecord == null || accommodation.DailyGrossRate == null || accommodation.DailyGrossRate == 0)
+        {
+            // Simple calculation without taxes if no tax rates configured
+            accommodation.TotalGrossWithTax = accommodation.DailyGrossRate * accommodation.NumberOfNights;
+            accommodation.TotalNetWithTax = accommodation.DailyNetRate * accommodation.NumberOfNights;
+            _bindingSource.ResetCurrentItem();
+            return;
+        }
+
+        // Use override values if specified, otherwise use property defaults
+        var taxPlanCode = !string.IsNullOrEmpty(accommodation.OverrideTaxPlanCode)
+            ? accommodation.OverrideTaxPlanCode
+            : property.TaxPlanCode ?? "000";
+        var percentToHost = accommodation.OverridePercentToHost ?? property.PercentToHost;
+
+        // Get the tax calculation service
+        var taxService = Program.ServiceProvider.GetRequiredService<ITaxCalculationService>();
+
+        // Build tax rate info
+        var taxRateInfo = new TaxRateInfo
+        {
+            TaxOne = taxRateRecord.TaxOne,
+            FutureTaxOne = taxRateRecord.FutureTaxOne,
+            FutureTaxOneEffectiveDate = taxRateRecord.FutureTaxOneEffectiveDate,
+            TaxTwo = taxRateRecord.TaxTwo,
+            FutureTaxTwo = taxRateRecord.FutureTaxTwo,
+            FutureTaxTwoEffectiveDate = taxRateRecord.FutureTaxTwoEffectiveDate,
+            TaxThree = taxRateRecord.TaxThree,
+            FutureTaxThree = taxRateRecord.FutureTaxThree,
+            FutureTaxThreeEffectiveDate = taxRateRecord.FutureTaxThreeEffectiveDate
+        };
+
+        // Build calculation input
+        var input = new TaxCalculationInput
+        {
+            DailyGrossRate = accommodation.DailyGrossRate.Value,
+            NumberOfNights = accommodation.NumberOfNights,
+            PercentToHost = percentToHost,
+            TaxPlanCode = taxPlanCode,
+            ArrivalDate = accommodation.ArrivalDate,
+            PaymentType = accommodation.PaymentType == "Direct" ? PaymentType.Direct
+                : accommodation.PaymentType == "Comp" ? PaymentType.Comp
+                : PaymentType.Prepay,
+            TaxRates = taxRateInfo
+        };
+
+        // Calculate
+        var result = taxService.CalculateAmounts(input);
+
+        if (result.Success)
+        {
+            // Apply calculated values
+            accommodation.DailyNetRate = result.DailyNetRate;
+            accommodation.Tax1 = result.Tax1Amount;
+            accommodation.Tax2 = result.Tax2Amount;
+            accommodation.Tax3 = result.Tax3Amount;
+            accommodation.TotalTax = result.TotalTax;
+            accommodation.TotalGrossWithTax = result.GrossWithTax;
+            accommodation.TotalNetWithTax = result.NetWithTax;
+            accommodation.ServiceFee = result.ServiceFee;
+        }
 
         // Refresh bindings
         _bindingSource.ResetCurrentItem();

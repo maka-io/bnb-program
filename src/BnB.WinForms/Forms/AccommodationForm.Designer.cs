@@ -41,7 +41,6 @@ partial class AccommodationForm
         this.lblNights = new Label();
         this.lblNumberOfGuests = new Label();
         this.lblUnitName = new Label();
-        this.lblUnitNameDescription = new Label();
         this.lblDailyGrossRate = new Label();
         this.lblDailyNetRate = new Label();
         this.lblTotalGrossWithTax = new Label();
@@ -64,8 +63,7 @@ partial class AccommodationForm
         this.txtLocation = new TextBox();
         this.txtNights = new TextBox();
         this.txtNumberOfGuests = new TextBox();
-        this.txtUnitName = new TextBox();
-        this.txtUnitNameDescription = new TextBox();
+        this.cboRoomType = new ComboBox();
         this.txtDailyGrossRate = new TextBox();
         this.txtDailyNetRate = new TextBox();
         this.txtTotalGrossWithTax = new TextBox();
@@ -134,7 +132,7 @@ partial class AccommodationForm
         // === Guest Group Box ===
         this.grpGuest.Text = "Guest / Property";
         this.grpGuest.Location = new Point(10, 10);
-        this.grpGuest.Size = new Size(420, 110);
+        this.grpGuest.Size = new Size(420, 115);
         this.panelForm.Controls.Add(this.grpGuest);
 
         int y = 20;
@@ -152,8 +150,34 @@ partial class AccommodationForm
         grpGuest.Controls.Add(cboProperty);
 
         y += 28;
-        AddLabelAndField(grpGuest, lblGuestName, "Guest:", txtGuestName, 15, y, 100, 150);
+        // Guest name fields: Last, First
+        AddLabelAndField(grpGuest, lblGuestName, "Guest:", txtGuestName, 15, y, 100, 120);
         txtGuestName.ReadOnly = true;
+
+        // First name label and text box
+        this.lblFirstName = new Label();
+        this.lblFirstName.Text = ",";
+        this.lblFirstName.Location = new Point(222, y + 3);
+        this.lblFirstName.AutoSize = true;
+        grpGuest.Controls.Add(this.lblFirstName);
+
+        this.txtFirstName = new TextBox();
+        this.txtFirstName.Location = new Point(232, y);
+        this.txtFirstName.Size = new Size(100, 23);
+        this.txtFirstName.ReadOnly = true;
+        grpGuest.Controls.Add(this.txtFirstName);
+
+        // Guest lookup button with magnifying glass icon (using Label for precise sizing)
+        this.lblLookupGuest = new Label();
+        this.lblLookupGuest.Text = "\U0001F50D"; // Magnifying glass Unicode character
+        this.lblLookupGuest.Location = new Point(338, y);
+        this.lblLookupGuest.Size = new Size(23, 23);
+        this.lblLookupGuest.Font = new Font("Segoe UI Emoji", 9F);
+        this.lblLookupGuest.BorderStyle = BorderStyle.FixedSingle;
+        this.lblLookupGuest.TextAlign = ContentAlignment.MiddleCenter;
+        this.lblLookupGuest.Cursor = Cursors.Hand;
+        this.lblLookupGuest.Click += lblLookupGuest_Click;
+        grpGuest.Controls.Add(this.lblLookupGuest);
 
         // === Dates Group Box ===
         this.grpDates.Text = "Dates";
@@ -188,8 +212,14 @@ partial class AccommodationForm
         AddLabelAndField(grpDates, lblNumberOfGuests, "# In Party:", txtNumberOfGuests, 200, y, 280, 60);
 
         y += 28;
-        AddLabelAndField(grpDates, lblUnitName, "Unit:", txtUnitName, 15, y, 100, 60);
-        AddLabelAndField(grpDates, lblUnitNameDescription, "Desc:", txtUnitNameDescription, 200, y, 280, 120);
+        lblUnitName.Text = "Room Type:";
+        lblUnitName.Location = new Point(15, y + 3);
+        lblUnitName.AutoSize = true;
+        grpDates.Controls.Add(lblUnitName);
+        cboRoomType.Location = new Point(100, y);
+        cboRoomType.Size = new Size(310, 23);
+        cboRoomType.DropDownStyle = ComboBoxStyle.DropDownList;
+        grpDates.Controls.Add(cboRoomType);
 
         // === Calculated Amounts Group Box ===
         this.grpCalculatedAmounts.Text = "Calculated Amounts";
@@ -399,7 +429,6 @@ partial class AccommodationForm
     private Label lblNights;
     private Label lblNumberOfGuests;
     private Label lblUnitName;
-    private Label lblUnitNameDescription;
     private Label lblDailyGrossRate;
     private Label lblDailyNetRate;
     private Label lblTotalGrossWithTax;
@@ -419,11 +448,13 @@ partial class AccommodationForm
 
     private TextBox txtConfirmationNumber;
     private TextBox txtGuestName;
+    private TextBox txtFirstName;
+    private Label lblFirstName;
+    private Label lblLookupGuest;
     private TextBox txtLocation;
     private TextBox txtNights;
     private TextBox txtNumberOfGuests;
-    private TextBox txtUnitName;
-    private TextBox txtUnitNameDescription;
+    private ComboBox cboRoomType;
     private TextBox txtDailyGrossRate;
     private TextBox txtDailyNetRate;
     private TextBox txtTotalGrossWithTax;
