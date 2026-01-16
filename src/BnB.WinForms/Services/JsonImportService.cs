@@ -554,34 +554,70 @@ public class JsonImportService
         Report("Importing Payments...");
         var validGuests = await _context.Guests.Select(g => g.ConfirmationNumber).ToListAsync();
 
+        // First, read payment due information from payment.json (one record per guest)
+        var paymentDues = new Dictionary<long, JsonElement>();
+        var dueItems = await ReadJsonFileAsync("payment");
+        foreach (var el in dueItems)
+        {
+            var conf = GetLong(el, "conf", "ConfirmationNumber");
+            if (validGuests.Contains(conf))
+            {
+                paymentDues[conf] = el;
+            }
+        }
+        Report($"  Payment dues loaded: {paymentDues.Count}");
+
+        // Now read actual payments received from paymentreceived.json
         var items = await ReadJsonFileAsync("paymentreceived");
         var count = 0;
+        var processedConfs = new HashSet<long>();
 
         foreach (var el in items)
         {
             var conf = GetLong(el, "conf", "ConfirmationNumber");
             if (!validGuests.Contains(conf)) continue;
 
+            // Get due info for this guest (if available and not yet added)
+            decimal? depositDue = null, prepaymentDue = null, cancellationFee = null, refundOwed = null, otherCredit = null, defaultComm = null;
+            DateTime? depositDueDate = null, prepaymentDueDate = null, cancellationFeeDueDate = null;
+            string? dueComments = null;
+
+            // Only add due info to the first payment record for each guest
+            if (!processedConfs.Contains(conf) && paymentDues.TryGetValue(conf, out var dueEl))
+            {
+                depositDue = GetNullableDecimal(dueEl, "depdue", "DepositDue");
+                depositDueDate = GetDateTime(dueEl, "depdate", "DepositDueDate");
+                prepaymentDue = GetNullableDecimal(dueEl, "predue", "PrepaymentDue");
+                prepaymentDueDate = GetDateTime(dueEl, "predate", "PrepaymentDueDate");
+                cancellationFee = GetNullableDecimal(dueEl, "canclfee", "CancellationFee");
+                cancellationFeeDueDate = GetDateTime(dueEl, "canclfeedatedue", "CancellationFeeDueDate");
+                refundOwed = GetNullableDecimal(dueEl, "RefundOwed", "refundowed");
+                otherCredit = GetNullableDecimal(dueEl, "OtherCredit", "othercredit");
+                defaultComm = GetNullableDecimal(dueEl, "defcom", "DefaultCommission");
+                dueComments = GetString(dueEl, "cmmnts", "comments", "Comments");
+                processedConfs.Add(conf);
+            }
+
             var payment = new Payment
             {
                 ConfirmationNumber = conf,
                 FirstName = GetString(el, "f_name", "fname", "FirstName"),
                 LastName = GetString(el, "l_name", "lname", "LastName"),
-                Amount = GetDecimal(el, "amountreceived", "amount", "Amount"),
-                PaymentDate = GetDateTime(el, "datereceived", "paymentdate", "PaymentDate") ?? DateTime.Today,
-                CheckNumber = GetString(el, "checknumber", "checknum", "CheckNumber"),
-                ReceivedFrom = GetString(el, "receivedfrom", "ReceivedFrom"),
-                AppliedTo = GetString(el, "appliedto", "AppliedTo"),
-                DepositDue = GetNullableDecimal(el, "depdue", "DepositDue"),
-                DepositDueDate = GetDateTime(el, "depdate", "DepositDueDate"),
-                PrepaymentDue = GetNullableDecimal(el, "predue", "PrepaymentDue"),
-                PrepaymentDueDate = GetDateTime(el, "predate", "PrepaymentDueDate"),
-                CancellationFee = GetNullableDecimal(el, "canclfee", "CancellationFee"),
-                CancellationFeeDueDate = GetDateTime(el, "canclfeedatedue", "CancellationFeeDueDate"),
-                RefundOwed = GetNullableDecimal(el, "refundowed", "RefundOwed"),
-                OtherCredit = GetNullableDecimal(el, "othercredit", "OtherCredit"),
-                DefaultCommission = GetNullableDecimal(el, "defcom", "DefaultCommission"),
-                Comments = GetString(el, "comments", "Comments")
+                Amount = GetDecimal(el, "AmountReceived", "amountreceived", "amount", "Amount"),
+                PaymentDate = GetDateTime(el, "DateReceived", "datereceived", "paymentdate", "PaymentDate") ?? DateTime.Today,
+                CheckNumber = GetString(el, "CheckNumber", "checknumber", "checknum"),
+                ReceivedFrom = GetString(el, "ReceivedFrom", "receivedfrom"),
+                AppliedTo = GetString(el, "AppliedTo", "appliedto"),
+                DepositDue = depositDue,
+                DepositDueDate = depositDueDate,
+                PrepaymentDue = prepaymentDue,
+                PrepaymentDueDate = prepaymentDueDate,
+                CancellationFee = cancellationFee,
+                CancellationFeeDueDate = cancellationFeeDueDate,
+                RefundOwed = refundOwed,
+                OtherCredit = otherCredit,
+                DefaultCommission = defaultComm,
+                Comments = GetString(el, "Comments", "comments") ?? dueComments
             };
             _context.Payments.Add(payment);
             count++;

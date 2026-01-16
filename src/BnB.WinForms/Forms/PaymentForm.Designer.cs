@@ -39,7 +39,6 @@ partial class PaymentForm
         this.txtConfirmationNumber = new TextBox();
         this.txtFirstName = new TextBox();
         this.txtLastName = new TextBox();
-        this.btnLookupGuest = new Button();
 
         // Payment Received controls
         this.lblAmount = new Label();
@@ -124,25 +123,20 @@ partial class PaymentForm
         // === Guest Info Group ===
         this.grpGuestInfo.Text = "Guest Information";
         this.grpGuestInfo.Location = new Point(10, 10);
-        this.grpGuestInfo.Size = new Size(350, 115);
+        this.grpGuestInfo.Size = new Size(350, 120);
         this.panelForm.Controls.Add(this.grpGuestInfo);
 
-        int y = 22;
+        int y = 25;
         AddLabelAndField(grpGuestInfo, lblConfirmationNumber, "Conf #:", txtConfirmationNumber, 10, y, 80, 100);
-        btnLookupGuest.Text = "Lookup";
-        btnLookupGuest.Location = new Point(190, y - 2);
-        btnLookupGuest.Size = new Size(70, 25);
-        btnLookupGuest.Click += btnLookupGuest_Click;
-        grpGuestInfo.Controls.Add(btnLookupGuest);
 
-        y += 28;
+        y += 30;
         AddLabelAndField(grpGuestInfo, lblFirstName, "First Name:", txtFirstName, 10, y, 80, 150);
-        y += 28;
+        y += 30;
         AddLabelAndField(grpGuestInfo, lblLastName, "Last Name:", txtLastName, 10, y, 80, 150);
 
         // === Payment Received Group ===
         this.grpPaymentReceived.Text = "Payment Received";
-        this.grpPaymentReceived.Location = new Point(10, 135);
+        this.grpPaymentReceived.Location = new Point(10, 140);
         this.grpPaymentReceived.Size = new Size(350, 170);
         this.panelForm.Controls.Add(this.grpPaymentReceived);
 
@@ -175,17 +169,17 @@ partial class PaymentForm
         // === Payments Due Group ===
         this.grpPaymentsDue.Text = "Payments Due from Guest";
         this.grpPaymentsDue.Location = new Point(370, 10);
-        this.grpPaymentsDue.Size = new Size(350, 140);
+        this.grpPaymentsDue.Size = new Size(360, 140);
         this.panelForm.Controls.Add(this.grpPaymentsDue);
 
         y = 22;
         AddLabelAndField(grpPaymentsDue, lblDepositDue, "Deposit:", txtDepositDue, 10, y, 90, 80);
         lblDepositDueDate.Text = "Due:";
-        lblDepositDueDate.Location = new Point(180, y + 3);
+        lblDepositDueDate.Location = new Point(185, y + 3);
         lblDepositDueDate.AutoSize = true;
         grpPaymentsDue.Controls.Add(lblDepositDueDate);
-        dtpDepositDueDate.Location = new Point(210, y);
-        dtpDepositDueDate.Size = new Size(120, 23);
+        dtpDepositDueDate.Location = new Point(220, y);
+        dtpDepositDueDate.Size = new Size(125, 23);
         dtpDepositDueDate.Format = DateTimePickerFormat.Short;
         dtpDepositDueDate.ShowCheckBox = true;
         grpPaymentsDue.Controls.Add(dtpDepositDueDate);
@@ -193,11 +187,11 @@ partial class PaymentForm
         y += 28;
         AddLabelAndField(grpPaymentsDue, lblPrepaymentDue, "Prepayment:", txtPrepaymentDue, 10, y, 90, 80);
         lblPrepaymentDueDate.Text = "Due:";
-        lblPrepaymentDueDate.Location = new Point(180, y + 3);
+        lblPrepaymentDueDate.Location = new Point(185, y + 3);
         lblPrepaymentDueDate.AutoSize = true;
         grpPaymentsDue.Controls.Add(lblPrepaymentDueDate);
-        dtpPrepaymentDueDate.Location = new Point(210, y);
-        dtpPrepaymentDueDate.Size = new Size(120, 23);
+        dtpPrepaymentDueDate.Location = new Point(220, y);
+        dtpPrepaymentDueDate.Size = new Size(125, 23);
         dtpPrepaymentDueDate.Format = DateTimePickerFormat.Short;
         dtpPrepaymentDueDate.ShowCheckBox = true;
         grpPaymentsDue.Controls.Add(dtpPrepaymentDueDate);
@@ -205,11 +199,11 @@ partial class PaymentForm
         y += 28;
         AddLabelAndField(grpPaymentsDue, lblCancellationFee, "Cancel Fee:", txtCancellationFee, 10, y, 90, 80);
         lblCancellationFeeDueDate.Text = "Due:";
-        lblCancellationFeeDueDate.Location = new Point(180, y + 3);
+        lblCancellationFeeDueDate.Location = new Point(185, y + 3);
         lblCancellationFeeDueDate.AutoSize = true;
         grpPaymentsDue.Controls.Add(lblCancellationFeeDueDate);
-        dtpCancellationFeeDueDate.Location = new Point(210, y);
-        dtpCancellationFeeDueDate.Size = new Size(120, 23);
+        dtpCancellationFeeDueDate.Location = new Point(220, y);
+        dtpCancellationFeeDueDate.Size = new Size(125, 23);
         dtpCancellationFeeDueDate.Format = DateTimePickerFormat.Short;
         dtpCancellationFeeDueDate.ShowCheckBox = true;
         grpPaymentsDue.Controls.Add(dtpCancellationFeeDueDate);
@@ -217,30 +211,30 @@ partial class PaymentForm
         // === Refund Group ===
         this.grpRefund.Text = "Refund Due to Guest";
         this.grpRefund.Location = new Point(370, 160);
-        this.grpRefund.Size = new Size(170, 60);
+        this.grpRefund.Size = new Size(175, 60);
         this.panelForm.Controls.Add(this.grpRefund);
 
         y = 25;
-        AddLabelAndField(grpRefund, lblRefundOwed, "Amount:", txtRefundOwed, 10, y, 60, 90);
+        AddLabelAndField(grpRefund, lblRefundOwed, "Amount:", txtRefundOwed, 10, y, 70, 90);
 
         // === Other Credits Group ===
         this.grpOtherCredits.Text = "Other Credits";
-        this.grpOtherCredits.Location = new Point(550, 160);
-        this.grpOtherCredits.Size = new Size(170, 90);
+        this.grpOtherCredits.Location = new Point(555, 160);
+        this.grpOtherCredits.Size = new Size(175, 90);
         this.panelForm.Controls.Add(this.grpOtherCredits);
 
         y = 22;
-        AddLabelAndField(grpOtherCredits, lblDefaultCommission, "Def Comm:", txtDefaultCommission, 10, y, 70, 80);
+        AddLabelAndField(grpOtherCredits, lblDefaultCommission, "Def Comm:", txtDefaultCommission, 10, y, 80, 80);
         y += 28;
-        AddLabelAndField(grpOtherCredits, lblOtherCredit, "Other:", txtOtherCredit, 10, y, 70, 80);
+        AddLabelAndField(grpOtherCredits, lblOtherCredit, "Other:", txtOtherCredit, 10, y, 80, 80);
 
         // === Comments ===
         lblComments.Text = "Comments:";
-        lblComments.Location = new Point(10, 315);
+        lblComments.Location = new Point(10, 320);
         lblComments.AutoSize = true;
         panelForm.Controls.Add(lblComments);
 
-        txtComments.Location = new Point(10, 333);
+        txtComments.Location = new Point(10, 338);
         txtComments.Size = new Size(350, 70);
         txtComments.Multiline = true;
         txtComments.ScrollBars = ScrollBars.Vertical;
@@ -314,7 +308,7 @@ partial class PaymentForm
         this.dgvPayments.ReadOnly = true;
         this.dgvPayments.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         this.dgvPayments.MultiSelect = false;
-        this.dgvPayments.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        this.dgvPayments.ScrollBars = ScrollBars.Both;
         this.dgvPayments.SelectionChanged += dgvPayments_SelectionChanged;
 
         // === Form ===
@@ -377,7 +371,6 @@ partial class PaymentForm
     private TextBox txtConfirmationNumber;
     private TextBox txtFirstName;
     private TextBox txtLastName;
-    private Button btnLookupGuest;
 
     // Payment Received
     private Label lblAmount;

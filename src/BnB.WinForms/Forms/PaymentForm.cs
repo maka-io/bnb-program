@@ -35,9 +35,115 @@ public partial class PaymentForm : Form
     private void PaymentForm_Load(object sender, EventArgs e)
     {
         this.ApplyTheme();
+        ConfigureDataGridView();
         LoadPayments();
         SetupDataBindings();
         SetMode(FormMode.Browse);
+    }
+
+    private void ConfigureDataGridView()
+    {
+        dgvPayments.AutoGenerateColumns = false;
+        dgvPayments.Columns.Clear();
+
+        // Enable horizontal scrolling
+        dgvPayments.ScrollBars = ScrollBars.Both;
+        dgvPayments.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+
+        dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = nameof(Payment.ConfirmationNumber),
+            HeaderText = "Conf #",
+            Width = 70
+        });
+        dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = nameof(Payment.FirstName),
+            HeaderText = "First Name",
+            Width = 90
+        });
+        dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = nameof(Payment.LastName),
+            HeaderText = "Last Name",
+            Width = 90
+        });
+        dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = nameof(Payment.Amount),
+            HeaderText = "Amount",
+            Width = 80,
+            DefaultCellStyle = new DataGridViewCellStyle { Format = "C2", Alignment = DataGridViewContentAlignment.MiddleRight }
+        });
+        dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = nameof(Payment.PaymentDate),
+            HeaderText = "Date",
+            Width = 85,
+            DefaultCellStyle = new DataGridViewCellStyle { Format = "MM/dd/yyyy" }
+        });
+        dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = nameof(Payment.CheckNumber),
+            HeaderText = "Check #",
+            Width = 80
+        });
+        dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = nameof(Payment.AppliedTo),
+            HeaderText = "Applied To",
+            Width = 85
+        });
+        dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = nameof(Payment.ReceivedFrom),
+            HeaderText = "Received From",
+            Width = 100
+        });
+        dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = nameof(Payment.DepositDue),
+            HeaderText = "Deposit Due",
+            Width = 85,
+            DefaultCellStyle = new DataGridViewCellStyle { Format = "C2", Alignment = DataGridViewContentAlignment.MiddleRight }
+        });
+        dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = nameof(Payment.DepositDueDate),
+            HeaderText = "Dep Date",
+            Width = 85,
+            DefaultCellStyle = new DataGridViewCellStyle { Format = "MM/dd/yyyy" }
+        });
+        dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = nameof(Payment.PrepaymentDue),
+            HeaderText = "Prepay Due",
+            Width = 85,
+            DefaultCellStyle = new DataGridViewCellStyle { Format = "C2", Alignment = DataGridViewContentAlignment.MiddleRight }
+        });
+        dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = nameof(Payment.PrepaymentDueDate),
+            HeaderText = "Prepay Date",
+            Width = 85,
+            DefaultCellStyle = new DataGridViewCellStyle { Format = "MM/dd/yyyy" }
+        });
+        dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = nameof(Payment.CancellationFee),
+            HeaderText = "Cancel Fee",
+            Width = 80,
+            DefaultCellStyle = new DataGridViewCellStyle { Format = "C2", Alignment = DataGridViewContentAlignment.MiddleRight }
+        });
+
+        // Add a Comments column that fills remaining space
+        dgvPayments.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = nameof(Payment.Comments),
+            HeaderText = "Comments",
+            MinimumWidth = 100,
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
+        });
     }
 
     private void SetupDataBindings()
@@ -106,6 +212,19 @@ public partial class PaymentForm : Form
             var payments = query
                 .OrderByDescending(p => p.PaymentDate)
                 .ToList();
+
+            // Populate FirstName/LastName from Guest if not already set
+            foreach (var payment in payments)
+            {
+                if (string.IsNullOrEmpty(payment.FirstName) && payment.Guest != null)
+                {
+                    payment.FirstName = payment.Guest.FirstName;
+                }
+                if (string.IsNullOrEmpty(payment.LastName) && payment.Guest != null)
+                {
+                    payment.LastName = payment.Guest.LastName;
+                }
+            }
 
             _bindingSource.DataSource = payments;
 
@@ -230,6 +349,14 @@ public partial class PaymentForm : Form
         _bindingSource.Add(_currentPayment);
         _bindingSource.Position = _bindingSource.Count - 1;
 
+        // Clear the confirmation number so user can enter a new one
+        txtConfirmationNumber.DataBindings.Clear();
+        txtConfirmationNumber.Clear();
+        txtConfirmationNumber.ReadOnly = false;
+        txtFirstName.Clear();
+        txtFirstName.ReadOnly = true; // First/Last name populated by Lookup
+        txtLastName.Clear();
+        txtLastName.ReadOnly = true;
         txtConfirmationNumber.Focus();
     }
 
@@ -280,6 +407,12 @@ public partial class PaymentForm : Form
                     _bindingSource.EndEdit();
                     if (_currentPayment != null)
                     {
+                        // Set the confirmation number from the textbox (binding was cleared)
+                        if (long.TryParse(txtConfirmationNumber.Text, out var confNum))
+                        {
+                            _currentPayment.ConfirmationNumber = confNum;
+                        }
+
                         // Look up guest info
                         var guest = _dbContext.Guests
                             .FirstOrDefault(g => g.ConfirmationNumber == _currentPayment.ConfirmationNumber);
@@ -288,6 +421,12 @@ public partial class PaymentForm : Form
                         {
                             _currentPayment.FirstName = guest.FirstName;
                             _currentPayment.LastName = guest.LastName;
+                        }
+                        else
+                        {
+                            // Use the manually entered names if guest not found
+                            _currentPayment.FirstName = txtFirstName.Text;
+                            _currentPayment.LastName = txtLastName.Text;
                         }
 
                         _dbContext.Payments.Add(_currentPayment);
@@ -305,12 +444,22 @@ public partial class PaymentForm : Form
                     break;
             }
 
+            // Restore bindings and reload
+            RestoreConfirmationNumberBinding();
             LoadPayments();
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Error saving: {ex.Message}", "Error",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private void RestoreConfirmationNumberBinding()
+    {
+        if (txtConfirmationNumber.DataBindings.Count == 0)
+        {
+            txtConfirmationNumber.DataBindings.Add("Text", _bindingSource, nameof(Payment.ConfirmationNumber), true);
         }
     }
 
@@ -345,6 +494,7 @@ public partial class PaymentForm : Form
         }
 
         _currentPayment = null;
+        RestoreConfirmationNumberBinding();
         LoadPayments();
     }
 
@@ -354,14 +504,22 @@ public partial class PaymentForm : Form
         if (searchForm.ShowDialog(this) == DialogResult.OK && searchForm.SearchCriteria != null)
         {
             var criteria = searchForm.SearchCriteria;
-            var query = _dbContext.Payments.AsQueryable();
+            var query = _dbContext.Payments
+                .Include(p => p.Guest)
+                .AsQueryable();
 
             if (criteria.ConfirmationNumber.HasValue)
                 query = query.Where(p => p.ConfirmationNumber == criteria.ConfirmationNumber);
 
             if (!string.IsNullOrEmpty(criteria.GuestName))
-                query = query.Where(p => (p.LastName != null && p.LastName.Contains(criteria.GuestName)) ||
-                                         (p.FirstName != null && p.FirstName.Contains(criteria.GuestName)));
+            {
+                var searchTerm = criteria.GuestName.ToLower();
+                query = query.Where(p =>
+                    (p.LastName != null && p.LastName.ToLower().Contains(searchTerm)) ||
+                    (p.FirstName != null && p.FirstName.ToLower().Contains(searchTerm)) ||
+                    (p.Guest != null && p.Guest.LastName != null && p.Guest.LastName.ToLower().Contains(searchTerm)) ||
+                    (p.Guest != null && p.Guest.FirstName != null && p.Guest.FirstName.ToLower().Contains(searchTerm)));
+            }
 
             if (criteria.DateFrom.HasValue)
                 query = query.Where(p => p.PaymentDate >= criteria.DateFrom);
@@ -373,6 +531,16 @@ public partial class PaymentForm : Form
                 query = query.Where(p => p.Amount >= criteria.MinAmount);
 
             var results = query.OrderByDescending(p => p.PaymentDate).ToList();
+
+            // Populate FirstName/LastName from Guest if not set
+            foreach (var payment in results)
+            {
+                if (string.IsNullOrEmpty(payment.FirstName) && payment.Guest != null)
+                    payment.FirstName = payment.Guest.FirstName;
+                if (string.IsNullOrEmpty(payment.LastName) && payment.Guest != null)
+                    payment.LastName = payment.Guest.LastName;
+            }
+
             _bindingSource.DataSource = results;
 
             if (results.Count == 0)
@@ -401,24 +569,6 @@ public partial class PaymentForm : Form
         {
             MessageBox.Show($"Navigate to Guest Conf# {payment.ConfirmationNumber}",
                 "Go To Guest", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-    }
-
-    private void btnLookupGuest_Click(object sender, EventArgs e)
-    {
-        if (long.TryParse(txtConfirmationNumber.Text, out var confNum))
-        {
-            var guest = _dbContext.Guests.FirstOrDefault(g => g.ConfirmationNumber == confNum);
-            if (guest != null)
-            {
-                txtFirstName.Text = guest.FirstName;
-                txtLastName.Text = guest.LastName;
-            }
-            else
-            {
-                MessageBox.Show($"No guest found with confirmation number {confNum}.",
-                    "Guest Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
         }
     }
 

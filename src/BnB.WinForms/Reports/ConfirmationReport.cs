@@ -216,8 +216,8 @@ public class ConfirmationReport : BaseReport
                     columns.RelativeColumn(1.3f);  // Property/Location
                     columns.ConstantColumn(65);    // Arrival
                     columns.ConstantColumn(65);    // Departure
-                    columns.ConstantColumn(40);    // Nights
-                    columns.ConstantColumn(40);    // Guests
+                    columns.ConstantColumn(45);    // Nights
+                    columns.ConstantColumn(45);    // Guests
                     columns.ConstantColumn(60);    // Rate
                     columns.ConstantColumn(55);    // Tax
                     columns.ConstantColumn(65);    // Total
@@ -335,20 +335,21 @@ public class ConfirmationReport : BaseReport
                     totalCredits += _payment.OtherCredit ?? 0;
                 }
 
-                innerCol.Item().PaddingVertical(5).LineHorizontal(1).LineColor(ReportStyles.BorderColor);
-
-                // Total and Balance Due
-                innerCol.Item().Row(row =>
+                // Total and Balance Due - only show breakdown if there are credits
+                if (totalCredits > 0)
                 {
-                    row.RelativeItem().Text("Total Charges:").Bold();
-                    row.ConstantItem(100).AlignRight().Text(FormatCurrency(grandTotal)).Bold();
-                });
+                    innerCol.Item().Row(row =>
+                    {
+                        row.RelativeItem().Text("Total Charges:").Bold();
+                        row.ConstantItem(100).AlignRight().Text(FormatCurrency(grandTotal)).Bold();
+                    });
 
-                innerCol.Item().Row(row =>
-                {
-                    row.RelativeItem().Text("Total Credits:");
-                    row.ConstantItem(100).AlignRight().Text(FormatCurrency(totalCredits));
-                });
+                    innerCol.Item().Row(row =>
+                    {
+                        row.RelativeItem().Text("Total Credits:");
+                        row.ConstantItem(100).AlignRight().Text(FormatCurrency(totalCredits));
+                    });
+                }
 
                 var balanceDue = grandTotal - totalCredits;
                 innerCol.Item().PaddingTop(5).Row(row =>
