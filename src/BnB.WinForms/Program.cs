@@ -219,6 +219,65 @@ static class Program
         {
             // Ignore errors - column may already exist or table may not exist yet
         }
+
+        try
+        {
+            // Add TaxPlan rate fields if they don't exist
+            dbContext.Database.ExecuteSqlRaw(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'TaxPlans' AND column_name = 'Tax1Rate') THEN
+                        ALTER TABLE ""TaxPlans"" ADD COLUMN ""Tax1Rate"" DECIMAL(10,4) DEFAULT 0;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'TaxPlans' AND column_name = 'Tax1Description') THEN
+                        ALTER TABLE ""TaxPlans"" ADD COLUMN ""Tax1Description"" VARCHAR(50);
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'TaxPlans' AND column_name = 'Tax1Application') THEN
+                        ALTER TABLE ""TaxPlans"" ADD COLUMN ""Tax1Application"" INTEGER DEFAULT 2;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'TaxPlans' AND column_name = 'FutureTax1Rate') THEN
+                        ALTER TABLE ""TaxPlans"" ADD COLUMN ""FutureTax1Rate"" DECIMAL(10,4);
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'TaxPlans' AND column_name = 'FutureTax1EffectiveDate') THEN
+                        ALTER TABLE ""TaxPlans"" ADD COLUMN ""FutureTax1EffectiveDate"" TIMESTAMP;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'TaxPlans' AND column_name = 'Tax2Rate') THEN
+                        ALTER TABLE ""TaxPlans"" ADD COLUMN ""Tax2Rate"" DECIMAL(10,4) DEFAULT 0;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'TaxPlans' AND column_name = 'Tax2Description') THEN
+                        ALTER TABLE ""TaxPlans"" ADD COLUMN ""Tax2Description"" VARCHAR(50);
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'TaxPlans' AND column_name = 'Tax2Application') THEN
+                        ALTER TABLE ""TaxPlans"" ADD COLUMN ""Tax2Application"" INTEGER DEFAULT 2;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'TaxPlans' AND column_name = 'FutureTax2Rate') THEN
+                        ALTER TABLE ""TaxPlans"" ADD COLUMN ""FutureTax2Rate"" DECIMAL(10,4);
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'TaxPlans' AND column_name = 'FutureTax2EffectiveDate') THEN
+                        ALTER TABLE ""TaxPlans"" ADD COLUMN ""FutureTax2EffectiveDate"" TIMESTAMP;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'TaxPlans' AND column_name = 'Tax3Rate') THEN
+                        ALTER TABLE ""TaxPlans"" ADD COLUMN ""Tax3Rate"" DECIMAL(10,4) DEFAULT 0;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'TaxPlans' AND column_name = 'Tax3Description') THEN
+                        ALTER TABLE ""TaxPlans"" ADD COLUMN ""Tax3Description"" VARCHAR(50);
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'TaxPlans' AND column_name = 'Tax3Application') THEN
+                        ALTER TABLE ""TaxPlans"" ADD COLUMN ""Tax3Application"" INTEGER DEFAULT 2;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'TaxPlans' AND column_name = 'FutureTax3Rate') THEN
+                        ALTER TABLE ""TaxPlans"" ADD COLUMN ""FutureTax3Rate"" DECIMAL(10,4);
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'TaxPlans' AND column_name = 'FutureTax3EffectiveDate') THEN
+                        ALTER TABLE ""TaxPlans"" ADD COLUMN ""FutureTax3EffectiveDate"" TIMESTAMP;
+                    END IF;
+                END $$;
+            ");
+        }
+        catch
+        {
+            // Ignore errors - columns may already exist or table may not exist yet
+        }
     }
 
     /// <summary>
@@ -255,6 +314,38 @@ static class Program
         catch
         {
             // Column already exists
+        }
+
+        // Add TaxPlan rate fields if they don't exist
+        var taxPlanColumns = new[]
+        {
+            "ALTER TABLE TaxPlans ADD COLUMN Tax1Rate TEXT DEFAULT '0'",
+            "ALTER TABLE TaxPlans ADD COLUMN Tax1Description TEXT",
+            "ALTER TABLE TaxPlans ADD COLUMN Tax1Application INTEGER DEFAULT 2",
+            "ALTER TABLE TaxPlans ADD COLUMN FutureTax1Rate TEXT",
+            "ALTER TABLE TaxPlans ADD COLUMN FutureTax1EffectiveDate TEXT",
+            "ALTER TABLE TaxPlans ADD COLUMN Tax2Rate TEXT DEFAULT '0'",
+            "ALTER TABLE TaxPlans ADD COLUMN Tax2Description TEXT",
+            "ALTER TABLE TaxPlans ADD COLUMN Tax2Application INTEGER DEFAULT 2",
+            "ALTER TABLE TaxPlans ADD COLUMN FutureTax2Rate TEXT",
+            "ALTER TABLE TaxPlans ADD COLUMN FutureTax2EffectiveDate TEXT",
+            "ALTER TABLE TaxPlans ADD COLUMN Tax3Rate TEXT DEFAULT '0'",
+            "ALTER TABLE TaxPlans ADD COLUMN Tax3Description TEXT",
+            "ALTER TABLE TaxPlans ADD COLUMN Tax3Application INTEGER DEFAULT 2",
+            "ALTER TABLE TaxPlans ADD COLUMN FutureTax3Rate TEXT",
+            "ALTER TABLE TaxPlans ADD COLUMN FutureTax3EffectiveDate TEXT"
+        };
+
+        foreach (var sql in taxPlanColumns)
+        {
+            try
+            {
+                dbContext.Database.ExecuteSqlRaw(sql);
+            }
+            catch
+            {
+                // Column already exists
+            }
         }
     }
 }

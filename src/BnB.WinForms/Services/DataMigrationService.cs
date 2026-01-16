@@ -107,6 +107,21 @@ public class DataMigrationService
 
         await _context.TaxPlans.ExecuteDeleteAsync();
 
+        // Get the global tax rate record to copy rates into each plan
+        // Query directly from the database
+        var taxRateCount = await _context.TaxRates.CountAsync();
+        var globalTaxRate = await _context.TaxRates.FirstOrDefaultAsync();
+
+        // Log what we found
+        if (globalTaxRate == null)
+        {
+            ReportProgress($"Tax Plans (WARNING: No TaxRate found, count={taxRateCount})", 0, 0);
+        }
+        else
+        {
+            ReportProgress($"Tax Plans (Found TaxRate: {globalTaxRate.TaxOne}% {globalTaxRate.TaxOneDescription})", 0, 0);
+        }
+
         var table = reader.ReadTable("taxplan");
         var count = 0;
 
@@ -122,12 +137,35 @@ public class DataMigrationService
                 Description = AccessDataReader.GetString(row, "description")
             };
 
+            // Parse the plan code to set application settings
+            taxPlan.ParsePlanCode(planCode);
+
+            // Copy tax rates from global TaxRate record
+            if (globalTaxRate != null)
+            {
+                taxPlan.Tax1Rate = globalTaxRate.TaxOne;
+                taxPlan.Tax1Description = globalTaxRate.TaxOneDescription;
+                taxPlan.FutureTax1Rate = globalTaxRate.FutureTaxOne;
+                taxPlan.FutureTax1EffectiveDate = globalTaxRate.FutureTaxOneEffectiveDate;
+
+                taxPlan.Tax2Rate = globalTaxRate.TaxTwo;
+                taxPlan.Tax2Description = globalTaxRate.TaxTwoDescription;
+                taxPlan.FutureTax2Rate = globalTaxRate.FutureTaxTwo;
+                taxPlan.FutureTax2EffectiveDate = globalTaxRate.FutureTaxTwoEffectiveDate;
+
+                taxPlan.Tax3Rate = globalTaxRate.TaxThree;
+                taxPlan.Tax3Description = globalTaxRate.TaxThreeDescription;
+                taxPlan.FutureTax3Rate = globalTaxRate.FutureTaxThree;
+                taxPlan.FutureTax3EffectiveDate = globalTaxRate.FutureTaxThreeEffectiveDate;
+            }
+
             _context.TaxPlans.Add(taxPlan);
             count++;
         }
 
         await _context.SaveChangesAsync();
         ReportProgress("Tax Plans", count, count);
+
         return count;
     }
 
@@ -232,15 +270,26 @@ public class DataMigrationService
         await _context.Database.ExecuteSqlRawAsync("DELETE FROM RoomTypes");
         await _context.Database.ExecuteSqlRawAsync("DELETE FROM Properties");
 
+        // Clear the change tracker to avoid conflicts
+        _context.ChangeTracker.Clear();
+
         var table = reader.ReadTable("proptbl");
         var total = table.Rows.Count;
         var count = 0;
+        var seenAccountNumbers = new HashSet<int>();
 
         foreach (DataRow row in table.Rows)
         {
+            var accountNumber = AccessDataReader.GetInt(row, "accountnum");
+
+            // Skip duplicate account numbers
+            if (seenAccountNumbers.Contains(accountNumber))
+                continue;
+            seenAccountNumbers.Add(accountNumber);
+
             var property = new Property
             {
-                AccountNumber = AccessDataReader.GetInt(row, "accountnum"),
+                AccountNumber = accountNumber,
                 Location = AccessDataReader.GetString(row, "location") ?? "Unknown",
                 FullName = AccessDataReader.GetString(row, "fullname"),
                 DBA = AccessDataReader.GetString(row, "dba"),

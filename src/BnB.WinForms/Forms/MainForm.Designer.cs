@@ -81,7 +81,6 @@ partial class MainForm
 
         // Taxes Menu
         this.mnuTaxes = new ToolStripMenuItem();
-        this.mnuSetTaxRates = new ToolStripMenuItem();
         this.mnuSetTaxPlans = new ToolStripMenuItem();
 
         // View Menu
@@ -97,7 +96,6 @@ partial class MainForm
         this.mnuDatabaseSettings = new ToolStripMenuItem();
         this.mnuRestoreDatabase = new ToolStripMenuItem();
         this.mnuImportLegacyData = new ToolStripMenuItem();
-        this.mnuImportFromJson = new ToolStripMenuItem();
 
         // Help Menu
         this.mnuHelp = new ToolStripMenuItem();
@@ -277,11 +275,9 @@ partial class MainForm
 
         // === Taxes Menu ===
         this.mnuTaxes.DropDownItems.AddRange(new ToolStripItem[] {
-            this.mnuSetTaxRates, this.mnuSetTaxPlans
+            this.mnuSetTaxPlans
         });
         this.mnuTaxes.Text = "&Taxes";
-        this.mnuSetTaxRates.Text = "Set Tax &Rates";
-        this.mnuSetTaxRates.Click += mnuSetTaxRates_Click;
         this.mnuSetTaxPlans.Text = "Set Tax &Plans";
         this.mnuSetTaxPlans.Click += mnuSetTaxPlans_Click;
 
@@ -302,7 +298,7 @@ partial class MainForm
 
         // === Admin Menu ===
         this.mnuAdmin.DropDownItems.AddRange(new ToolStripItem[] {
-            this.mnuPropertyFacts, this.mnuCompanyInfo, this.mnuDatabaseSettings, this.mnuRestoreDatabase, this.mnuImportLegacyData, this.mnuImportFromJson
+            this.mnuPropertyFacts, this.mnuCompanyInfo, this.mnuDatabaseSettings, this.mnuRestoreDatabase, this.mnuImportLegacyData
         });
         this.mnuAdmin.Text = "A&dmin";
         this.mnuPropertyFacts.Text = "&Property Facts Master List";
@@ -315,8 +311,6 @@ partial class MainForm
         this.mnuRestoreDatabase.Click += mnuRestoreDatabase_Click;
         this.mnuImportLegacyData.Text = "&Import Legacy Data...";
         this.mnuImportLegacyData.Click += mnuImportLegacyData_Click;
-        this.mnuImportFromJson.Text = "Import from &JSON...";
-        this.mnuImportFromJson.Click += mnuImportFromJson_Click;
 
         // === Help Menu ===
         this.mnuHelp.DropDownItems.AddRange(new ToolStripItem[] {
@@ -429,7 +423,6 @@ partial class MainForm
 
     // Taxes Menu
     private ToolStripMenuItem mnuTaxes;
-    private ToolStripMenuItem mnuSetTaxRates;
     private ToolStripMenuItem mnuSetTaxPlans;
 
     // View Menu
@@ -445,7 +438,6 @@ partial class MainForm
     private ToolStripMenuItem mnuDatabaseSettings;
     private ToolStripMenuItem mnuRestoreDatabase;
     private ToolStripMenuItem mnuImportLegacyData;
-    private ToolStripMenuItem mnuImportFromJson;
 
     // Help Menu
     private ToolStripMenuItem mnuHelp;

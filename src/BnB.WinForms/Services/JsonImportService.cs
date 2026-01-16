@@ -227,6 +227,17 @@ public class JsonImportService
         Report("Importing Tax Plans...");
         await _context.TaxPlans.ExecuteDeleteAsync();
 
+        // Get the global tax rate that was just imported
+        var globalTaxRate = await _context.TaxRates.FirstOrDefaultAsync();
+        if (globalTaxRate != null)
+        {
+            Report($"  Found TaxRate: {globalTaxRate.TaxOne}% {globalTaxRate.TaxOneDescription}");
+        }
+        else
+        {
+            Report($"  WARNING: No TaxRate found to copy to TaxPlans");
+        }
+
         var items = await ReadJsonFileAsync("taxplan");
         foreach (var el in items)
         {
@@ -239,6 +250,29 @@ public class JsonImportService
                 PlanTitle = GetString(el, "plan_title", "PlanTitle"),
                 Description = GetString(el, "description", "Description")
             };
+
+            // Parse the plan code to set tax application settings
+            taxPlan.ParsePlanCode(planCode);
+
+            // Copy tax rates from the global TaxRate record
+            if (globalTaxRate != null)
+            {
+                taxPlan.Tax1Rate = globalTaxRate.TaxOne;
+                taxPlan.Tax1Description = globalTaxRate.TaxOneDescription;
+                taxPlan.FutureTax1Rate = globalTaxRate.FutureTaxOne;
+                taxPlan.FutureTax1EffectiveDate = globalTaxRate.FutureTaxOneEffectiveDate;
+
+                taxPlan.Tax2Rate = globalTaxRate.TaxTwo;
+                taxPlan.Tax2Description = globalTaxRate.TaxTwoDescription;
+                taxPlan.FutureTax2Rate = globalTaxRate.FutureTaxTwo;
+                taxPlan.FutureTax2EffectiveDate = globalTaxRate.FutureTaxTwoEffectiveDate;
+
+                taxPlan.Tax3Rate = globalTaxRate.TaxThree;
+                taxPlan.Tax3Description = globalTaxRate.TaxThreeDescription;
+                taxPlan.FutureTax3Rate = globalTaxRate.FutureTaxThree;
+                taxPlan.FutureTax3EffectiveDate = globalTaxRate.FutureTaxThreeEffectiveDate;
+            }
+
             _context.TaxPlans.Add(taxPlan);
         }
 

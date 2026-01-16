@@ -794,6 +794,27 @@ namespace BnB.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("FutureTax1EffectiveDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("FutureTax1Rate")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("FutureTax2EffectiveDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("FutureTax2Rate")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("FutureTax3EffectiveDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("FutureTax3Rate")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("PlanCode")
                         .IsRequired()
                         .HasMaxLength(10)
@@ -801,6 +822,39 @@ namespace BnB.Data.Migrations
 
                     b.Property<string>("PlanTitle")
                         .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Tax1Application")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Tax1Description")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Tax1Rate")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Tax2Application")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Tax2Description")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Tax2Rate")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Tax3Application")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Tax3Description")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Tax3Rate")
+                        .HasPrecision(10, 4)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

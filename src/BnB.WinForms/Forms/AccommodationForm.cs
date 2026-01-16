@@ -735,39 +735,36 @@ public partial class AccommodationForm : Form
             return;
         }
 
-        // Get tax rates from database
-        var taxRateRecord = _dbContext.TaxRates.FirstOrDefault();
-        if (taxRateRecord == null || accommodation.DailyGrossRate == null || accommodation.DailyGrossRate == 0)
+        // Use override values if specified, otherwise use property defaults
+        var taxPlanCode = !string.IsNullOrEmpty(accommodation.OverrideTaxPlanCode)
+            ? accommodation.OverrideTaxPlanCode
+            : property.TaxPlanCode ?? "258";  // Default to all taxes N/A
+        var percentToHost = accommodation.OverridePercentToHost ?? property.PercentToHost;
+
+        // Get tax plan by code to get the rates
+        var taxPlan = _dbContext.TaxPlans.FirstOrDefault(tp => tp.PlanCode == taxPlanCode);
+
+        if (taxPlan == null || accommodation.DailyGrossRate == null || accommodation.DailyGrossRate == 0)
         {
-            // Simple calculation without taxes if no tax rates configured
+            // Simple calculation without taxes if no tax plan configured
             accommodation.TotalGrossWithTax = accommodation.DailyGrossRate * accommodation.NumberOfNights;
+            var pctHost = percentToHost / 100m;
+            accommodation.DailyNetRate = accommodation.DailyGrossRate * pctHost;
             accommodation.TotalNetWithTax = accommodation.DailyNetRate * accommodation.NumberOfNights;
+            accommodation.Tax1 = 0;
+            accommodation.Tax2 = 0;
+            accommodation.Tax3 = 0;
+            accommodation.TotalTax = 0;
+            accommodation.ServiceFee = (accommodation.TotalGrossWithTax ?? 0) - (accommodation.TotalNetWithTax ?? 0);
             _bindingSource.ResetCurrentItem();
             return;
         }
 
-        // Use override values if specified, otherwise use property defaults
-        var taxPlanCode = !string.IsNullOrEmpty(accommodation.OverrideTaxPlanCode)
-            ? accommodation.OverrideTaxPlanCode
-            : property.TaxPlanCode ?? "000";
-        var percentToHost = accommodation.OverridePercentToHost ?? property.PercentToHost;
-
         // Get the tax calculation service
         var taxService = Program.ServiceProvider.GetRequiredService<ITaxCalculationService>();
 
-        // Build tax rate info
-        var taxRateInfo = new TaxRateInfo
-        {
-            TaxOne = taxRateRecord.TaxOne,
-            FutureTaxOne = taxRateRecord.FutureTaxOne,
-            FutureTaxOneEffectiveDate = taxRateRecord.FutureTaxOneEffectiveDate,
-            TaxTwo = taxRateRecord.TaxTwo,
-            FutureTaxTwo = taxRateRecord.FutureTaxTwo,
-            FutureTaxTwoEffectiveDate = taxRateRecord.FutureTaxTwoEffectiveDate,
-            TaxThree = taxRateRecord.TaxThree,
-            FutureTaxThree = taxRateRecord.FutureTaxThree,
-            FutureTaxThreeEffectiveDate = taxRateRecord.FutureTaxThreeEffectiveDate
-        };
+        // Get tax rate info from the TaxPlan
+        var taxRateInfo = taxPlan.ToTaxRateInfo();
 
         // Build calculation input
         var input = new TaxCalculationInput

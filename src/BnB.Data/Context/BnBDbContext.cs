@@ -203,6 +203,21 @@ public class BnBDbContext : DbContext
             entity.Property(e => e.PlanTitle).HasMaxLength(100);
             entity.Property(e => e.Description).HasMaxLength(500);
             entity.HasIndex(e => e.PlanCode).IsUnique();
+
+            // Tax 1 fields
+            entity.Property(e => e.Tax1Rate).HasPrecision(10, 4);
+            entity.Property(e => e.Tax1Description).HasMaxLength(50);
+            entity.Property(e => e.FutureTax1Rate).HasPrecision(10, 4);
+
+            // Tax 2 fields
+            entity.Property(e => e.Tax2Rate).HasPrecision(10, 4);
+            entity.Property(e => e.Tax2Description).HasMaxLength(50);
+            entity.Property(e => e.FutureTax2Rate).HasPrecision(10, 4);
+
+            // Tax 3 fields
+            entity.Property(e => e.Tax3Rate).HasPrecision(10, 4);
+            entity.Property(e => e.Tax3Description).HasMaxLength(50);
+            entity.Property(e => e.FutureTax3Rate).HasPrecision(10, 4);
         });
 
         // RoomType configuration (hostaccount_roomtype_link)
