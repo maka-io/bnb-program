@@ -21,6 +21,7 @@ public partial class AccommodationForm : Form
     private FormMode _currentMode = FormMode.Browse;
     private Accommodation? _currentAccommodation;
     private long? _filterConfirmationNumber;
+    private ContextMenuStrip _goToMenu;
 
     public AccommodationForm(BnBDbContext dbContext, long? confirmationNumber = null)
     {
@@ -31,6 +32,17 @@ public partial class AccommodationForm : Form
         _filterConfirmationNumber = confirmationNumber;
 
         InitializeComponent();
+        InitializeGoToMenu();
+    }
+
+    private void InitializeGoToMenu()
+    {
+        _goToMenu = new ContextMenuStrip();
+        var mnuGuestInfo = new ToolStripMenuItem("Guest General Information");
+        mnuGuestInfo.Click += (s, e) => GoToGuestInfo();
+        var mnuPayments = new ToolStripMenuItem("Guest Payments");
+        mnuPayments.Click += (s, e) => GoToPayments();
+        _goToMenu.Items.AddRange(new ToolStripItem[] { mnuGuestInfo, mnuPayments });
     }
 
     private void AccommodationForm_Load(object sender, EventArgs e)
@@ -473,11 +485,29 @@ public partial class AccommodationForm : Form
 
     private void btnGoToGuest_Click(object sender, EventArgs e)
     {
+        if (_bindingSource.Current is Accommodation && btnGoToGuest != null)
+        {
+            _goToMenu.Show(btnGoToGuest, new Point(0, btnGoToGuest.Height));
+        }
+    }
+
+    private void GoToGuestInfo()
+    {
         if (_bindingSource.Current is Accommodation accommodation)
         {
-            // Navigate to guest form (would need to be implemented via parent form)
-            MessageBox.Show($"Navigate to Guest Conf# {accommodation.ConfirmationNumber}",
-                "Go To Guest", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            var form = new GuestForm(_dbContext, accommodation.ConfirmationNumber);
+            form.MdiParent = this.MdiParent;
+            form.Show();
+        }
+    }
+
+    private void GoToPayments()
+    {
+        if (_bindingSource.Current is Accommodation accommodation)
+        {
+            var form = new PaymentForm(_dbContext, accommodation.ConfirmationNumber);
+            form.MdiParent = this.MdiParent;
+            form.Show();
         }
     }
 

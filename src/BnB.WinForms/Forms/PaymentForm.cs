@@ -20,6 +20,7 @@ public partial class PaymentForm : Form
     private FormMode _currentMode = FormMode.Browse;
     private Payment? _currentPayment;
     private long? _filterConfirmationNumber;
+    private ContextMenuStrip _goToMenu;
 
     public PaymentForm(BnBDbContext dbContext, long? confirmationNumber = null)
     {
@@ -30,6 +31,17 @@ public partial class PaymentForm : Form
 
         InitializeComponent();
         LoadAppliedToOptions();
+        InitializeGoToMenu();
+    }
+
+    private void InitializeGoToMenu()
+    {
+        _goToMenu = new ContextMenuStrip();
+        var mnuGuestInfo = new ToolStripMenuItem("Guest General Information");
+        mnuGuestInfo.Click += (s, e) => GoToGuestInfo();
+        var mnuAccommodations = new ToolStripMenuItem("Guest Accommodations");
+        mnuAccommodations.Click += (s, e) => GoToAccommodations();
+        _goToMenu.Items.AddRange(new ToolStripItem[] { mnuGuestInfo, mnuAccommodations });
     }
 
     private void PaymentForm_Load(object sender, EventArgs e)
@@ -41,10 +53,19 @@ public partial class PaymentForm : Form
         SetMode(FormMode.Browse);
 
         // If opened with a confirmation number filter but no payments exist,
-        // automatically start insert mode with guest info pre-populated
+        // ask user if they want to create a payment record
         if (_filterConfirmationNumber.HasValue && _bindingSource.Count == 0)
         {
-            StartInsertWithGuestInfo(_filterConfirmationNumber.Value);
+            var result = MessageBox.Show(
+                $"No payment records found for Confirmation #{_filterConfirmationNumber.Value}.\n\nWould you like to create a payment record?",
+                "No Payment Records",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                StartInsertWithGuestInfo(_filterConfirmationNumber.Value);
+            }
         }
     }
 
@@ -630,10 +651,29 @@ public partial class PaymentForm : Form
 
     private void btnGoToGuest_Click(object sender, EventArgs e)
     {
+        if (_bindingSource.Current is Payment && btnGoToGuest != null)
+        {
+            _goToMenu.Show(btnGoToGuest, new Point(0, btnGoToGuest.Height));
+        }
+    }
+
+    private void GoToGuestInfo()
+    {
         if (_bindingSource.Current is Payment payment)
         {
-            MessageBox.Show($"Navigate to Guest Conf# {payment.ConfirmationNumber}",
-                "Go To Guest", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            var form = new GuestForm(_dbContext, payment.ConfirmationNumber);
+            form.MdiParent = this.MdiParent;
+            form.Show();
+        }
+    }
+
+    private void GoToAccommodations()
+    {
+        if (_bindingSource.Current is Payment payment)
+        {
+            var form = new AccommodationForm(_dbContext, payment.ConfirmationNumber);
+            form.MdiParent = this.MdiParent;
+            form.Show();
         }
     }
 

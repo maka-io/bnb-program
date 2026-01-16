@@ -123,7 +123,6 @@ partial class PaymentReceivableForm
         dgvReceivables.AllowUserToAddRows = false;
         dgvReceivables.AllowUserToDeleteRows = false;
         dgvReceivables.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dgvReceivables.ContextMenuStrip = contextMenuStrip;
         dgvReceivables.Dock = DockStyle.Fill;
         dgvReceivables.Location = new Point(0, 35);
         dgvReceivables.MultiSelect = false;
@@ -132,6 +131,7 @@ partial class PaymentReceivableForm
         dgvReceivables.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         dgvReceivables.Size = new Size(850, 375);
         dgvReceivables.TabIndex = 0;
+        dgvReceivables.MouseDown += dgvReceivables_MouseDown;
         //
         // pnlBottom
         //

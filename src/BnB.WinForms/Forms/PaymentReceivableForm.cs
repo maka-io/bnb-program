@@ -285,6 +285,34 @@ public partial class PaymentReceivableForm : Form
         Close();
     }
 
+    private void dgvReceivables_MouseDown(object sender, MouseEventArgs e)
+    {
+        if (e.Button == MouseButtons.Right)
+        {
+            var hitTest = dgvReceivables.HitTest(e.X, e.Y);
+            if (hitTest.RowIndex >= 0 && hitTest.RowIndex < dgvReceivables.Rows.Count)
+            {
+                // Select the row under the cursor
+                dgvReceivables.ClearSelection();
+                dgvReceivables.Rows[hitTest.RowIndex].Selected = true;
+
+                // Find the first visible cell to set as current
+                foreach (DataGridViewCell cell in dgvReceivables.Rows[hitTest.RowIndex].Cells)
+                {
+                    if (cell.Visible)
+                    {
+                        dgvReceivables.CurrentCell = cell;
+                        break;
+                    }
+                }
+
+                // Show context menu at cursor position
+                contextMenuStrip.Show(dgvReceivables, e.Location);
+            }
+            // If not on a valid row, don't show the context menu
+        }
+    }
+
     private long? GetSelectedConfirmationNumber()
     {
         if (dgvReceivables.SelectedRows.Count == 0) return null;
