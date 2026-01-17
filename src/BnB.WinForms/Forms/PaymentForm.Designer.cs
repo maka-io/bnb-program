@@ -98,6 +98,7 @@ partial class PaymentForm
         this.btnFind = new Button();
         this.btnRefresh = new Button();
         this.btnGoToGuest = new Button();
+        this.btnRecordPayment = new Button();
 
         // Other controls
         this.lblRecordCount = new Label();
@@ -293,6 +294,9 @@ partial class PaymentForm
         AddButton(panelButtons, btnRefresh, "&Refresh", btnY);
         btnY += btnSpacing + 15;
         AddButton(panelButtons, btnGoToGuest, "&Go to...", btnY);
+        btnY += btnSpacing + 10;
+        AddButton(panelButtons, btnRecordPayment, "Record &Pmt", btnY);
+        btnRecordPayment.BackColor = Color.FromArgb(230, 245, 230);
 
         btnInsert.Click += btnInsert_Click;
         btnUpdate.Click += btnUpdate_Click;
@@ -302,6 +306,7 @@ partial class PaymentForm
         btnFind.Click += btnFind_Click;
         btnRefresh.Click += btnRefresh_Click;
         btnGoToGuest.Click += btnGoToGuest_Click;
+        btnRecordPayment.Click += btnRecordPayment_Click;
 
         // === Summary Panel (above DataGrid) ===
         this.panelSummary = new Panel();
@@ -457,6 +462,7 @@ partial class PaymentForm
     private Button btnFind;
     private Button btnRefresh;
     private Button btnGoToGuest;
+    private Button btnRecordPayment;
 
     // Other
     private Label lblRecordCount;

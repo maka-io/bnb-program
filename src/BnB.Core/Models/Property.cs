@@ -43,9 +43,53 @@ public class Property
 
     // Tax and booking settings
     public string? TaxPlanCode { get; set; }  // tax_plan_code
-    public string? DepositRequired { get; set; }  // depositreq
+    public string? DepositRequired { get; set; }  // depositreq (legacy text field)
     public string? Exceptions { get; set; }  // exceptions
     public string? ExceptionsDescription { get; set; }  // exceptions_desc
+
+    // Payment Policy - Default Settings
+    /// <summary>Deposit percentage (e.g., 50 for 50%)</summary>
+    public decimal? DefaultDepositPercent { get; set; }
+
+    /// <summary>Days after booking when deposit is due (e.g., 14 for 2 weeks)</summary>
+    public int? DefaultDepositDueDays { get; set; }
+
+    /// <summary>Days before arrival when full prepayment is due (e.g., 45)</summary>
+    public int? DefaultPrepaymentDueDays { get; set; }
+
+    /// <summary>Days before arrival required for cancellation notice (e.g., 30)</summary>
+    public int? DefaultCancellationNoticeDays { get; set; }
+
+    /// <summary>Percentage of deposit forfeited if cancellation is late (e.g., 100 = forfeit entire deposit)</summary>
+    public decimal? DefaultCancellationFeePercent { get; set; }
+
+    /// <summary>Flat processing fee deducted from refund for any cancellation (e.g., $25)</summary>
+    public decimal? CancellationProcessingFee { get; set; }
+
+    // Payment Policy - Peak Period Override Settings (e.g., Christmas/Holiday period)
+    /// <summary>Whether this property has peak period payment overrides</summary>
+    public bool HasPeakPeriodPolicy { get; set; }
+
+    /// <summary>Peak period prepayment due days override (e.g., 60)</summary>
+    public int? PeakPeriodPrepaymentDueDays { get; set; }
+
+    /// <summary>Peak period cancellation notice days override (e.g., 60)</summary>
+    public int? PeakPeriodCancellationNoticeDays { get; set; }
+
+    /// <summary>Peak period cancellation fee percent override</summary>
+    public decimal? PeakPeriodCancellationFeePercent { get; set; }
+
+    /// <summary>Start month of peak period (1-12)</summary>
+    public int? PeakPeriodStartMonth { get; set; }
+
+    /// <summary>Start day of peak period (1-31)</summary>
+    public int? PeakPeriodStartDay { get; set; }
+
+    /// <summary>End month of peak period (1-12)</summary>
+    public int? PeakPeriodEndMonth { get; set; }
+
+    /// <summary>End day of peak period (1-31)</summary>
+    public int? PeakPeriodEndDay { get; set; }
 
     // Status flags
     [NotMapped]
@@ -58,4 +102,77 @@ public class Property
     // Navigation properties
     public virtual ICollection<Accommodation> Accommodations { get; set; } = new List<Accommodation>();
     public virtual ICollection<RoomType> RoomTypes { get; set; } = new List<RoomType>();
+
+    /// <summary>
+    /// Checks if a given arrival date falls within the peak period.
+    /// Handles date ranges that span year boundaries (e.g., Dec 15 - Jan 5).
+    /// </summary>
+    public bool IsInPeakPeriod(DateTime arrivalDate)
+    {
+        if (!HasPeakPeriodPolicy ||
+            !PeakPeriodStartMonth.HasValue || !PeakPeriodStartDay.HasValue ||
+            !PeakPeriodEndMonth.HasValue || !PeakPeriodEndDay.HasValue)
+        {
+            return false;
+        }
+
+        var month = arrivalDate.Month;
+        var day = arrivalDate.Day;
+        var startMonth = PeakPeriodStartMonth.Value;
+        var startDay = PeakPeriodStartDay.Value;
+        var endMonth = PeakPeriodEndMonth.Value;
+        var endDay = PeakPeriodEndDay.Value;
+
+        // Create comparable date values (month * 100 + day)
+        var dateValue = month * 100 + day;
+        var startValue = startMonth * 100 + startDay;
+        var endValue = endMonth * 100 + endDay;
+
+        if (startValue <= endValue)
+        {
+            // Normal range (e.g., Jun 1 - Aug 31)
+            return dateValue >= startValue && dateValue <= endValue;
+        }
+        else
+        {
+            // Range spans year boundary (e.g., Dec 15 - Jan 5)
+            return dateValue >= startValue || dateValue <= endValue;
+        }
+    }
+
+    /// <summary>
+    /// Gets the prepayment due days for a given arrival date (uses peak period override if applicable).
+    /// </summary>
+    public int? GetPrepaymentDueDays(DateTime arrivalDate)
+    {
+        if (IsInPeakPeriod(arrivalDate) && PeakPeriodPrepaymentDueDays.HasValue)
+        {
+            return PeakPeriodPrepaymentDueDays;
+        }
+        return DefaultPrepaymentDueDays;
+    }
+
+    /// <summary>
+    /// Gets the cancellation notice days for a given arrival date (uses peak period override if applicable).
+    /// </summary>
+    public int? GetCancellationNoticeDays(DateTime arrivalDate)
+    {
+        if (IsInPeakPeriod(arrivalDate) && PeakPeriodCancellationNoticeDays.HasValue)
+        {
+            return PeakPeriodCancellationNoticeDays;
+        }
+        return DefaultCancellationNoticeDays;
+    }
+
+    /// <summary>
+    /// Gets the cancellation fee percent for a given arrival date (uses peak period override if applicable).
+    /// </summary>
+    public decimal? GetCancellationFeePercent(DateTime arrivalDate)
+    {
+        if (IsInPeakPeriod(arrivalDate) && PeakPeriodCancellationFeePercent.HasValue)
+        {
+            return PeakPeriodCancellationFeePercent;
+        }
+        return DefaultCancellationFeePercent;
+    }
 }

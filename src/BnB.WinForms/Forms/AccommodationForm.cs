@@ -693,6 +693,13 @@ public partial class AccommodationForm : Form
                         _dbContext.Accommodations.Add(_currentAccommodation);
                     }
                     _dbContext.SaveChanges();
+
+                    // Auto-generate payment record for the new accommodation
+                    if (_currentAccommodation != null)
+                    {
+                        CreatePaymentRecordForAccommodation(_currentAccommodation);
+                    }
+
                     MessageBox.Show("Accommodation added successfully.", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -1215,6 +1222,123 @@ public partial class AccommodationForm : Form
                     e.Cancel = true;
                     break;
             }
+        }
+    }
+
+    /// <summary>
+    /// Creates a payment record for a newly created accommodation, applying the property's payment policy.
+    /// </summary>
+    private void CreatePaymentRecordForAccommodation(Accommodation accommodation)
+    {
+        try
+        {
+            // Check if a payment record already exists for this confirmation
+            var existingPayment = _dbContext.Payments
+                .AsNoTracking()
+                .FirstOrDefault(p => p.ConfirmationNumber == accommodation.ConfirmationNumber);
+
+            if (existingPayment != null)
+                return; // Payment already exists, don't create a duplicate
+
+            // Get property with payment policy
+            var property = _dbContext.Properties
+                .FirstOrDefault(p => p.AccountNumber == accommodation.PropertyAccountNumber);
+
+            // Get guest info
+            var guest = _dbContext.Guests.Find(accommodation.GuestId);
+
+            var payment = new Payment
+            {
+                ConfirmationNumber = accommodation.ConfirmationNumber,
+                GuestId = accommodation.GuestId,
+                FirstName = guest?.FirstName,
+                LastName = guest?.LastName,
+                PaymentDate = DateTime.Today,
+                Amount = 0 // No payment received yet, just setting up the dues
+            };
+
+            // Apply property payment policy if available
+            if (property != null)
+            {
+                ApplyPropertyPaymentPolicy(payment, property, accommodation, guest);
+            }
+
+            _dbContext.Payments.Add(payment);
+            _dbContext.SaveChanges();
+        }
+        catch (Exception ex)
+        {
+            // Log but don't fail the accommodation save
+            System.Diagnostics.Debug.WriteLine($"Error creating payment record: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Applies the property's payment policy to auto-populate payment due amounts and dates.
+    /// </summary>
+    private void ApplyPropertyPaymentPolicy(Payment payment, Property property, Accommodation accommodation, Guest? guest)
+    {
+        var arrivalDate = accommodation.ArrivalDate;
+        var bookedDate = guest?.DateBooked ?? DateTime.Today;
+
+        // Calculate total for all accommodations with the same confirmation number
+        // Note: SQLite doesn't support Sum on decimal, so we load to memory first
+        var totalGross = _dbContext.Accommodations
+            .Where(a => a.ConfirmationNumber == accommodation.ConfirmationNumber)
+            .Select(a => a.TotalGrossWithTax)
+            .ToList()
+            .Sum() ?? 0m;
+
+        // Calculate deposit amount if deposit percent is set
+        if (property.DefaultDepositPercent.HasValue && property.DefaultDepositPercent > 0)
+        {
+            var depositAmount = totalGross * (property.DefaultDepositPercent.Value / 100m);
+            payment.DepositDue = Math.Round(depositAmount, 2);
+
+            // Calculate deposit due date
+            if (property.DefaultDepositDueDays.HasValue)
+            {
+                payment.DepositDueDate = bookedDate.AddDays(property.DefaultDepositDueDays.Value);
+            }
+        }
+
+        // Calculate prepayment amount (remainder after deposit)
+        if (property.DefaultDepositPercent.HasValue && property.DefaultDepositPercent < 100)
+        {
+            var prepaymentAmount = totalGross - (payment.DepositDue ?? 0);
+            payment.PrepaymentDue = Math.Round(prepaymentAmount, 2);
+        }
+        else if (!property.DefaultDepositPercent.HasValue)
+        {
+            // No deposit percent set, full amount as prepayment
+            payment.PrepaymentDue = totalGross;
+        }
+
+        // Calculate prepayment due date (uses peak period override if applicable)
+        var prepaymentDueDays = property.GetPrepaymentDueDays(arrivalDate);
+        if (prepaymentDueDays.HasValue && prepaymentDueDays > 0)
+        {
+            payment.PrepaymentDueDate = arrivalDate.AddDays(-prepaymentDueDays.Value);
+        }
+
+        // Calculate cancellation fee due date (for reference - fee is usually if they cancel after this date)
+        var cancellationNoticeDays = property.GetCancellationNoticeDays(arrivalDate);
+        if (cancellationNoticeDays.HasValue && cancellationNoticeDays > 0)
+        {
+            payment.CancellationFeeDueDate = arrivalDate.AddDays(-cancellationNoticeDays.Value);
+        }
+
+        // Calculate cancellation fee (based on deposit forfeiture percentage)
+        var cancellationFeePercent = property.GetCancellationFeePercent(arrivalDate);
+        if (cancellationFeePercent.HasValue && payment.DepositDue.HasValue)
+        {
+            var baseFee = payment.DepositDue.Value * (cancellationFeePercent.Value / 100m);
+            var processingFee = property.CancellationProcessingFee ?? 0m;
+            payment.CancellationFee = Math.Round(baseFee + processingFee, 2);
+        }
+        else if (property.CancellationProcessingFee.HasValue)
+        {
+            payment.CancellationFee = property.CancellationProcessingFee.Value;
         }
     }
 }

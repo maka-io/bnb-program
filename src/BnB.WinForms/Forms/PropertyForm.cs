@@ -33,9 +33,56 @@ public partial class PropertyForm : Form
     {
         this.ApplyTheme();
         LoadTaxPlans();
+        LoadMonthComboBoxes();
         LoadProperties();
         SetupDataBindings();
         SetMode(FormMode.Browse);
+        UpdatePeakPeriodControlsEnabled();
+    }
+
+    private void LoadMonthComboBoxes()
+    {
+        var months = new[]
+        {
+            new { Value = (int?)null, Display = "" },
+            new { Value = (int?)1, Display = "January" },
+            new { Value = (int?)2, Display = "February" },
+            new { Value = (int?)3, Display = "March" },
+            new { Value = (int?)4, Display = "April" },
+            new { Value = (int?)5, Display = "May" },
+            new { Value = (int?)6, Display = "June" },
+            new { Value = (int?)7, Display = "July" },
+            new { Value = (int?)8, Display = "August" },
+            new { Value = (int?)9, Display = "September" },
+            new { Value = (int?)10, Display = "October" },
+            new { Value = (int?)11, Display = "November" },
+            new { Value = (int?)12, Display = "December" }
+        };
+
+        cboPeakPeriodStartMonth.DataSource = months.ToList();
+        cboPeakPeriodStartMonth.DisplayMember = "Display";
+        cboPeakPeriodStartMonth.ValueMember = "Value";
+
+        cboPeakPeriodEndMonth.DataSource = months.ToList();
+        cboPeakPeriodEndMonth.DisplayMember = "Display";
+        cboPeakPeriodEndMonth.ValueMember = "Value";
+    }
+
+    private void ChkHasPeakPeriodPolicy_CheckedChanged(object? sender, EventArgs e)
+    {
+        UpdatePeakPeriodControlsEnabled();
+    }
+
+    private void UpdatePeakPeriodControlsEnabled()
+    {
+        var enabled = chkHasPeakPeriodPolicy.Checked;
+        txtPeakPeriodPrepaymentDueDays.Enabled = enabled;
+        txtPeakPeriodCancellationNoticeDays.Enabled = enabled;
+        txtPeakPeriodCancellationFeePercent.Enabled = enabled;
+        cboPeakPeriodStartMonth.Enabled = enabled;
+        txtPeakPeriodStartDay.Enabled = enabled;
+        cboPeakPeriodEndMonth.Enabled = enabled;
+        txtPeakPeriodEndDay.Enabled = enabled;
     }
 
     private void SetupDataBindings()
@@ -88,6 +135,27 @@ public partial class PropertyForm : Form
 
         // Comments
         txtComments.DataBindings.Add("Text", _bindingSource, nameof(Property.Comments), true);
+
+        // Payment Policy - Default Settings
+        txtDefaultDepositPercent.DataBindings.Add("Text", _bindingSource, nameof(Property.DefaultDepositPercent), true);
+        txtDefaultDepositDueDays.DataBindings.Add("Text", _bindingSource, nameof(Property.DefaultDepositDueDays), true);
+        txtDefaultPrepaymentDueDays.DataBindings.Add("Text", _bindingSource, nameof(Property.DefaultPrepaymentDueDays), true);
+        txtDefaultCancellationNoticeDays.DataBindings.Add("Text", _bindingSource, nameof(Property.DefaultCancellationNoticeDays), true);
+        txtDefaultCancellationFeePercent.DataBindings.Add("Text", _bindingSource, nameof(Property.DefaultCancellationFeePercent), true);
+        txtCancellationProcessingFee.DataBindings.Add("Text", _bindingSource, nameof(Property.CancellationProcessingFee), true);
+
+        // Payment Policy - Peak Period Settings
+        chkHasPeakPeriodPolicy.DataBindings.Add("Checked", _bindingSource, nameof(Property.HasPeakPeriodPolicy), true,
+            DataSourceUpdateMode.OnPropertyChanged);
+        txtPeakPeriodPrepaymentDueDays.DataBindings.Add("Text", _bindingSource, nameof(Property.PeakPeriodPrepaymentDueDays), true);
+        txtPeakPeriodCancellationNoticeDays.DataBindings.Add("Text", _bindingSource, nameof(Property.PeakPeriodCancellationNoticeDays), true);
+        txtPeakPeriodCancellationFeePercent.DataBindings.Add("Text", _bindingSource, nameof(Property.PeakPeriodCancellationFeePercent), true);
+        cboPeakPeriodStartMonth.DataBindings.Add("SelectedValue", _bindingSource, nameof(Property.PeakPeriodStartMonth), true,
+            DataSourceUpdateMode.OnPropertyChanged);
+        txtPeakPeriodStartDay.DataBindings.Add("Text", _bindingSource, nameof(Property.PeakPeriodStartDay), true);
+        cboPeakPeriodEndMonth.DataBindings.Add("SelectedValue", _bindingSource, nameof(Property.PeakPeriodEndMonth), true,
+            DataSourceUpdateMode.OnPropertyChanged);
+        txtPeakPeriodEndDay.DataBindings.Add("Text", _bindingSource, nameof(Property.PeakPeriodEndDay), true);
 
         // Navigation grid
         dgvProperties.DataSource = _bindingSource;

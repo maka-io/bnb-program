@@ -71,11 +71,13 @@ public partial class PaymentForm : Form
 
     private void StartInsertWithGuestInfo(long confirmationNumber)
     {
-        // Look up the guest info via the accommodation's GuestId
+        // Look up the accommodation and its property to get payment policy
         var accommodation = _dbContext.Accommodations
             .Include(a => a.Guest)
+            .Include(a => a.Property)
             .FirstOrDefault(a => a.ConfirmationNumber == confirmationNumber);
         var guest = accommodation?.Guest;
+        var property = accommodation?.Property;
 
         SetMode(FormMode.Insert);
 
@@ -88,6 +90,12 @@ public partial class PaymentForm : Form
             FirstName = guest?.FirstName,
             LastName = guest?.LastName
         };
+
+        // Auto-populate payment policy fields from Property if available
+        if (property != null && accommodation != null)
+        {
+            ApplyPropertyPaymentPolicy(_currentPayment, property, accommodation);
+        }
 
         _bindingSource.Add(_currentPayment);
         _bindingSource.Position = _bindingSource.Count - 1;
@@ -102,6 +110,78 @@ public partial class PaymentForm : Form
         txtLastName.ReadOnly = true;
 
         txtAmount.Focus();
+    }
+
+    /// <summary>
+    /// Applies the property's payment policy to auto-populate payment due amounts and dates.
+    /// </summary>
+    private void ApplyPropertyPaymentPolicy(Payment payment, Property property, Accommodation accommodation)
+    {
+        var arrivalDate = accommodation.ArrivalDate;
+        var bookedDate = accommodation.Guest?.DateBooked ?? DateTime.Today;
+
+        // Calculate total for all accommodations with the same confirmation number
+        // Note: SQLite doesn't support Sum on decimal, so we load to memory first
+        var totalGross = _dbContext.Accommodations
+            .Where(a => a.ConfirmationNumber == accommodation.ConfirmationNumber)
+            .Select(a => a.TotalGrossWithTax)
+            .ToList()
+            .Sum() ?? 0m;
+
+        // Calculate deposit amount if deposit percent is set
+        if (property.DefaultDepositPercent.HasValue && property.DefaultDepositPercent > 0)
+        {
+            var depositAmount = totalGross * (property.DefaultDepositPercent.Value / 100m);
+            payment.DepositDue = Math.Round(depositAmount, 2);
+
+            // Calculate deposit due date
+            if (property.DefaultDepositDueDays.HasValue)
+            {
+                payment.DepositDueDate = bookedDate.AddDays(property.DefaultDepositDueDays.Value);
+            }
+        }
+
+        // Calculate prepayment amount (remainder after deposit)
+        if (property.DefaultDepositPercent.HasValue && property.DefaultDepositPercent < 100)
+        {
+            var prepaymentAmount = totalGross - (payment.DepositDue ?? 0);
+            payment.PrepaymentDue = Math.Round(prepaymentAmount, 2);
+        }
+        else if (!property.DefaultDepositPercent.HasValue)
+        {
+            // No deposit percent set, full amount as prepayment
+            payment.PrepaymentDue = totalGross;
+        }
+
+        // Calculate prepayment due date (uses peak period override if applicable)
+        var prepaymentDueDays = property.GetPrepaymentDueDays(arrivalDate);
+        if (prepaymentDueDays.HasValue && prepaymentDueDays > 0)
+        {
+            payment.PrepaymentDueDate = arrivalDate.AddDays(-prepaymentDueDays.Value);
+        }
+
+        // Calculate cancellation fee due date (for reference - fee is usually if they cancel after this date)
+        var cancellationNoticeDays = property.GetCancellationNoticeDays(arrivalDate);
+        if (cancellationNoticeDays.HasValue && cancellationNoticeDays > 0)
+        {
+            payment.CancellationFeeDueDate = arrivalDate.AddDays(-cancellationNoticeDays.Value);
+        }
+
+        // Calculate cancellation fee (based on deposit forfeiture percentage)
+        // This shows what the guest would owe if they cancel late
+        var cancellationFeePercent = property.GetCancellationFeePercent(arrivalDate);
+        if (cancellationFeePercent.HasValue && payment.DepositDue.HasValue)
+        {
+            var baseFee = payment.DepositDue.Value * (cancellationFeePercent.Value / 100m);
+            // Add processing fee if applicable
+            var processingFee = property.CancellationProcessingFee ?? 0m;
+            payment.CancellationFee = Math.Round(baseFee + processingFee, 2);
+        }
+        else if (property.CancellationProcessingFee.HasValue)
+        {
+            // Only processing fee, no percentage-based fee
+            payment.CancellationFee = property.CancellationProcessingFee.Value;
+        }
     }
 
     private void ConfigureDataGridView()
@@ -270,7 +350,11 @@ public partial class PaymentForm : Form
     {
         try
         {
+            // Use AsNoTracking to prevent accidental modifications from being persisted
+            // This is important because WinForms data binding can cause unexpected writes
+            // to tracked entities when controls sync their values
             var query = _dbContext.Payments
+                .AsNoTracking()
                 .Include(p => p.Guest)
                 .AsQueryable();
 
@@ -338,6 +422,7 @@ public partial class PaymentForm : Form
                 btnCancel.Enabled = false;
                 btnRefresh.Enabled = true;
                 btnGoToGuest.Enabled = _bindingSource.Count > 0;
+                btnRecordPayment.Enabled = _bindingSource.Count > 0;
                 dgvPayments.Enabled = true;
                 break;
 
@@ -351,6 +436,7 @@ public partial class PaymentForm : Form
                 btnCancel.Enabled = true;
                 btnRefresh.Enabled = false;
                 btnGoToGuest.Enabled = false;
+                btnRecordPayment.Enabled = false;
                 dgvPayments.Enabled = false;
                 break;
 
@@ -363,6 +449,7 @@ public partial class PaymentForm : Form
                 btnCancel.Enabled = true;
                 btnRefresh.Enabled = false;
                 btnGoToGuest.Enabled = false;
+                btnRecordPayment.Enabled = false;
                 dgvPayments.Enabled = false;
                 break;
 
@@ -375,6 +462,7 @@ public partial class PaymentForm : Form
                 btnCancel.Enabled = false;
                 btnRefresh.Enabled = true;
                 btnGoToGuest.Enabled = false;
+                btnRecordPayment.Enabled = false;
                 dgvPayments.Enabled = true;
                 break;
         }
@@ -390,7 +478,7 @@ public partial class PaymentForm : Form
         if (_bindingSource.DataSource is List<Payment> payments && payments.Count > 0)
         {
             var totalReceived = payments.Sum(p => p.Amount);
-            var totalDue = payments.Sum(p => (p.DepositDue ?? 0) + (p.PrepaymentDue ?? 0) + (p.CancellationFee ?? 0));
+            var totalDue = payments.Sum(p => (p.DepositDue ?? 0) + (p.PrepaymentDue ?? 0));
             var totalBalance = payments.Sum(p => p.Balance);
 
             lblTotalReceived.Text = $"Total Received: {totalReceived:C2}";
@@ -409,7 +497,7 @@ public partial class PaymentForm : Form
     {
         if (_bindingSource.Current is Payment payment)
         {
-            var totalDue = (payment.DepositDue ?? 0) + (payment.PrepaymentDue ?? 0) + (payment.CancellationFee ?? 0);
+            var totalDue = (payment.DepositDue ?? 0) + (payment.PrepaymentDue ?? 0);
 
             lblRecordReceived.Text = $"Received: {payment.Amount:C2}";
             lblRecordDue.Text = $"Due: {totalDue:C2}";
@@ -427,6 +515,10 @@ public partial class PaymentForm : Form
 
     private void btnInsert_Click(object sender, EventArgs e)
     {
+        // Finalize any pending edits on the current record before switching
+        // Note: Since we use AsNoTracking, these edits won't be persisted accidentally
+        _bindingSource.EndEdit();
+
         SetMode(FormMode.Insert);
 
         _currentPayment = new Payment
@@ -453,7 +545,29 @@ public partial class PaymentForm : Form
     {
         if (_bindingSource.Current is Payment payment)
         {
-            _currentPayment = payment;
+            // Check if this entity is already being tracked
+            var trackedEntity = _dbContext.ChangeTracker.Entries<Payment>()
+                .FirstOrDefault(e => e.Entity.Id == payment.Id);
+
+            if (trackedEntity != null)
+            {
+                // Use the tracked instance and copy values from the displayed one
+                _currentPayment = trackedEntity.Entity;
+                // Update position to point to the tracked entity in the binding source
+                var index = ((List<Payment>)_bindingSource.DataSource!).FindIndex(p => p.Id == payment.Id);
+                if (index >= 0)
+                {
+                    ((List<Payment>)_bindingSource.DataSource!)[index] = _currentPayment;
+                    _bindingSource.ResetItem(index);
+                }
+            }
+            else
+            {
+                _currentPayment = payment;
+                // Attach the untracked entity so changes can be saved
+                _dbContext.Payments.Attach(_currentPayment);
+            }
+
             SetMode(FormMode.Update);
             txtAmount.Focus();
         }
@@ -529,6 +643,11 @@ public partial class PaymentForm : Form
 
                 case FormMode.Update:
                     _bindingSource.EndEdit();
+                    // Mark entity as modified since we attached it in Unchanged state
+                    if (_currentPayment != null)
+                    {
+                        _dbContext.Entry(_currentPayment).State = EntityState.Modified;
+                    }
                     _dbContext.SaveChanges();
                     MessageBox.Show("Payment updated successfully.", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -560,7 +679,22 @@ public partial class PaymentForm : Form
         {
             if (_currentPayment != null)
             {
-                _dbContext.Payments.Remove(_currentPayment);
+                // Check if this entity is already being tracked
+                var trackedEntity = _dbContext.ChangeTracker.Entries<Payment>()
+                    .FirstOrDefault(e => e.Entity.Id == _currentPayment.Id);
+
+                Payment entityToDelete;
+                if (trackedEntity != null)
+                {
+                    entityToDelete = trackedEntity.Entity;
+                }
+                else
+                {
+                    entityToDelete = _currentPayment;
+                    _dbContext.Payments.Attach(entityToDelete);
+                }
+
+                _dbContext.Payments.Remove(entityToDelete);
                 _dbContext.SaveChanges();
                 MessageBox.Show("Payment deleted successfully.", "Success",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -680,6 +814,77 @@ public partial class PaymentForm : Form
             var form = new AccommodationForm(_dbContext, payment.ConfirmationNumber);
             form.MdiParent = this.MdiParent;
             form.Show();
+        }
+    }
+
+    private void btnRecordPayment_Click(object sender, EventArgs e)
+    {
+        if (_bindingSource.Current is not Payment currentPayment)
+            return;
+
+        var confirmationNumber = currentPayment.ConfirmationNumber;
+        var guestName = $"{currentPayment.FirstName} {currentPayment.LastName}".Trim();
+
+        // Get the dues from the current record (these represent what's owed for this confirmation)
+        var depositDue = currentPayment.DepositDue;
+        var prepaymentDue = currentPayment.PrepaymentDue;
+
+        // Calculate total previously paid for this confirmation
+        var payments = _bindingSource.DataSource as List<Payment>;
+        var totalPreviouslyPaid = payments?
+            .Where(p => p.ConfirmationNumber == confirmationNumber)
+            .Sum(p => p.Amount) ?? 0m;
+
+        using var recordForm = new RecordPaymentForm(
+            confirmationNumber,
+            guestName,
+            depositDue,
+            prepaymentDue,
+            totalPreviouslyPaid);
+
+        if (recordForm.ShowDialog(this) == DialogResult.OK)
+        {
+            try
+            {
+                // Look up guest info for the new payment record
+                var accommodation = _dbContext.Accommodations
+                    .Include(a => a.Guest)
+                    .FirstOrDefault(a => a.ConfirmationNumber == confirmationNumber);
+
+                var newPayment = new Payment
+                {
+                    ConfirmationNumber = confirmationNumber,
+                    GuestId = accommodation?.Guest?.Id ?? currentPayment.GuestId,
+                    FirstName = currentPayment.FirstName,
+                    LastName = currentPayment.LastName,
+                    Amount = recordForm.Amount,
+                    PaymentDate = recordForm.PaymentDate,
+                    CheckNumber = recordForm.CheckNumber,
+                    ReceivedFrom = recordForm.ReceivedFrom,
+                    AppliedTo = recordForm.AppliedTo,
+                    Comments = recordForm.Comments,
+                    // Copy the dues from the current record
+                    DepositDue = currentPayment.DepositDue,
+                    DepositDueDate = currentPayment.DepositDueDate,
+                    PrepaymentDue = currentPayment.PrepaymentDue,
+                    PrepaymentDueDate = currentPayment.PrepaymentDueDate,
+                    CancellationFee = currentPayment.CancellationFee,
+                    CancellationFeeDueDate = currentPayment.CancellationFeeDueDate
+                };
+
+                _dbContext.Payments.Add(newPayment);
+                _dbContext.SaveChanges();
+
+                MessageBox.Show($"Payment of {recordForm.Amount:C2} recorded successfully.", "Payment Recorded",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                LoadPayments();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error recording payment: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 

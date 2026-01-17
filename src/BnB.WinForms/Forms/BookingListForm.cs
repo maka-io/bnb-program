@@ -316,12 +316,25 @@ public partial class BookingListForm : Form
             .Where(a => a.ConfirmationNumber == accom.ConfirmationNumber)
             .ToList();
 
-        var payment = _dbContext.Payments
-            .FirstOrDefault(p => p.ConfirmationNumber == accom.ConfirmationNumber);
+        // Get all payments for this confirmation
+        var payments = _dbContext.Payments
+            .Where(p => p.ConfirmationNumber == accom.ConfirmationNumber)
+            .ToList();
 
-        // Calculate deposit and prepayment totals
-        decimal totalDeposit = payment?.DepositDue ?? 0;
-        decimal totalPrepayment = payment?.PrepaymentDue ?? 0;
+        // Get the first payment record (for dues info and other fields)
+        var payment = payments.FirstOrDefault();
+
+        // Calculate actual payments received by type (AppliedTo field)
+        decimal totalDepositReceived = payments
+            .Where(p => p.AppliedTo == "Deposit")
+            .Sum(p => p.Amount);
+        decimal totalPrepaymentReceived = payments
+            .Where(p => p.AppliedTo == "Prepayment" || p.AppliedTo == "Balance Due")
+            .Sum(p => p.Amount);
+
+        // Get check numbers for deposit and prepayment if available
+        var depositPayment = payments.FirstOrDefault(p => p.AppliedTo == "Deposit" && !string.IsNullOrEmpty(p.CheckNumber));
+        var prepayPayment = payments.FirstOrDefault(p => (p.AppliedTo == "Prepayment" || p.AppliedTo == "Balance Due") && !string.IsNullOrEmpty(p.CheckNumber));
 
         var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
         var report = new ConfirmationReport(
@@ -330,10 +343,10 @@ public partial class BookingListForm : Form
             payment,
             "Standard",
             "Guest",
-            totalDeposit,
-            totalPrepayment,
-            null,
-            null,
+            totalDepositReceived,
+            totalPrepaymentReceived,
+            depositPayment?.CheckNumber,
+            prepayPayment?.CheckNumber,
             companyInfo);
 
         using var viewer = new ReportViewerForm(report, autoPrint: true);

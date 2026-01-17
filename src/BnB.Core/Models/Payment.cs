@@ -44,8 +44,9 @@ public class Payment
     public string? Comments { get; set; }
 
     // Calculated property for outstanding balance
+    // Note: CancellationFee is NOT included - it's only owed if guest actually cancels
     [NotMapped]
-    public decimal Balance => (DepositDue ?? 0) + (PrepaymentDue ?? 0) + (CancellationFee ?? 0) - Amount;
+    public decimal Balance => (DepositDue ?? 0) + (PrepaymentDue ?? 0) - Amount;
 
     // Navigation properties
     public virtual Guest Guest { get; set; } = null!;

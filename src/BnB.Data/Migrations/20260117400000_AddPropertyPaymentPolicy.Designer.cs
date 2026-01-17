@@ -3,6 +3,7 @@ using System;
 using BnB.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BnB.Data.Migrations
 {
     [DbContext(typeof(BnBDbContext))]
-    partial class BnBDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260117400000_AddPropertyPaymentPolicy")]
+    partial class AddPropertyPaymentPolicy
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -46,11 +49,15 @@ namespace BnB.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("DailyNetRate")
+                    b.Property<decimal?>("DailyHostRate")
                         .HasPrecision(10, 2)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("DepartureDate")
+                    b.Property<DateTime?>("DepartureDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("DiscountRate")
+                        .HasPrecision(10, 2)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("EntryDate")
@@ -78,63 +85,21 @@ namespace BnB.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("NightNotes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("Notified")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("NumberInParty")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("NumberOfNights")
                         .HasColumnType("INTEGER");
 
-                    b.Property<decimal?>("OverridePercentToHost")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("OverrideTaxPlanCode")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PaymentType")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("PropertyAccountNumber")
+                    b.Property<int>("PropertyAccountNumber")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("RevisionDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("ServiceFee")
-                        .HasPrecision(10, 2)
+                    b.Property<string>("SpecialRequests")
+                        .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("Suppress")
                         .HasColumnType("INTEGER");
-
-                    b.Property<decimal?>("Tax1")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("Tax2")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("Tax3")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("TotalGrossWithTax")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("TotalNetWithTax")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
 
                     b.Property<decimal?>("TotalTax")
                         .HasPrecision(10, 2)
@@ -145,7 +110,7 @@ namespace BnB.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("UnitNameDescription")
-                        .HasMaxLength(200)
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("UpdateDate")
@@ -155,10 +120,7 @@ namespace BnB.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("UseManualAmounts")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("ArrivalDate")
+                    b.Property<DateTime?>("ArrivalDate")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -172,208 +134,6 @@ namespace BnB.Data.Migrations
                     b.ToTable("Accommodations");
                 });
 
-            modelBuilder.Entity("BnB.Core.Models.CarAgency", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Address")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("City")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Comments")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CommissionPercent")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ContactName")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Fax")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("State")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ZipCode")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CarAgencies");
-                });
-
-            modelBuilder.Entity("BnB.Core.Models.CarRental", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("CarAgencyId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("CarType")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CheckNumber")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Comments")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CommissionAmount")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CommissionPaid")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("CommissionPaidDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<long>("ConfirmationNumber")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal?>("DailyRate")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("GuestId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("PickupDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("ReturnDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("TotalAmount")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CarAgencyId");
-
-                    b.HasIndex("GuestId");
-
-                    b.ToTable("CarRentals");
-                });
-
-            modelBuilder.Entity("BnB.Core.Models.Check", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("AccommodationId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Category")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("CheckDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CheckNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Comments")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<long>("ConfirmationNumber")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsVoid")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Memo")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PayableTo")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AccommodationId");
-
-                    b.ToTable("Checks");
-                });
-
-            modelBuilder.Entity("BnB.Core.Models.CheckNumberConfig", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("LastCheckNumber")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CheckNumberConfigs");
-                });
-
-            modelBuilder.Entity("BnB.Core.Models.CommonText", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(60)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Title")
-                        .IsUnique();
-
-                    b.ToTable("CommonTexts");
-                });
-
             modelBuilder.Entity("BnB.Core.Models.CompanyInfo", b =>
                 {
                     b.Property<int>("Id")
@@ -381,19 +141,20 @@ namespace BnB.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Address")
-                        .HasMaxLength(100)
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("City")
-                        .HasMaxLength(50)
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("CompanyName")
-                        .HasMaxLength(100)
+                        .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
-                        .HasMaxLength(100)
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Fax")
@@ -411,12 +172,12 @@ namespace BnB.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("WebUrl")
+                    b.Property<string>("Website")
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ZipCode")
-                        .HasMaxLength(50)
+                        .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -430,14 +191,18 @@ namespace BnB.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Category")
+                    b.Property<string>("FactItem")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FactCategory")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("FactId");
 
@@ -566,7 +331,7 @@ namespace BnB.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("AppliedTo")
-                        .HasMaxLength(100)
+                        .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
                     b.Property<decimal?>("CancellationFee")
@@ -581,6 +346,7 @@ namespace BnB.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Comments")
+                        .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
                     b.Property<long>("ConfirmationNumber")
@@ -632,6 +398,8 @@ namespace BnB.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ConfirmationNumber");
+
                     b.HasIndex("GuestId");
 
                     b.ToTable("Payments");
@@ -654,10 +422,6 @@ namespace BnB.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("DepositRequired")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
                     b.Property<int?>("DefaultCancellationNoticeDays")
                         .HasColumnType("INTEGER");
 
@@ -678,6 +442,10 @@ namespace BnB.Data.Migrations
 
                     b.Property<int?>("DefaultPrepaymentDueDays")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("DepositRequired")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
                         .HasMaxLength(100)
@@ -749,10 +517,6 @@ namespace BnB.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("PercentToHost")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
-
                     b.Property<int?>("PeakPeriodCancellationNoticeDays")
                         .HasColumnType("INTEGER");
 
@@ -774,6 +538,10 @@ namespace BnB.Data.Migrations
 
                     b.Property<int?>("PeakPeriodStartMonth")
                         .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("PercentToHost")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("PropertyAddress")
                         .HasMaxLength(100)
@@ -866,7 +634,7 @@ namespace BnB.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RoomTypeId", "StartDate", "EndDate");
+                    b.HasIndex("RoomTypeId");
 
                     b.ToTable("RoomBlackouts");
                 });
@@ -877,21 +645,48 @@ namespace BnB.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<decimal?>("DefaultRate")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Description")
-                        .HasMaxLength(200)
+                        .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
+                    b.Property<DateTime?>("EntryDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EntryUser")
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal?>("GrossRate")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("HostRate")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MaxOccupancy")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("PropertyAccountNumber")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("RoomName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TotalUnits")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UpdateUser")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -902,81 +697,16 @@ namespace BnB.Data.Migrations
 
             modelBuilder.Entity("BnB.Core.Models.TaxPlan", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("FutureTax1EffectiveDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("FutureTax1Rate")
-                        .HasPrecision(10, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("FutureTax2EffectiveDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("FutureTax2Rate")
-                        .HasPrecision(10, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("FutureTax3EffectiveDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("FutureTax3Rate")
-                        .HasPrecision(10, 4)
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("PlanCode")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PlanTitle")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Tax1Application")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Tax1Description")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Tax1Rate")
-                        .HasPrecision(10, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Tax2Application")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Tax2Description")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Tax2Rate")
-                        .HasPrecision(10, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Tax3Application")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Tax3Description")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Tax3Rate")
-                        .HasPrecision(10, 4)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PlanCode")
-                        .IsUnique();
+                    b.HasKey("PlanCode");
 
                     b.ToTable("TaxPlans");
                 });
@@ -987,52 +717,23 @@ namespace BnB.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<decimal?>("FutureTaxOne")
-                        .HasPrecision(10, 4)
+                    b.Property<string>("PlanCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("FutureTaxOneEffectiveDate")
+                    b.Property<decimal>("Rate")
+                        .HasPrecision(5, 4)
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("FutureTaxThree")
-                        .HasPrecision(10, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("FutureTaxThreeEffectiveDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("FutureTaxTwo")
-                        .HasPrecision(10, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("FutureTaxTwoEffectiveDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("TaxOne")
-                        .HasPrecision(10, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("TaxOneDescription")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("TaxThree")
-                        .HasPrecision(10, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("TaxThreeDescription")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("TaxTwo")
-                        .HasPrecision(10, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("TaxTwoDescription")
-                        .HasMaxLength(50)
+                    b.Property<string>("TaxName")
+                        .IsRequired()
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PlanCode");
 
                     b.ToTable("TaxRates");
                 });
@@ -1043,10 +744,12 @@ namespace BnB.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("AccountNumber")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Address")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AgencyName")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
@@ -1054,10 +757,7 @@ namespace BnB.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Comments")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CommissionPercent")
+                    b.Property<decimal?>("CommissionRate")
                         .HasPrecision(5, 2)
                         .HasColumnType("TEXT");
 
@@ -1073,10 +773,8 @@ namespace BnB.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Phone")
                         .HasMaxLength(50)
@@ -1087,7 +785,7 @@ namespace BnB.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ZipCode")
-                        .HasMaxLength(50)
+                        .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -1101,18 +799,7 @@ namespace BnB.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("CheckNumber")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Comments")
-                        .HasColumnType("TEXT");
-
                     b.Property<decimal?>("CommissionAmount")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CommissionPaid")
                         .HasPrecision(10, 2)
                         .HasColumnType("TEXT");
 
@@ -1125,7 +812,10 @@ namespace BnB.Data.Migrations
                     b.Property<int>("GuestId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("TravelAgencyId")
+                    b.Property<bool>("IsPaid")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TravelAgencyId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -1147,43 +837,19 @@ namespace BnB.Data.Migrations
 
                     b.HasOne("BnB.Core.Models.Property", "Property")
                         .WithMany("Accommodations")
-                        .HasForeignKey("PropertyAccountNumber");
+                        .HasForeignKey("PropertyAccountNumber")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Guest");
 
                     b.Navigation("Property");
                 });
 
-            modelBuilder.Entity("BnB.Core.Models.CarRental", b =>
-                {
-                    b.HasOne("BnB.Core.Models.CarAgency", "CarAgency")
-                        .WithMany("Rentals")
-                        .HasForeignKey("CarAgencyId");
-
-                    b.HasOne("BnB.Core.Models.Guest", "Guest")
-                        .WithMany()
-                        .HasForeignKey("GuestId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CarAgency");
-
-                    b.Navigation("Guest");
-                });
-
-            modelBuilder.Entity("BnB.Core.Models.Check", b =>
-                {
-                    b.HasOne("BnB.Core.Models.Accommodation", "Accommodation")
-                        .WithMany()
-                        .HasForeignKey("AccommodationId");
-
-                    b.Navigation("Accommodation");
-                });
-
             modelBuilder.Entity("BnB.Core.Models.Payment", b =>
                 {
                     b.HasOne("BnB.Core.Models.Guest", "Guest")
-                        .WithMany("Payments")
+                        .WithMany()
                         .HasForeignKey("GuestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1242,16 +908,24 @@ namespace BnB.Data.Migrations
 
                     b.HasOne("BnB.Core.Models.TravelAgency", "TravelAgency")
                         .WithMany("Bookings")
-                        .HasForeignKey("TravelAgencyId");
+                        .HasForeignKey("TravelAgencyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Guest");
 
                     b.Navigation("TravelAgency");
                 });
 
-            modelBuilder.Entity("BnB.Core.Models.CarAgency", b =>
+            modelBuilder.Entity("BnB.Core.Models.TaxRate", b =>
                 {
-                    b.Navigation("Rentals");
+                    b.HasOne("BnB.Core.Models.TaxPlan", "TaxPlan")
+                        .WithMany("TaxRates")
+                        .HasForeignKey("PlanCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TaxPlan");
                 });
 
             modelBuilder.Entity("BnB.Core.Models.Fact", b =>
@@ -1262,8 +936,6 @@ namespace BnB.Data.Migrations
             modelBuilder.Entity("BnB.Core.Models.Guest", b =>
                 {
                     b.Navigation("Accommodations");
-
-                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("BnB.Core.Models.Property", b =>
@@ -1276,6 +948,11 @@ namespace BnB.Data.Migrations
             modelBuilder.Entity("BnB.Core.Models.RoomType", b =>
                 {
                     b.Navigation("Blackouts");
+                });
+
+            modelBuilder.Entity("BnB.Core.Models.TaxPlan", b =>
+                {
+                    b.Navigation("TaxRates");
                 });
 
             modelBuilder.Entity("BnB.Core.Models.TravelAgency", b =>

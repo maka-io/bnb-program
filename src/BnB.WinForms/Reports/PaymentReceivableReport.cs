@@ -69,7 +69,6 @@ public class PaymentReceivableReport : BaseReport
                     columns.ConstantColumn(65);  // Paid
                     columns.ConstantColumn(65);  // Balance
                     columns.ConstantColumn(50);  // Days Until
-                    columns.ConstantColumn(45);  // Pmt Rec
                 });
 
                 table.Header(header =>
@@ -83,7 +82,6 @@ public class PaymentReceivableReport : BaseReport
                     header.Cell().TableHeader().AlignRight().Text("Paid").TableHeaderText();
                     header.Cell().TableHeader().AlignRight().Text("Balance").TableHeaderText();
                     header.Cell().TableHeader().AlignCenter().Text("Days").TableHeaderText();
-                    header.Cell().TableHeader().AlignCenter().Text("Pmt").TableHeaderText();
                 });
 
                 bool alternate = false;
@@ -140,15 +138,6 @@ public class PaymentReceivableReport : BaseReport
                         textContainer = textContainer.Background("#ffeeee");
                     textContainer.AlignCenter().Text(rec.DaysUntilArrival.ToString()).TableCellText();
 
-                    // Payment record indicator - show "No" with warning color if no payment record
-                    textContainer = table.Cell().TableCell(alternate);
-                    if (isPastDue)
-                        textContainer = textContainer.Background("#ffeeee");
-                    if (!rec.HasPaymentRecord)
-                        textContainer.AlignCenter().Text("No").FontColor("#cc0000").Bold().TableCellText();
-                    else
-                        textContainer.AlignCenter().Text("Yes").TableCellText();
-
                     totalCharges += rec.TotalCharges;
                     totalPaid += rec.TotalPaid;
                     totalBalance += rec.BalanceDue;
@@ -161,7 +150,6 @@ public class PaymentReceivableReport : BaseReport
                 table.Cell().TotalsRow().AlignRight().Text(FormatCurrency(totalPaid)).Bold();
                 table.Cell().TotalsRow().AlignRight().Text(FormatCurrency(totalBalance)).Bold().FontColor("#cc0000");
                 table.Cell().TotalsRow(); // Days
-                table.Cell().TotalsRow(); // Pmt Rec
             });
 
             // Legend
@@ -169,7 +157,6 @@ public class PaymentReceivableReport : BaseReport
             {
                 row.AutoItem().Width(15).Height(15).Background("#ffeeee");
                 row.AutoItem().PaddingLeft(5).Text(" = Past arrival date").FontSize(8);
-                row.AutoItem().PaddingLeft(15).Text("Pmt = Payment record exists with amounts set").FontSize(8);
             });
         });
     }

@@ -21,10 +21,6 @@ public class PaymentReceivableData
     public decimal TotalPaid { get; set; }
     public decimal BalanceDue { get; set; }
     public int DaysUntilArrival { get; set; }
-    /// <summary>
-    /// Indicates whether a guest payment record exists with payment amounts set
-    /// </summary>
-    public bool HasPaymentRecord { get; set; }
 }
 
 /// <summary>
@@ -96,12 +92,6 @@ public partial class PaymentReceivableForm : Form
             .GroupBy(p => p.ConfirmationNumber)
             .ToDictionary(g => g.Key, g => g.Sum(p => p.Amount));
 
-        // Check which confirmations have payment records with amounts set (DepositDue or PrepaymentDue)
-        var confsWithPaymentRecord = allPayments
-            .Where(p => (p.DepositDue ?? 0) > 0 || (p.PrepaymentDue ?? 0) > 0)
-            .Select(p => p.ConfirmationNumber)
-            .ToHashSet();
-
         // Build the result with computed values (all on client side)
         var allReceivables = accommodations
             .Select(a => new
@@ -116,8 +106,7 @@ public partial class PaymentReceivableForm : Form
                 TotalCharges = a.TotalGrossWithTax ?? 0m,
                 TotalPaid = paymentsByConf.TryGetValue(a.ConfirmationNumber, out var paid) ? paid : 0m,
                 BalanceDue = (a.TotalGrossWithTax ?? 0m) - (paymentsByConf.TryGetValue(a.ConfirmationNumber, out var p) ? p : 0m),
-                DaysUntilArrival = (a.ArrivalDate - today).Days,
-                HasPaymentRecord = confsWithPaymentRecord.Contains(a.ConfirmationNumber)
+                DaysUntilArrival = (a.ArrivalDate - today).Days
             })
             .Where(a => a.BalanceDue > 0)
             .ToList();
@@ -216,13 +205,6 @@ public partial class PaymentReceivableForm : Form
             dgvReceivables.Columns["DaysUntilArrival"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
         }
 
-        if (dgvReceivables.Columns.Contains("HasPaymentRecord"))
-        {
-            dgvReceivables.Columns["HasPaymentRecord"].HeaderText = "Pmt Rec";
-            dgvReceivables.Columns["HasPaymentRecord"].Width = 60;
-            dgvReceivables.Columns["HasPaymentRecord"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-        }
-
         // Color code based on urgency
         foreach (DataGridViewRow row in dgvReceivables.Rows)
         {
@@ -288,8 +270,7 @@ public partial class PaymentReceivableForm : Form
                 TotalCharges = (decimal)(type.GetProperty("TotalCharges")?.GetValue(item) ?? 0m),
                 TotalPaid = (decimal)(type.GetProperty("TotalPaid")?.GetValue(item) ?? 0m),
                 BalanceDue = (decimal)(type.GetProperty("BalanceDue")?.GetValue(item) ?? 0m),
-                DaysUntilArrival = (int)(type.GetProperty("DaysUntilArrival")?.GetValue(item) ?? 0),
-                HasPaymentRecord = (bool)(type.GetProperty("HasPaymentRecord")?.GetValue(item) ?? false)
+                DaysUntilArrival = (int)(type.GetProperty("DaysUntilArrival")?.GetValue(item) ?? 0)
             });
         }
 

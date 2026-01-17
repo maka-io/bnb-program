@@ -31,6 +31,8 @@ partial class PropertyForm
         this.grpTaxInfo = new GroupBox();
         this.grpFuturePercent = new GroupBox();
         this.grpOptions = new GroupBox();
+        this.grpPaymentPolicy = new GroupBox();
+        this.grpPeakPeriod = new GroupBox();
 
         // General Info controls
         this.lblAccountNumber = new Label();
@@ -105,6 +107,35 @@ partial class PropertyForm
         this.txtDepositRequired = new TextBox();
         this.chkExceptions = new CheckBox();
         this.txtExceptionsDescription = new TextBox();
+
+        // Payment Policy controls
+        this.lblDefaultDepositPercent = new Label();
+        this.txtDefaultDepositPercent = new TextBox();
+        this.lblDefaultDepositDueDays = new Label();
+        this.txtDefaultDepositDueDays = new TextBox();
+        this.lblDefaultPrepaymentDueDays = new Label();
+        this.txtDefaultPrepaymentDueDays = new TextBox();
+        this.lblDefaultCancellationNoticeDays = new Label();
+        this.txtDefaultCancellationNoticeDays = new TextBox();
+        this.lblDefaultCancellationFeePercent = new Label();
+        this.txtDefaultCancellationFeePercent = new TextBox();
+        this.lblCancellationProcessingFee = new Label();
+        this.txtCancellationProcessingFee = new TextBox();
+
+        // Peak Period controls
+        this.chkHasPeakPeriodPolicy = new CheckBox();
+        this.lblPeakPeriodPrepaymentDueDays = new Label();
+        this.txtPeakPeriodPrepaymentDueDays = new TextBox();
+        this.lblPeakPeriodCancellationNoticeDays = new Label();
+        this.txtPeakPeriodCancellationNoticeDays = new TextBox();
+        this.lblPeakPeriodCancellationFeePercent = new Label();
+        this.txtPeakPeriodCancellationFeePercent = new TextBox();
+        this.lblPeakPeriodStart = new Label();
+        this.cboPeakPeriodStartMonth = new ComboBox();
+        this.txtPeakPeriodStartDay = new TextBox();
+        this.lblPeakPeriodEnd = new Label();
+        this.cboPeakPeriodEndMonth = new ComboBox();
+        this.txtPeakPeriodEndDay = new TextBox();
 
         // Buttons
         this.btnInsert = new Button();
@@ -302,6 +333,71 @@ partial class PropertyForm
         this.lblRecordCount.AutoSize = true;
         this.panelForm.Controls.Add(lblRecordCount);
 
+        // === Payment Policy Group ===
+        this.grpPaymentPolicy.Text = "Default Payment Policy";
+        this.grpPaymentPolicy.Location = new Point(920, 10);
+        this.grpPaymentPolicy.Size = new Size(260, 200);
+        this.panelForm.Controls.Add(this.grpPaymentPolicy);
+
+        y = 22;
+        AddLabelAndField(grpPaymentPolicy, lblDefaultDepositPercent, "Deposit %:", txtDefaultDepositPercent, 10, y, 115, 50);
+        y += 26;
+        AddLabelAndField(grpPaymentPolicy, lblDefaultDepositDueDays, "Dep Due (days):", txtDefaultDepositDueDays, 10, y, 115, 50);
+        y += 26;
+        AddLabelAndField(grpPaymentPolicy, lblDefaultPrepaymentDueDays, "Prepay (days):", txtDefaultPrepaymentDueDays, 10, y, 115, 50);
+        y += 26;
+        AddLabelAndField(grpPaymentPolicy, lblDefaultCancellationNoticeDays, "Cancel (days):", txtDefaultCancellationNoticeDays, 10, y, 115, 50);
+        y += 26;
+        AddLabelAndField(grpPaymentPolicy, lblDefaultCancellationFeePercent, "Forfeit %:", txtDefaultCancellationFeePercent, 10, y, 115, 50);
+        y += 26;
+        AddLabelAndField(grpPaymentPolicy, lblCancellationProcessingFee, "Process Fee $:", txtCancellationProcessingFee, 10, y, 115, 60);
+
+        // === Peak Period Group ===
+        this.grpPeakPeriod.Text = "Peak Period Override (e.g., Christmas)";
+        this.grpPeakPeriod.Location = new Point(920, 220);
+        this.grpPeakPeriod.Size = new Size(260, 200);
+        this.panelForm.Controls.Add(this.grpPeakPeriod);
+
+        y = 20;
+        chkHasPeakPeriodPolicy.Text = "Enable peak period policy";
+        chkHasPeakPeriodPolicy.Location = new Point(10, y);
+        chkHasPeakPeriodPolicy.AutoSize = true;
+        chkHasPeakPeriodPolicy.CheckedChanged += ChkHasPeakPeriodPolicy_CheckedChanged;
+        grpPeakPeriod.Controls.Add(chkHasPeakPeriodPolicy);
+
+        y += 24;
+        AddLabelAndField(grpPeakPeriod, lblPeakPeriodPrepaymentDueDays, "Prepay (days):", txtPeakPeriodPrepaymentDueDays, 10, y, 110, 50);
+        y += 26;
+        AddLabelAndField(grpPeakPeriod, lblPeakPeriodCancellationNoticeDays, "Cancel (days):", txtPeakPeriodCancellationNoticeDays, 10, y, 110, 50);
+        y += 26;
+        AddLabelAndField(grpPeakPeriod, lblPeakPeriodCancellationFeePercent, "Forfeit %:", txtPeakPeriodCancellationFeePercent, 10, y, 110, 50);
+
+        y += 28;
+        lblPeakPeriodStart.Text = "Start:";
+        lblPeakPeriodStart.Location = new Point(10, y + 3);
+        lblPeakPeriodStart.AutoSize = true;
+        grpPeakPeriod.Controls.Add(lblPeakPeriodStart);
+        cboPeakPeriodStartMonth.Location = new Point(50, y);
+        cboPeakPeriodStartMonth.Size = new Size(90, 23);
+        cboPeakPeriodStartMonth.DropDownStyle = ComboBoxStyle.DropDownList;
+        grpPeakPeriod.Controls.Add(cboPeakPeriodStartMonth);
+        txtPeakPeriodStartDay.Location = new Point(145, y);
+        txtPeakPeriodStartDay.Size = new Size(35, 23);
+        grpPeakPeriod.Controls.Add(txtPeakPeriodStartDay);
+
+        y += 26;
+        lblPeakPeriodEnd.Text = "End:";
+        lblPeakPeriodEnd.Location = new Point(10, y + 3);
+        lblPeakPeriodEnd.AutoSize = true;
+        grpPeakPeriod.Controls.Add(lblPeakPeriodEnd);
+        cboPeakPeriodEndMonth.Location = new Point(50, y);
+        cboPeakPeriodEndMonth.Size = new Size(90, 23);
+        cboPeakPeriodEndMonth.DropDownStyle = ComboBoxStyle.DropDownList;
+        grpPeakPeriod.Controls.Add(cboPeakPeriodEndMonth);
+        txtPeakPeriodEndDay.Location = new Point(145, y);
+        txtPeakPeriodEndDay.Size = new Size(35, 23);
+        grpPeakPeriod.Controls.Add(txtPeakPeriodEndDay);
+
         // === Panel Buttons ===
         this.panelButtons.Dock = DockStyle.Right;
         this.panelButtons.Width = 120;
@@ -348,7 +444,7 @@ partial class PropertyForm
         // === Form ===
         this.AutoScaleDimensions = new SizeF(7F, 15F);
         this.AutoScaleMode = AutoScaleMode.Font;
-        this.ClientSize = new Size(1050, 750);
+        this.ClientSize = new Size(1200, 750);
         this.Controls.Add(this.splitContainer);
         this.Name = "PropertyForm";
         this.Text = "Host Properties";
@@ -471,6 +567,37 @@ partial class PropertyForm
     private TextBox txtDepositRequired;
     private CheckBox chkExceptions;
     private TextBox txtExceptionsDescription;
+
+    // Payment Policy
+    private GroupBox grpPaymentPolicy;
+    private Label lblDefaultDepositPercent;
+    private TextBox txtDefaultDepositPercent;
+    private Label lblDefaultDepositDueDays;
+    private TextBox txtDefaultDepositDueDays;
+    private Label lblDefaultPrepaymentDueDays;
+    private TextBox txtDefaultPrepaymentDueDays;
+    private Label lblDefaultCancellationNoticeDays;
+    private TextBox txtDefaultCancellationNoticeDays;
+    private Label lblDefaultCancellationFeePercent;
+    private TextBox txtDefaultCancellationFeePercent;
+    private Label lblCancellationProcessingFee;
+    private TextBox txtCancellationProcessingFee;
+
+    // Peak Period
+    private GroupBox grpPeakPeriod;
+    private CheckBox chkHasPeakPeriodPolicy;
+    private Label lblPeakPeriodPrepaymentDueDays;
+    private TextBox txtPeakPeriodPrepaymentDueDays;
+    private Label lblPeakPeriodCancellationNoticeDays;
+    private TextBox txtPeakPeriodCancellationNoticeDays;
+    private Label lblPeakPeriodCancellationFeePercent;
+    private TextBox txtPeakPeriodCancellationFeePercent;
+    private Label lblPeakPeriodStart;
+    private ComboBox cboPeakPeriodStartMonth;
+    private TextBox txtPeakPeriodStartDay;
+    private Label lblPeakPeriodEnd;
+    private ComboBox cboPeakPeriodEndMonth;
+    private TextBox txtPeakPeriodEndDay;
 
     // Buttons
     private Button btnInsert;

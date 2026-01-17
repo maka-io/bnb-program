@@ -295,7 +295,54 @@ public class ConfirmationReport : BaseReport
                 if (_guest.ReservationFee.HasValue)
                     grandTotal += _guest.ReservationFee.Value;
 
-                // Credits section
+                // Payment Due section - show what the guest owes and when
+                bool hasDues = false;
+                if (_payment?.DepositDue > 0)
+                {
+                    innerCol.Item().Row(row =>
+                    {
+                        var dueText = "Deposit Due";
+                        if (_payment.DepositDueDate.HasValue)
+                            dueText += $" by {_payment.DepositDueDate.Value:MM/dd/yyyy}";
+                        dueText += ":";
+                        row.RelativeItem().Text(dueText);
+                        row.ConstantItem(100).AlignRight().Text(FormatCurrency(_payment.DepositDue));
+                    });
+                    hasDues = true;
+                }
+
+                if (_payment?.PrepaymentDue > 0)
+                {
+                    innerCol.Item().Row(row =>
+                    {
+                        var dueText = "Prepayment Due";
+                        if (_payment.PrepaymentDueDate.HasValue)
+                            dueText += $" by {_payment.PrepaymentDueDate.Value:MM/dd/yyyy}";
+                        dueText += ":";
+                        row.RelativeItem().Text(dueText);
+                        row.ConstantItem(100).AlignRight().Text(FormatCurrency(_payment.PrepaymentDue));
+                    });
+                    hasDues = true;
+                }
+
+                // Show cancellation deadline if it hasn't passed yet
+                if (_payment?.CancellationFeeDueDate.HasValue == true &&
+                    _payment.CancellationFeeDueDate.Value >= DateTime.Today)
+                {
+                    innerCol.Item().PaddingTop(3).Row(row =>
+                    {
+                        row.RelativeItem().Text($"Cancellation Deadline: {_payment.CancellationFeeDueDate.Value:MM/dd/yyyy}")
+                            .FontSize(9).Italic();
+                    });
+                    hasDues = true;
+                }
+
+                if (hasDues)
+                {
+                    innerCol.Item().PaddingVertical(5).LineHorizontal(0.5f).LineColor("#cccccc");
+                }
+
+                // Credits section - show what has been received
                 decimal totalCredits = 0;
 
                 if (_totalDeposit > 0)
@@ -338,19 +385,13 @@ public class ConfirmationReport : BaseReport
                     totalCredits += _payment.OtherCredit ?? 0;
                 }
 
-                // Total and Balance Due - only show breakdown if there are credits
+                // Total Charges and Balance Due - only show total charges if there are credits
                 if (totalCredits > 0)
                 {
                     innerCol.Item().Row(row =>
                     {
                         row.RelativeItem().Text("Total Charges:").Bold();
                         row.ConstantItem(100).AlignRight().Text(FormatCurrency(grandTotal)).Bold();
-                    });
-
-                    innerCol.Item().Row(row =>
-                    {
-                        row.RelativeItem().Text("Total Credits:");
-                        row.ConstantItem(100).AlignRight().Text(FormatCurrency(totalCredits));
                     });
                 }
 

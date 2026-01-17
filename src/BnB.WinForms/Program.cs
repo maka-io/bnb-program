@@ -609,6 +609,37 @@ static class Program
             // Ignore errors
         }
 
+        // Add Property payment policy columns if they don't exist
+        var propertyPaymentPolicyColumns = new[]
+        {
+            "ALTER TABLE Properties ADD COLUMN DefaultDepositPercent TEXT",
+            "ALTER TABLE Properties ADD COLUMN DefaultDepositDueDays INTEGER",
+            "ALTER TABLE Properties ADD COLUMN DefaultPrepaymentDueDays INTEGER",
+            "ALTER TABLE Properties ADD COLUMN DefaultCancellationNoticeDays INTEGER",
+            "ALTER TABLE Properties ADD COLUMN DefaultCancellationFeePercent TEXT",
+            "ALTER TABLE Properties ADD COLUMN CancellationProcessingFee TEXT",
+            "ALTER TABLE Properties ADD COLUMN HasPeakPeriodPolicy INTEGER DEFAULT 0",
+            "ALTER TABLE Properties ADD COLUMN PeakPeriodPrepaymentDueDays INTEGER",
+            "ALTER TABLE Properties ADD COLUMN PeakPeriodCancellationNoticeDays INTEGER",
+            "ALTER TABLE Properties ADD COLUMN PeakPeriodCancellationFeePercent TEXT",
+            "ALTER TABLE Properties ADD COLUMN PeakPeriodStartMonth INTEGER",
+            "ALTER TABLE Properties ADD COLUMN PeakPeriodStartDay INTEGER",
+            "ALTER TABLE Properties ADD COLUMN PeakPeriodEndMonth INTEGER",
+            "ALTER TABLE Properties ADD COLUMN PeakPeriodEndDay INTEGER"
+        };
+
+        foreach (var sql in propertyPaymentPolicyColumns)
+        {
+            try
+            {
+                dbContext.Database.ExecuteSqlRaw(sql);
+            }
+            catch
+            {
+                // Column already exists
+            }
+        }
+
         // Migrate to new Guest.Id as primary key (instead of ConfirmationNumber)
         // This is a major schema change that affects multiple tables
         MigrateToGuestIdPrimaryKey(dbContext);
