@@ -223,8 +223,8 @@ public partial class CarRentalBookingForm : Form
             var criteria = guestSearch.SearchCriteria;
             var query = _dbContext.Guests.AsQueryable();
 
-            if (criteria.ConfirmationNumber.HasValue)
-                query = query.Where(g => g.ConfirmationNumber == criteria.ConfirmationNumber);
+            if (criteria.GuestId.HasValue)
+                query = query.Where(g => g.Id == criteria.GuestId);
             else if (!string.IsNullOrEmpty(criteria.LastName))
                 query = query.Where(g => g.LastName != null && g.LastName.Contains(criteria.LastName));
 
@@ -238,9 +238,13 @@ public partial class CarRentalBookingForm : Form
 
             SetMode(FormMode.Insert);
 
+            // Get first accommodation for this guest to use its confirmation number
+            var firstAccom = _dbContext.Accommodations.FirstOrDefault(a => a.GuestId == guest.Id);
+
             _currentRental = new CarRental
             {
-                ConfirmationNumber = guest.ConfirmationNumber,
+                GuestId = guest.Id,
+                ConfirmationNumber = firstAccom?.ConfirmationNumber ?? 0,
                 Guest = guest,
                 PickupDate = DateTime.Today,
                 ReturnDate = DateTime.Today.AddDays(7)
@@ -426,8 +430,8 @@ public partial class CarRentalBookingForm : Form
                 .Include(r => r.CarAgency)
                 .AsQueryable();
 
-            if (criteria.ConfirmationNumber.HasValue)
-                query = query.Where(r => r.ConfirmationNumber == criteria.ConfirmationNumber);
+            if (criteria.GuestId.HasValue)
+                query = query.Where(r => r.GuestId == criteria.GuestId);
 
             if (!string.IsNullOrEmpty(criteria.LastName))
                 query = query.Where(r => r.Guest.LastName != null && r.Guest.LastName.Contains(criteria.LastName));

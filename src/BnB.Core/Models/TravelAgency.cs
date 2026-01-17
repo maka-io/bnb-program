@@ -33,7 +33,8 @@ public class TravelAgency
 public class TravelAgentBooking
 {
     public int Id { get; set; }
-    public long ConfirmationNumber { get; set; }  // conf
+    public int GuestId { get; set; }  // Foreign key to Guest.Id
+    public long ConfirmationNumber { get; set; }  // conf - booking/reservation number
     public int? TravelAgencyId { get; set; }
 
     // Commission info

@@ -425,9 +425,13 @@ public class DataMigrationService
         return count;
     }
 
+    // Maps legacy confirmation number to new Guest.Id for use by dependent tables
+    private Dictionary<long, int> _legacyConfToGuestId = new();
+
     private async Task<int> MigrateGuestsAsync(AccessDataReader reader)
     {
         ReportProgress("Guests", 0, 0);
+        _legacyConfToGuestId.Clear();
 
         await _context.Database.ExecuteSqlRawAsync("DELETE FROM TravelAgentBookings");
         await _context.Database.ExecuteSqlRawAsync("DELETE FROM CarRentals");
@@ -439,14 +443,14 @@ public class DataMigrationService
         var table = reader.ReadTable("guesttbl");
         var total = table.Rows.Count;
         var count = 0;
-        var batchSize = 100;
-        var batch = new List<Guest>();
 
         foreach (DataRow row in table.Rows)
         {
+            var legacyConf = AccessDataReader.GetLong(row, "conf");
+
             var guest = new Guest
             {
-                ConfirmationNumber = AccessDataReader.GetLong(row, "conf"),
+                // Id is auto-generated - no ConfirmationNumber on Guest anymore
                 FirstName = AccessDataReader.GetString(row, "f_name") ?? AccessDataReader.GetString(row, "fname") ?? "",
                 LastName = AccessDataReader.GetString(row, "l_name") ?? AccessDataReader.GetString(row, "lname") ?? "",
                 Address = AccessDataReader.GetString(row, "address") ?? AccessDataReader.GetString(row, "addr"),
@@ -475,22 +479,17 @@ public class DataMigrationService
                 Revision = AccessDataReader.GetInt(row, "revision", 0)
             };
 
-            batch.Add(guest);
-            count++;
+            _context.Guests.Add(guest);
+            await _context.SaveChangesAsync();
 
-            if (batch.Count >= batchSize)
+            // Map the legacy confirmation number to the new Guest.Id
+            _legacyConfToGuestId[legacyConf] = guest.Id;
+
+            count++;
+            if (count % 100 == 0)
             {
-                _context.Guests.AddRange(batch);
-                await _context.SaveChangesAsync();
-                batch.Clear();
                 ReportProgress("Guests", count, total);
             }
-        }
-
-        if (batch.Count > 0)
-        {
-            _context.Guests.AddRange(batch);
-            await _context.SaveChangesAsync();
         }
 
         ReportProgress("Guests", count, total);
@@ -501,7 +500,6 @@ public class DataMigrationService
     {
         ReportProgress("Accommodations", 0, 0);
 
-        var validGuests = await _context.Guests.Select(g => g.ConfirmationNumber).ToListAsync();
         var validProperties = await _context.Properties.Select(p => p.AccountNumber).ToListAsync();
 
         var table = reader.ReadTable("bbtbl");
@@ -514,8 +512,8 @@ public class DataMigrationService
             var conf = AccessDataReader.GetLong(row, "conf");
             var accountNum = AccessDataReader.GetInt(row, "accountnum");
 
-            // Skip if foreign keys don't exist
-            if (!validGuests.Contains(conf) || !validProperties.Contains(accountNum))
+            // Skip if foreign keys don't exist - use the legacy conf to guest id mapping
+            if (!_legacyConfToGuestId.TryGetValue(conf, out var guestId) || !validProperties.Contains(accountNum))
             {
                 skipped++;
                 continue;
@@ -525,7 +523,8 @@ public class DataMigrationService
             {
                 var accommodation = new Accommodation
                 {
-                    ConfirmationNumber = conf,
+                    ConfirmationNumber = conf,  // This is now the booking/reservation number
+                    GuestId = guestId,  // FK to Guest.Id
                     PropertyAccountNumber = accountNum,
                     FirstName = (AccessDataReader.GetString(row, "f_name") ?? AccessDataReader.GetString(row, "fname")).Truncate(50),
                     LastName = (AccessDataReader.GetString(row, "l_name") ?? AccessDataReader.GetString(row, "lname")).Truncate(50),
@@ -603,8 +602,6 @@ public class DataMigrationService
     {
         ReportProgress("Payments", 0, 0);
 
-        var validGuests = await _context.Guests.Select(g => g.ConfirmationNumber).ToListAsync();
-
         var table = reader.ReadTable("paymentreceived");
         var total = table.Rows.Count;
         var count = 0;
@@ -612,11 +609,13 @@ public class DataMigrationService
         foreach (DataRow row in table.Rows)
         {
             var conf = AccessDataReader.GetLong(row, "conf");
-            if (!validGuests.Contains(conf)) continue;
+            // Skip if no matching guest exists
+            if (!_legacyConfToGuestId.TryGetValue(conf, out var guestId)) continue;
 
             var payment = new Payment
             {
-                ConfirmationNumber = conf,
+                GuestId = guestId,  // FK to Guest.Id
+                ConfirmationNumber = conf,  // The booking/reservation number
                 FirstName = AccessDataReader.GetString(row, "f_name") ?? AccessDataReader.GetString(row, "fname"),
                 LastName = AccessDataReader.GetString(row, "l_name") ?? AccessDataReader.GetString(row, "lname"),
                 Amount = AccessDataReader.GetDecimal(row, "amountreceived", 0) + AccessDataReader.GetDecimal(row, "amount", 0),
@@ -708,7 +707,6 @@ public class DataMigrationService
     {
         ReportProgress("Travel Agent Bookings", 0, 0);
 
-        var validGuests = await _context.Guests.Select(g => g.ConfirmationNumber).ToListAsync();
         var agencies = await _context.TravelAgencies.ToDictionaryAsync(a => a.AccountNumber, a => a.Id);
 
         DataTable table;
@@ -726,14 +724,16 @@ public class DataMigrationService
         foreach (DataRow row in table.Rows)
         {
             var conf = AccessDataReader.GetLong(row, "conf");
-            if (!validGuests.Contains(conf)) continue;
+            // Skip if no matching guest exists
+            if (!_legacyConfToGuestId.TryGetValue(conf, out var guestId)) continue;
 
             var agencyAccountNum = AccessDataReader.GetInt(row, "agencyaccountnum") + AccessDataReader.GetInt(row, "accountnum");
             int? agencyId = agencies.TryGetValue(agencyAccountNum, out var id) ? id : null;
 
             var booking = new TravelAgentBooking
             {
-                ConfirmationNumber = conf,
+                GuestId = guestId,  // FK to Guest.Id
+                ConfirmationNumber = conf,  // The booking/reservation number
                 TravelAgencyId = agencyId,
                 CommissionAmount = AccessDataReader.GetNullableDecimal(row, "commamount") ?? AccessDataReader.GetNullableDecimal(row, "commission"),
                 CommissionPaid = AccessDataReader.GetNullableDecimal(row, "commpaid"),
@@ -755,7 +755,6 @@ public class DataMigrationService
     {
         ReportProgress("Car Rentals", 0, 0);
 
-        var validGuests = await _context.Guests.Select(g => g.ConfirmationNumber).ToListAsync();
         var agencies = await _context.CarAgencies.ToListAsync();
 
         DataTable table;
@@ -773,7 +772,8 @@ public class DataMigrationService
         foreach (DataRow row in table.Rows)
         {
             var conf = AccessDataReader.GetLong(row, "conf");
-            if (!validGuests.Contains(conf)) continue;
+            // Skip if no matching guest exists
+            if (!_legacyConfToGuestId.TryGetValue(conf, out var guestId)) continue;
 
             // Try to match car agency by name
             var agencyName = AccessDataReader.GetString(row, "carcompany") ?? AccessDataReader.GetString(row, "agency");
@@ -782,7 +782,8 @@ public class DataMigrationService
 
             var rental = new CarRental
             {
-                ConfirmationNumber = conf,
+                GuestId = guestId,  // FK to Guest.Id
+                ConfirmationNumber = conf,  // The booking/reservation number
                 CarAgencyId = agency?.Id,
                 PickupDate = AccessDataReader.GetDateTime(row, "pudate") ?? AccessDataReader.GetDateTime(row, "pickupdate"),
                 ReturnDate = AccessDataReader.GetDateTime(row, "dropdate") ?? AccessDataReader.GetDateTime(row, "returndate"),

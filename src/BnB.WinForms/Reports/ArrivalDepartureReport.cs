@@ -85,7 +85,7 @@ public class ArrivalDepartureReport : BaseReport
                         table.Cell().TableCell(alternate).Text($"{SafeString(arr.FirstName)} {SafeString(arr.LastName)}").TableCellText();
                         table.Cell().TableCell(alternate).Text(SafeString(arr.Property?.Location)).TableCellText();
                         table.Cell().TableCell(alternate).AlignCenter().Text(arr.NumberOfNights.ToString()).TableCellText();
-                        table.Cell().TableCell(alternate).AlignCenter().Text((arr.NumberInParty ?? 0).ToString()).TableCellText();
+                        table.Cell().TableCell(alternate).AlignCenter().Text(arr.NumberInParty.ToString()).TableCellText();
                         table.Cell().TableCell(alternate).Text(FormatDate(arr.DepartureDate, "MM/dd/yy")).TableCellText();
                         table.Cell().TableCell(alternate).Text(SafeString(arr.SpecialRequests)).TableCellText();
                         alternate = !alternate;

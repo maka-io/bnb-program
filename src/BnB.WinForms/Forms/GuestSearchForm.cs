@@ -18,7 +18,7 @@ public partial class GuestSearchForm : Form
         {
             FirstName = string.IsNullOrWhiteSpace(txtFirstName.Text) ? null : txtFirstName.Text.Trim(),
             LastName = string.IsNullOrWhiteSpace(txtLastName.Text) ? null : txtLastName.Text.Trim(),
-            ConfirmationNumber = long.TryParse(txtConfirmationNumber.Text, out var confNum) ? confNum : null
+            GuestId = int.TryParse(txtConfirmationNumber.Text, out var guestId) ? guestId : null
         };
 
         DialogResult = DialogResult.OK;

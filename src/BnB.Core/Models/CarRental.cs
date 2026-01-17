@@ -32,7 +32,8 @@ public class CarAgency
 public class CarRental
 {
     public int Id { get; set; }
-    public long ConfirmationNumber { get; set; }  // conf
+    public int GuestId { get; set; }  // Foreign key to Guest.Id
+    public long ConfirmationNumber { get; set; }  // conf - booking/reservation number
     public int? CarAgencyId { get; set; }
 
     // Rental info

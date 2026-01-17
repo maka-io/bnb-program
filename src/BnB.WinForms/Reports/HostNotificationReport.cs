@@ -101,7 +101,7 @@ public class HostNotificationReport : BaseReport
                         table.Cell().TableCell(alternate).Text(FormatDate(arrival.DepartureDate, "MM/dd/yy")).TableCellText();
                         table.Cell().TableCell(alternate).Text(arrival.ConfirmationNumber.ToString()).TableCellText();
                         table.Cell().TableCell(alternate).Text(guestName).TableCellText();
-                        table.Cell().TableCell(alternate).AlignCenter().Text((arrival.NumberInParty ?? 1).ToString()).TableCellText();
+                        table.Cell().TableCell(alternate).AlignCenter().Text(arrival.NumberInParty.ToString()).TableCellText();
                         table.Cell().TableCell(alternate).Text(SafeString(arrival.UnitNameDescription ?? arrival.UnitName)).TableCellText();
                         table.Cell().TableCell(alternate).Text(SafeString(arrival.SpecialRequests)).TableCellText();
 

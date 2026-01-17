@@ -8,7 +8,8 @@ namespace BnB.Core.Models;
 public class Payment
 {
     public int Id { get; set; }
-    public long ConfirmationNumber { get; set; }  // conf
+    public int GuestId { get; set; }  // Foreign key to Guest.Id
+    public long ConfirmationNumber { get; set; }  // conf - the booking/reservation number
 
     // Denormalized guest info
     public string? FirstName { get; set; }  // f_name

@@ -205,7 +205,7 @@ public partial class BookingListForm : Form
         var count = _accommodations.Count;
         var totalNights = _accommodations.Sum(a => a.NumberOfNights);
         var totalAmount = _accommodations.Sum(a => a.TotalGrossWithTax);
-        var totalGuests = _accommodations.Sum(a => a.NumberInParty ?? 1);
+        var totalGuests = _accommodations.Sum(a => a.NumberInParty);
 
         lblSummary.Text = $"Bookings: {count} | Total Nights: {totalNights} | Total Guests: {totalGuests} | Total: {totalAmount:C2}";
     }
@@ -244,7 +244,7 @@ public partial class BookingListForm : Form
                         $"{accom.ArrivalDate:MM/dd/yyyy}," +
                         $"{accom.DepartureDate:MM/dd/yyyy}," +
                         $"{accom.NumberOfNights}," +
-                        $"{accom.NumberInParty ?? 1}," +
+                        $"{accom.NumberInParty}," +
                         $"{accom.TotalGrossWithTax:F2}");
                 }
 
@@ -302,7 +302,7 @@ public partial class BookingListForm : Form
 
         // Load the full guest and accommodations data
         var guest = _dbContext.Guests
-            .FirstOrDefault(g => g.ConfirmationNumber == accom.ConfirmationNumber);
+            .FirstOrDefault(g => g.Id == accom.GuestId);
 
         if (guest == null)
         {

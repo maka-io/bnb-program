@@ -21,6 +21,10 @@ public class PaymentReceivableData
     public decimal TotalPaid { get; set; }
     public decimal BalanceDue { get; set; }
     public int DaysUntilArrival { get; set; }
+    /// <summary>
+    /// Indicates whether a guest payment record exists with payment amounts set
+    /// </summary>
+    public bool HasPaymentRecord { get; set; }
 }
 
 /// <summary>
@@ -87,10 +91,16 @@ public partial class PaymentReceivableForm : Form
         var accommodations = accommodationsQuery.ToList();
 
         // Get all payments and group by confirmation number (client-side)
-        var paymentsByConf = _dbContext.Payments
-            .ToList()
+        var allPayments = _dbContext.Payments.ToList();
+        var paymentsByConf = allPayments
             .GroupBy(p => p.ConfirmationNumber)
             .ToDictionary(g => g.Key, g => g.Sum(p => p.Amount));
+
+        // Check which confirmations have payment records with amounts set (DepositDue or PrepaymentDue)
+        var confsWithPaymentRecord = allPayments
+            .Where(p => (p.DepositDue ?? 0) > 0 || (p.PrepaymentDue ?? 0) > 0)
+            .Select(p => p.ConfirmationNumber)
+            .ToHashSet();
 
         // Build the result with computed values (all on client side)
         var allReceivables = accommodations
@@ -106,7 +116,8 @@ public partial class PaymentReceivableForm : Form
                 TotalCharges = a.TotalGrossWithTax ?? 0m,
                 TotalPaid = paymentsByConf.TryGetValue(a.ConfirmationNumber, out var paid) ? paid : 0m,
                 BalanceDue = (a.TotalGrossWithTax ?? 0m) - (paymentsByConf.TryGetValue(a.ConfirmationNumber, out var p) ? p : 0m),
-                DaysUntilArrival = (a.ArrivalDate - today).Days
+                DaysUntilArrival = (a.ArrivalDate - today).Days,
+                HasPaymentRecord = confsWithPaymentRecord.Contains(a.ConfirmationNumber)
             })
             .Where(a => a.BalanceDue > 0)
             .ToList();
@@ -205,6 +216,13 @@ public partial class PaymentReceivableForm : Form
             dgvReceivables.Columns["DaysUntilArrival"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
         }
 
+        if (dgvReceivables.Columns.Contains("HasPaymentRecord"))
+        {
+            dgvReceivables.Columns["HasPaymentRecord"].HeaderText = "Pmt Rec";
+            dgvReceivables.Columns["HasPaymentRecord"].Width = 60;
+            dgvReceivables.Columns["HasPaymentRecord"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+        }
+
         // Color code based on urgency
         foreach (DataGridViewRow row in dgvReceivables.Rows)
         {
@@ -270,7 +288,8 @@ public partial class PaymentReceivableForm : Form
                 TotalCharges = (decimal)(type.GetProperty("TotalCharges")?.GetValue(item) ?? 0m),
                 TotalPaid = (decimal)(type.GetProperty("TotalPaid")?.GetValue(item) ?? 0m),
                 BalanceDue = (decimal)(type.GetProperty("BalanceDue")?.GetValue(item) ?? 0m),
-                DaysUntilArrival = (int)(type.GetProperty("DaysUntilArrival")?.GetValue(item) ?? 0)
+                DaysUntilArrival = (int)(type.GetProperty("DaysUntilArrival")?.GetValue(item) ?? 0),
+                HasPaymentRecord = (bool)(type.GetProperty("HasPaymentRecord")?.GetValue(item) ?? false)
             });
         }
 
@@ -338,14 +357,15 @@ public partial class PaymentReceivableForm : Form
             return;
         }
 
-        var guest = _dbContext.Guests.FirstOrDefault(g => g.ConfirmationNumber == confNum);
-        if (guest == null)
+        // Look up guest via accommodation since Guest no longer has ConfirmationNumber
+        var accommodation = _dbContext.Accommodations.FirstOrDefault(a => a.ConfirmationNumber == confNum);
+        if (accommodation == null)
         {
-            MessageBox.Show($"Guest with Conf# {confNum} not found.", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show($"Accommodation with Conf# {confNum} not found.", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
-        var form = new GuestForm(_dbContext, confNum);
+        var form = new GuestForm(_dbContext, accommodation.GuestId);
         form.MdiParent = this.MdiParent;
         form.Show();
     }

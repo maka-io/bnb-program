@@ -243,7 +243,12 @@ public partial class RoomTypeForm : Form
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error saving room type: {ex.Message}", "Error",
+            // Get the innermost exception for actual error details
+            var innerEx = ex;
+            while (innerEx.InnerException != null)
+                innerEx = innerEx.InnerException;
+
+            MessageBox.Show($"Error saving room type: {ex.Message}\n\nDetails: {innerEx.Message}", "Error",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }

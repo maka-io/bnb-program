@@ -36,12 +36,8 @@ public partial class GuestLookupForm : Form
         dgvGuests.AutoGenerateColumns = false;
         dgvGuests.Columns.Clear();
 
-        dgvGuests.Columns.Add(new DataGridViewTextBoxColumn
-        {
-            DataPropertyName = "ConfirmationNumber",
-            HeaderText = "Conf #",
-            Width = 70
-        });
+        // Guest lookup should show guest info only - not confirmation number
+        // Confirmation number is set by the calling form, not selected here
 
         dgvGuests.Columns.Add(new DataGridViewTextBoxColumn
         {
@@ -75,48 +71,47 @@ public partial class GuestLookupForm : Form
         {
             DataPropertyName = "HomePhone",
             HeaderText = "Phone",
-            Width = 110
+            Width = 120
         });
 
         dgvGuests.Columns.Add(new DataGridViewTextBoxColumn
         {
             DataPropertyName = "Email",
             HeaderText = "Email",
-            Width = 180
+            Width = 200
         });
     }
 
     private void LoadGuests()
     {
-        var searchText = txtSearchName.Text.Trim();
-        long? confNum = null;
-        if (long.TryParse(txtSearchConfNum.Text.Trim(), out var parsedConfNum))
+        try
         {
-            confNum = parsedConfNum;
+            var searchText = txtSearchName.Text.Trim();
+
+            IQueryable<Guest> query = _dbContext.Guests;
+
+            if (!string.IsNullOrEmpty(searchText))
+            {
+                query = query.Where(g =>
+                    (g.FirstName != null && g.FirstName.Contains(searchText)) ||
+                    (g.LastName != null && g.LastName.Contains(searchText)));
+            }
+
+            var guests = query
+                .OrderByDescending(g => g.Id)
+                .Take(100)
+                .ToList();
+
+            _bindingSource.DataSource = guests;
+            dgvGuests.DataSource = _bindingSource;
+
+            lblResultCount.Text = $"Showing {guests.Count} guest(s)";
         }
-
-        var query = _dbContext.Guests.AsQueryable();
-
-        if (confNum.HasValue)
+        catch (Exception ex)
         {
-            query = query.Where(g => g.ConfirmationNumber == confNum.Value);
+            MessageBox.Show($"Error loading guests: {ex.Message}", "Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
-        else if (!string.IsNullOrEmpty(searchText))
-        {
-            query = query.Where(g =>
-                g.FirstName.Contains(searchText) ||
-                g.LastName.Contains(searchText));
-        }
-
-        var guests = query
-            .OrderByDescending(g => g.ConfirmationNumber)
-            .Take(100)
-            .ToList();
-
-        _bindingSource.DataSource = guests;
-        dgvGuests.DataSource = _bindingSource;
-
-        lblResultCount.Text = $"Showing {guests.Count} guest(s)";
     }
 
     private void btnSearch_Click(object sender, EventArgs e)

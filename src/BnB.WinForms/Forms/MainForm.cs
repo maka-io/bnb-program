@@ -274,6 +274,57 @@ public partial class MainForm : Form
         }
     }
 
+    private void mnuResetDatabase_Click(object sender, EventArgs e)
+    {
+        var result = MessageBox.Show(
+            "WARNING: This will delete ALL data in the database and create a fresh, empty database.\n\n" +
+            "This action cannot be undone!\n\n" +
+            "Are you sure you want to reset the database?",
+            "Confirm Database Reset",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning,
+            MessageBoxDefaultButton.Button2);
+
+        if (result != DialogResult.Yes)
+            return;
+
+        // Double-confirm for safety
+        result = MessageBox.Show(
+            "Are you ABSOLUTELY sure? All data will be permanently deleted.\n\n" +
+            "Click Yes to proceed with the reset.",
+            "Final Confirmation",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Stop,
+            MessageBoxDefaultButton.Button2);
+
+        if (result != DialogResult.Yes)
+            return;
+
+        try
+        {
+            // Create a marker file to indicate database should be deleted on next startup
+            var markerPath = Program.GetDatabaseResetMarkerPath();
+            File.WriteAllText(markerPath, DateTime.Now.ToString("o"));
+
+            MessageBox.Show(
+                "Database reset has been scheduled.\n\n" +
+                "The application will now restart and create a fresh database.",
+                "Database Reset Scheduled",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+
+            // Restart the application
+            Application.Restart();
+            Environment.Exit(0);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error scheduling database reset: {ex.Message}",
+                "Reset Failed",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
     private async void mnuImportLegacyData_Click(object sender, EventArgs e)
     {
         using var openDialog = new OpenFileDialog

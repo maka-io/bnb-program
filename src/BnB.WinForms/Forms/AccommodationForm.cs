@@ -254,20 +254,12 @@ public partial class AccommodationForm : Form
     {
         SetMode(FormMode.Insert);
 
-        // Get next confirmation number
+        // Get next confirmation number from accommodations only (guests no longer have conf#)
         long nextConfNum = 1;
         var maxConf = _dbContext.Accommodations.Max(a => (long?)a.ConfirmationNumber);
         if (maxConf.HasValue)
         {
             nextConfNum = maxConf.Value + 1;
-        }
-        else
-        {
-            var maxGuestConf = _dbContext.Guests.Max(g => (long?)g.ConfirmationNumber);
-            if (maxGuestConf.HasValue)
-            {
-                nextConfNum = maxGuestConf.Value + 1;
-            }
         }
 
         _currentAccommodation = new Accommodation
@@ -276,6 +268,7 @@ public partial class AccommodationForm : Form
             ArrivalDate = _prefillArrivalDate ?? DateTime.Today,
             DepartureDate = (_prefillArrivalDate ?? DateTime.Today).AddDays(1),
             NumberOfNights = 1,
+            NumberInParty = 1,
             PaymentType = "Prepay",
             EntryDate = DateTime.Now,
             EntryUser = Environment.UserName,
@@ -484,7 +477,7 @@ public partial class AccommodationForm : Form
             }
 
             var accommodations = query
-                .OrderByDescending(a => a.ArrivalDate)
+                .OrderByDescending(a => a.ConfirmationNumber)
                 .ToList();
 
             _bindingSource.DataSource = accommodations;
@@ -593,21 +586,12 @@ public partial class AccommodationForm : Form
     {
         SetMode(FormMode.Insert);
 
-        // Get next confirmation number
+        // Get next confirmation number from accommodations only (guests no longer have conf#)
         long nextConfNum = 1;
         var maxConf = _dbContext.Accommodations.Max(a => (long?)a.ConfirmationNumber);
         if (maxConf.HasValue)
         {
             nextConfNum = maxConf.Value + 1;
-        }
-        else
-        {
-            // Also check guests table in case no accommodations exist yet
-            var maxGuestConf = _dbContext.Guests.Max(g => (long?)g.ConfirmationNumber);
-            if (maxGuestConf.HasValue)
-            {
-                nextConfNum = maxGuestConf.Value + 1;
-            }
         }
 
         _currentAccommodation = new Accommodation
@@ -616,6 +600,7 @@ public partial class AccommodationForm : Form
             ArrivalDate = DateTime.Today,
             DepartureDate = DateTime.Today.AddDays(1),
             NumberOfNights = 1,
+            NumberInParty = 1,
             PaymentType = "Prepay",
             EntryDate = DateTime.Now,
             EntryUser = Environment.UserName
@@ -683,6 +668,7 @@ public partial class AccommodationForm : Form
             {
                 case FormMode.Insert:
                     _bindingSource.EndEdit();
+                    long? newConfirmationNumber = null;
                     if (_currentAccommodation != null)
                     {
                         // Set property info
@@ -703,12 +689,17 @@ public partial class AccommodationForm : Form
                             _currentAccommodation.UnitNameDescription = selectedRoom.Description;
                         }
 
+                        newConfirmationNumber = _currentAccommodation.ConfirmationNumber;
                         _dbContext.Accommodations.Add(_currentAccommodation);
                     }
                     _dbContext.SaveChanges();
                     MessageBox.Show("Accommodation added successfully.", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    break;
+
+                    // Reload and select the newly created record (will be at top due to descending sort)
+                    LoadAccommodations();
+                    _bindingSource.Position = 0;
+                    return;  // Skip the LoadAccommodations() call below
 
                 case FormMode.Update:
                     _bindingSource.EndEdit();
@@ -741,7 +732,17 @@ public partial class AccommodationForm : Form
             while (innerEx.InnerException != null)
                 innerEx = innerEx.InnerException;
 
-            MessageBox.Show($"Error saving: {ex.Message}\n\nDetails: {innerEx.Message}", "Error",
+            // Include diagnostic info for foreign key errors
+            var diagnostics = "";
+            if (_currentAccommodation != null)
+            {
+                diagnostics = $"\n\nDiagnostics:" +
+                    $"\n  GuestId: {_currentAccommodation.GuestId}" +
+                    $"\n  PropertyAccountNumber: {_currentAccommodation.PropertyAccountNumber}" +
+                    $"\n  ConfirmationNumber: {_currentAccommodation.ConfirmationNumber}";
+            }
+
+            MessageBox.Show($"Error saving: {ex.Message}\n\nDetails: {innerEx.Message}{diagnostics}", "Error",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
@@ -838,7 +839,7 @@ public partial class AccommodationForm : Form
     {
         if (_bindingSource.Current is Accommodation accommodation)
         {
-            var form = new GuestForm(_dbContext, accommodation.ConfirmationNumber);
+            var form = new GuestForm(_dbContext, accommodation.GuestId);
             form.MdiParent = this.MdiParent;
             form.Show();
         }
@@ -880,8 +881,10 @@ public partial class AccommodationForm : Form
 
             if (_currentAccommodation != null)
             {
-                // Link the accommodation to the selected guest
-                _currentAccommodation.ConfirmationNumber = guest.ConfirmationNumber;
+                // Link to the selected guest via GuestId (the guest's auto-increment Id)
+                _currentAccommodation.GuestId = guest.Id;
+
+                // Copy the guest name for display
                 _currentAccommodation.FirstName = guest.FirstName;
                 _currentAccommodation.LastName = guest.LastName;
 
@@ -1027,15 +1030,40 @@ public partial class AccommodationForm : Form
         }
 
         // Check that a guest has been selected (required for foreign key)
-        if (_currentAccommodation != null && _currentMode == FormMode.Insert)
+        // This applies to both Insert and Update modes
+        if (_currentAccommodation != null && (_currentMode == FormMode.Insert || _currentMode == FormMode.Update))
         {
-            var guestExists = _dbContext.Guests.Any(g => g.ConfirmationNumber == _currentAccommodation.ConfirmationNumber);
-            if (!guestExists)
+            // GuestId must be set via guest lookup - check if it's valid
+            if (_currentAccommodation.GuestId == 0)
             {
-                MessageBox.Show("Please select a guest using the 'Lookup Guest' link before saving.", "Validation Error",
+                MessageBox.Show("Please select a guest using the 'Lookup Guest' link before saving.\n\n" +
+                    "(Every accommodation must be linked to a guest.)", "Validation Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
+
+            // Verify the selected guest actually exists
+            var guestExists = _dbContext.Guests.Any(g => g.Id == _currentAccommodation.GuestId);
+            if (!guestExists)
+            {
+                MessageBox.Show($"The selected guest (ID: {_currentAccommodation.GuestId}) no longer exists.\n\n" +
+                    "Please select a different guest using the 'Lookup Guest' link.", "Validation Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+        }
+
+        // Check number in party is entered
+        if (_currentAccommodation != null)
+        {
+            if (!int.TryParse(txtNumberOfGuests.Text, out var numInParty) || numInParty < 1)
+            {
+                MessageBox.Show("Please enter the number of people in the party.", "Validation Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtNumberOfGuests.Focus();
+                return false;
+            }
+            _currentAccommodation.NumberInParty = numInParty;
         }
 
         // Check for double booking

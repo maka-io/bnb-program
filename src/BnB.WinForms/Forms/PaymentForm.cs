@@ -71,13 +71,17 @@ public partial class PaymentForm : Form
 
     private void StartInsertWithGuestInfo(long confirmationNumber)
     {
-        // Look up the guest info
-        var guest = _dbContext.Guests.FirstOrDefault(g => g.ConfirmationNumber == confirmationNumber);
+        // Look up the guest info via the accommodation's GuestId
+        var accommodation = _dbContext.Accommodations
+            .Include(a => a.Guest)
+            .FirstOrDefault(a => a.ConfirmationNumber == confirmationNumber);
+        var guest = accommodation?.Guest;
 
         SetMode(FormMode.Insert);
 
         _currentPayment = new Payment
         {
+            GuestId = guest?.Id ?? 0,
             ConfirmationNumber = confirmationNumber,
             PaymentDate = DateTime.Today,
             Amount = 0,
@@ -498,14 +502,16 @@ public partial class PaymentForm : Form
                             _currentPayment.ConfirmationNumber = confNum;
                         }
 
-                        // Look up guest info
-                        var guest = _dbContext.Guests
-                            .FirstOrDefault(g => g.ConfirmationNumber == _currentPayment.ConfirmationNumber);
+                        // Look up guest info via accommodation
+                        var accommodation = _dbContext.Accommodations
+                            .Include(a => a.Guest)
+                            .FirstOrDefault(a => a.ConfirmationNumber == _currentPayment.ConfirmationNumber);
 
-                        if (guest != null)
+                        if (accommodation?.Guest != null)
                         {
-                            _currentPayment.FirstName = guest.FirstName;
-                            _currentPayment.LastName = guest.LastName;
+                            _currentPayment.GuestId = accommodation.Guest.Id;
+                            _currentPayment.FirstName = accommodation.Guest.FirstName;
+                            _currentPayment.LastName = accommodation.Guest.LastName;
                         }
                         else
                         {
@@ -661,7 +667,7 @@ public partial class PaymentForm : Form
     {
         if (_bindingSource.Current is Payment payment)
         {
-            var form = new GuestForm(_dbContext, payment.ConfirmationNumber);
+            var form = new GuestForm(_dbContext, payment.GuestId);
             form.MdiParent = this.MdiParent;
             form.Show();
         }

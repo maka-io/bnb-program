@@ -5,7 +5,7 @@ namespace BnB.Core.Models;
 /// </summary>
 public class Guest
 {
-    public long ConfirmationNumber { get; set; }  // conf
+    public int Id { get; set; }  // Auto-increment primary key
     public string FirstName { get; set; } = string.Empty;  // f_name
     public string LastName { get; set; } = string.Empty;  // l_name
 

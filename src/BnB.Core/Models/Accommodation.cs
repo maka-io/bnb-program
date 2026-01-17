@@ -8,7 +8,8 @@ namespace BnB.Core.Models;
 public class Accommodation
 {
     public int Id { get; set; }
-    public long ConfirmationNumber { get; set; }  // conf
+    public long ConfirmationNumber { get; set; }  // conf - the reservation/booking number
+    public int GuestId { get; set; }  // Foreign key to Guest.Id (required - every accommodation must have a guest)
     public int PropertyAccountNumber { get; set; }  // accountnum
 
     // Denormalized guest/property info (from legacy)
@@ -20,7 +21,7 @@ public class Accommodation
     public DateTime ArrivalDate { get; set; }  // arrdate
     public DateTime DepartureDate { get; set; }  // depdate
     public int NumberOfNights { get; set; }  // NumNites
-    public int? NumberInParty { get; set; }  // numpty
+    public int NumberInParty { get; set; }  // numpty
 
     [NotMapped]
     public DateTime? BookedDate => Guest?.DateBooked;  // From Guest record

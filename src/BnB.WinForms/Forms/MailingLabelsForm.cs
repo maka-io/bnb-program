@@ -303,13 +303,13 @@ public partial class MailingLabelsForm : Form
             var startDate = dtpStartDate.Value.Date;
             var endDate = dtpEndDate.Value.Date;
 
-            var confirmationNumbers = _dbContext.Accommodations
+            var guestIds = _dbContext.Accommodations
                 .Where(a => a.ArrivalDate >= startDate && a.ArrivalDate <= endDate)
-                .Select(a => a.ConfirmationNumber)
+                .Select(a => a.GuestId)
                 .Distinct()
                 .ToList();
 
-            query = _dbContext.Guests.Where(g => confirmationNumbers.Contains(g.ConfirmationNumber));
+            query = _dbContext.Guests.Where(g => guestIds.Contains(g.Id));
         }
 
         var guests = query

@@ -49,9 +49,9 @@ public partial class ManualConfirmationForm : Form
             return;
         }
 
-        // Verify the confirmation number exists in the database
+        // Verify the confirmation number exists in the database (check accommodations, not guests)
         var exists = long.TryParse(confNum, out var confNumLong) &&
-                     _dbContext.Guests.Any(g => g.ConfirmationNumber == confNumLong);
+                     _dbContext.Accommodations.Any(a => a.ConfirmationNumber == confNumLong);
         if (!exists)
         {
             var result = MessageBox.Show(

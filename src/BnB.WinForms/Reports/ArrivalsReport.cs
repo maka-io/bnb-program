@@ -109,7 +109,7 @@ public class ArrivalsReport : BaseReport
                     table.Cell().TableCell(alternate).Text(FormatDate(arrival.ArrivalDate)).TableCellText();
                     table.Cell().TableCell(alternate).Text(FormatDate(arrival.DepartureDate)).TableCellText();
                     table.Cell().TableCell(alternate).AlignCenter().Text(arrival.NumberOfNights.ToString()).TableCellText();
-                    table.Cell().TableCell(alternate).AlignCenter().Text(arrival.NumberInParty?.ToString() ?? "").TableCellText();
+                    table.Cell().TableCell(alternate).AlignCenter().Text(arrival.NumberInParty.ToString()).TableCellText();
                     table.Cell().TableCell(alternate).Text(SafeString(arrival.Guest?.HomePhone ?? arrival.Guest?.BusinessPhone)).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(arrival.TotalGrossWithTax)).TableCellText();
 
@@ -165,7 +165,7 @@ public class ArrivalsReport : BaseReport
                 {
                     table.Cell().TableCell(alternate).Text(group.Key).TableCellText();
                     table.Cell().TableCell(alternate).AlignCenter().Text(group.Count().ToString()).TableCellText();
-                    table.Cell().TableCell(alternate).AlignCenter().Text(group.Sum(a => a.NumberInParty ?? 1).ToString()).TableCellText();
+                    table.Cell().TableCell(alternate).AlignCenter().Text(group.Sum(a => a.NumberInParty).ToString()).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(group.Sum(a => a.TotalGrossWithTax))).TableCellText();
                     alternate = !alternate;
                 }

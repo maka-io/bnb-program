@@ -56,7 +56,7 @@ public class BookingListReport : BaseReport
             column.Item().PaddingBottom(10).Row(row =>
             {
                 row.RelativeItem().Text($"Total Bookings: {_bookings.Count}").FontSize(11).SemiBold();
-                row.RelativeItem().AlignRight().Text($"Total Nights: {_bookings.Sum(b => b.NumberOfNights)} | Total Guests: {_bookings.Sum(b => b.NumberInParty ?? 1)}").FontSize(10);
+                row.RelativeItem().AlignRight().Text($"Total Nights: {_bookings.Sum(b => b.NumberOfNights)} | Total Guests: {_bookings.Sum(b => b.NumberInParty)}").FontSize(10);
             });
 
             column.Item().Table(table =>
@@ -99,7 +99,7 @@ public class BookingListReport : BaseReport
                     table.Cell().TableCell(alternate).Text(FormatDate(booking.ArrivalDate, "MM/dd/yy")).TableCellText();
                     table.Cell().TableCell(alternate).Text(FormatDate(booking.DepartureDate, "MM/dd/yy")).TableCellText();
                     table.Cell().TableCell(alternate).AlignCenter().Text(booking.NumberOfNights.ToString()).TableCellText();
-                    table.Cell().TableCell(alternate).AlignCenter().Text((booking.NumberInParty ?? 1).ToString()).TableCellText();
+                    table.Cell().TableCell(alternate).AlignCenter().Text(booking.NumberInParty.ToString()).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(booking.TotalGrossWithTax)).TableCellText();
 
                     grandTotal += booking.TotalGrossWithTax ?? 0;
@@ -142,7 +142,7 @@ public class BookingListReport : BaseReport
                     table.Cell().TableCell(alternate).Text(propertyGroup.Key).TableCellText();
                     table.Cell().TableCell(alternate).AlignCenter().Text(propertyGroup.Count().ToString()).TableCellText();
                     table.Cell().TableCell(alternate).AlignCenter().Text(propertyGroup.Sum(b => b.NumberOfNights).ToString()).TableCellText();
-                    table.Cell().TableCell(alternate).AlignCenter().Text(propertyGroup.Sum(b => b.NumberInParty ?? 1).ToString()).TableCellText();
+                    table.Cell().TableCell(alternate).AlignCenter().Text(propertyGroup.Sum(b => b.NumberInParty).ToString()).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(propertyGroup.Sum(b => b.TotalGrossWithTax))).TableCellText();
                     alternate = !alternate;
                 }

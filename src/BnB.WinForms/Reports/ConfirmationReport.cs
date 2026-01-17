@@ -20,8 +20,9 @@ public class ConfirmationReport : BaseReport
     private readonly decimal _totalPrepayment;
     private readonly string? _depositCheckNum;
     private readonly string? _prepayCheckNum;
+    private readonly long _confirmationNumber;
 
-    public override string Title => $"Confirmation #{_guest.ConfirmationNumber}";
+    public override string Title => $"Confirmation #{_confirmationNumber}";
 
     public ConfirmationReport(
         Guest guest,
@@ -45,6 +46,8 @@ public class ConfirmationReport : BaseReport
         _totalPrepayment = totalPrepayment;
         _depositCheckNum = depositCheckNum;
         _prepayCheckNum = prepayCheckNum;
+        // Get confirmation number from first accommodation (guests no longer have conf#)
+        _confirmationNumber = _accommodations.FirstOrDefault()?.ConfirmationNumber ?? 0;
     }
 
     public override void Compose(IDocumentContainer container)
@@ -114,7 +117,7 @@ public class ConfirmationReport : BaseReport
 
                 row.ConstantItem(150).AlignRight().Column(col =>
                 {
-                    col.Item().Text($"Confirmation #: {_guest.ConfirmationNumber}")
+                    col.Item().Text($"Confirmation #: {_confirmationNumber}")
                         .FontSize(12)
                         .Bold();
 
@@ -247,7 +250,7 @@ public class ConfirmationReport : BaseReport
                     table.Cell().TableCell(alternate).Text(FormatDate(accom.ArrivalDate)).TableCellText();
                     table.Cell().TableCell(alternate).Text(FormatDate(accom.DepartureDate)).TableCellText();
                     table.Cell().TableCell(alternate).AlignCenter().Text(accom.NumberOfNights.ToString()).TableCellText();
-                    table.Cell().TableCell(alternate).AlignCenter().Text(accom.NumberInParty?.ToString() ?? "").TableCellText();
+                    table.Cell().TableCell(alternate).AlignCenter().Text(accom.NumberInParty.ToString()).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(accom.DailyGrossRate)).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(accom.TotalTax)).TableCellText();
                     table.Cell().CurrencyCell(alternate).Text(FormatCurrency(totalWithTax)).TableCellText();

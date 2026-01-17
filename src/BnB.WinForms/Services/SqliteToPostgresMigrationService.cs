@@ -251,7 +251,7 @@ public class SqliteToPostgresMigrationService
 
         foreach (var item in items)
         {
-            if (!target.Guests.Any(x => x.ConfirmationNumber == item.ConfirmationNumber))
+            if (!target.Guests.Any(x => x.Id == item.Id))
             {
                 target.Guests.Add(item);
             }
@@ -456,7 +456,7 @@ public class SqliteToPostgresMigrationService
             ("CommonTexts", "Id"),
             ("CheckNumberConfigs", "Id"),
             ("Facts", "FactId"),
-            ("Guests", "ConfirmationNumber"),
+            ("Guests", "Id"),
             ("Properties", "AccountNumber"),
             ("TravelAgencies", "Id"),
             ("CarAgencies", "Id"),

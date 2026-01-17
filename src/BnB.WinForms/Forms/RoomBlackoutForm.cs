@@ -117,6 +117,18 @@ public partial class RoomBlackoutForm : Form
             return;
         }
 
+        // Validate that the room type exists (required for foreign key)
+        var roomTypeExists = _dbContext.RoomTypes.Any(r => r.Id == _roomTypeId);
+        if (!roomTypeExists)
+        {
+            MessageBox.Show(
+                $"Cannot create blackout - the room type (ID: {_roomTypeId}) no longer exists in the database.",
+                "Error",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+            return;
+        }
+
         // Create the blackout
         var blackout = new RoomBlackout
         {
@@ -128,11 +140,26 @@ public partial class RoomBlackoutForm : Form
             EntryUser = Environment.UserName
         };
 
-        _dbContext.RoomBlackouts.Add(blackout);
-        _dbContext.SaveChanges();
+        try
+        {
+            _dbContext.RoomBlackouts.Add(blackout);
+            _dbContext.SaveChanges();
 
-        DialogResult = DialogResult.OK;
-        Close();
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+        catch (Exception ex)
+        {
+            var innerEx = ex;
+            while (innerEx.InnerException != null)
+                innerEx = innerEx.InnerException;
+
+            MessageBox.Show(
+                $"Error saving blackout: {ex.Message}\n\nDetails: {innerEx.Message}\n\nRoomTypeId: {_roomTypeId}",
+                "Error",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
     }
 
     private void btnCancel_Click(object sender, EventArgs e)

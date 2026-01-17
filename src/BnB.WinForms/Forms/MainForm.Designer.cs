@@ -94,6 +94,7 @@ partial class MainForm
         this.mnuPropertyFacts = new ToolStripMenuItem();
         this.mnuCompanyInfo = new ToolStripMenuItem();
         this.mnuDatabaseSettings = new ToolStripMenuItem();
+        this.mnuResetDatabase = new ToolStripMenuItem();
         this.mnuRestoreDatabase = new ToolStripMenuItem();
         this.mnuImportLegacyData = new ToolStripMenuItem();
 
@@ -298,7 +299,8 @@ partial class MainForm
 
         // === Admin Menu ===
         this.mnuAdmin.DropDownItems.AddRange(new ToolStripItem[] {
-            this.mnuPropertyFacts, this.mnuCompanyInfo, this.mnuDatabaseSettings, this.mnuRestoreDatabase, this.mnuImportLegacyData
+            this.mnuPropertyFacts, this.mnuCompanyInfo, this.mnuDatabaseSettings,
+            this.mnuResetDatabase, this.mnuRestoreDatabase, this.mnuImportLegacyData
         });
         this.mnuAdmin.Text = "A&dmin";
         this.mnuPropertyFacts.Text = "&Property Facts Master List";
@@ -307,6 +309,8 @@ partial class MainForm
         this.mnuCompanyInfo.Click += mnuCompanyInfo_Click;
         this.mnuDatabaseSettings.Text = "&Database Settings...";
         this.mnuDatabaseSettings.Click += mnuDatabaseSettings_Click;
+        this.mnuResetDatabase.Text = "R&eset Database...";
+        this.mnuResetDatabase.Click += mnuResetDatabase_Click;
         this.mnuRestoreDatabase.Text = "&Restore Database";
         this.mnuRestoreDatabase.Click += mnuRestoreDatabase_Click;
         this.mnuImportLegacyData.Text = "&Import Legacy Data...";
@@ -436,6 +440,7 @@ partial class MainForm
     private ToolStripMenuItem mnuPropertyFacts;
     private ToolStripMenuItem mnuCompanyInfo;
     private ToolStripMenuItem mnuDatabaseSettings;
+    private ToolStripMenuItem mnuResetDatabase;
     private ToolStripMenuItem mnuRestoreDatabase;
     private ToolStripMenuItem mnuImportLegacyData;
 

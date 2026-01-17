@@ -22,8 +22,6 @@ partial class GuestLookupForm
         // Search controls
         this.lblSearchName = new Label();
         this.txtSearchName = new TextBox();
-        this.lblSearchConfNum = new Label();
-        this.txtSearchConfNum = new TextBox();
         this.btnSearch = new Button();
 
         // Results
@@ -44,22 +42,12 @@ partial class GuestLookupForm
         this.Controls.Add(this.lblSearchName);
 
         this.txtSearchName.Location = new Point(60, 12);
-        this.txtSearchName.Size = new Size(150, 23);
+        this.txtSearchName.Size = new Size(250, 23);
         this.txtSearchName.KeyDown += txtSearch_KeyDown;
         this.Controls.Add(this.txtSearchName);
 
-        this.lblSearchConfNum.Text = "Conf #:";
-        this.lblSearchConfNum.Location = new Point(230, 15);
-        this.lblSearchConfNum.AutoSize = true;
-        this.Controls.Add(this.lblSearchConfNum);
-
-        this.txtSearchConfNum.Location = new Point(280, 12);
-        this.txtSearchConfNum.Size = new Size(100, 23);
-        this.txtSearchConfNum.KeyDown += txtSearch_KeyDown;
-        this.Controls.Add(this.txtSearchConfNum);
-
         this.btnSearch.Text = "Search";
-        this.btnSearch.Location = new Point(400, 11);
+        this.btnSearch.Location = new Point(320, 11);
         this.btnSearch.Size = new Size(75, 25);
         this.btnSearch.Click += btnSearch_Click;
         this.Controls.Add(this.btnSearch);
@@ -119,8 +107,6 @@ partial class GuestLookupForm
 
     private Label lblSearchName;
     private TextBox txtSearchName;
-    private Label lblSearchConfNum;
-    private TextBox txtSearchConfNum;
     private Button btnSearch;
 
     private DataGridView dgvGuests;

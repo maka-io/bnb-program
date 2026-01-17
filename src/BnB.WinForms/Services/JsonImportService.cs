@@ -508,9 +508,14 @@ public class JsonImportService
         return count;
     }
 
+    // Maps legacy confirmation number to new Guest.Id for use by dependent tables
+    private Dictionary<long, int> _legacyConfToGuestId = new();
+
     private async Task<int> ImportGuestsAsync()
     {
         Report("Importing Guests...");
+        _legacyConfToGuestId.Clear();
+
         // Delete in order to respect foreign key constraints
         await _context.TravelAgentBookings.ExecuteDeleteAsync();
         await _context.CarRentals.ExecuteDeleteAsync();
@@ -524,9 +529,11 @@ public class JsonImportService
 
         foreach (var el in items)
         {
+            var legacyConf = GetLong(el, "conf", "ConfirmationNumber");
+
             var guest = new Guest
             {
-                ConfirmationNumber = GetLong(el, "conf", "ConfirmationNumber"),
+                // Id is auto-generated - no ConfirmationNumber on Guest anymore
                 FirstName = GetString(el, "f_name", "fname", "FirstName") ?? "",
                 LastName = GetString(el, "l_name", "lname", "LastName") ?? "",
                 Address = GetString(el, "address", "addr", "Address"),
@@ -555,16 +562,19 @@ public class JsonImportService
                 Revision = GetInt(el, "revision", "Revision")
             };
             _context.Guests.Add(guest);
+            await _context.SaveChangesAsync();
+
+            // Map the legacy confirmation number to the new Guest.Id
+            _legacyConfToGuestId[legacyConf] = guest.Id;
+
             count++;
 
-            if (count % 500 == 0)
+            if (count % 100 == 0)
             {
-                await _context.SaveChangesAsync();
                 Report($"  Guests: {count} imported...");
             }
         }
 
-        await _context.SaveChangesAsync();
         Report($"  Guests: {count} imported");
         return count;
     }
@@ -572,7 +582,6 @@ public class JsonImportService
     private async Task<int> ImportAccommodationsAsync()
     {
         Report("Importing Accommodations...");
-        var validGuests = await _context.Guests.Select(g => g.ConfirmationNumber).ToListAsync();
         var validProperties = await _context.Properties.Select(p => p.AccountNumber).ToListAsync();
 
         var items = await ReadJsonFileAsync("bbtbl");
@@ -584,7 +593,8 @@ public class JsonImportService
             var conf = GetLong(el, "conf", "ConfirmationNumber");
             var accountNum = GetInt(el, "accountnum", "AccountNumber");
 
-            if (!validGuests.Contains(conf))
+            // Skip if foreign keys don't exist - use the legacy conf to guest id mapping
+            if (!_legacyConfToGuestId.TryGetValue(conf, out var guestId))
             {
                 skipped++;
                 continue;
@@ -599,7 +609,8 @@ public class JsonImportService
             {
                 var accommodation = new Accommodation
                 {
-                    ConfirmationNumber = conf,
+                    ConfirmationNumber = conf,  // This is now the booking/reservation number
+                    GuestId = guestId,  // FK to Guest.Id
                     PropertyAccountNumber = accountNum,
                     FirstName = GetString(el, "f_name", "fname", "FirstName")?.Truncate(50),
                     LastName = GetString(el, "l_name", "lname", "LastName")?.Truncate(50),
@@ -667,7 +678,6 @@ public class JsonImportService
     private async Task<int> ImportPaymentsAsync()
     {
         Report("Importing Payments...");
-        var validGuests = await _context.Guests.Select(g => g.ConfirmationNumber).ToListAsync();
 
         // First, read payment due information from payment.json (one record per guest)
         var paymentDues = new Dictionary<long, JsonElement>();
@@ -675,7 +685,7 @@ public class JsonImportService
         foreach (var el in dueItems)
         {
             var conf = GetLong(el, "conf", "ConfirmationNumber");
-            if (validGuests.Contains(conf))
+            if (_legacyConfToGuestId.ContainsKey(conf))
             {
                 paymentDues[conf] = el;
             }
@@ -690,7 +700,8 @@ public class JsonImportService
         foreach (var el in items)
         {
             var conf = GetLong(el, "conf", "ConfirmationNumber");
-            if (!validGuests.Contains(conf)) continue;
+            // Skip if no matching guest exists
+            if (!_legacyConfToGuestId.TryGetValue(conf, out var guestId)) continue;
 
             // Get due info for this guest (if available and not yet added)
             decimal? depositDue = null, prepaymentDue = null, cancellationFee = null, refundOwed = null, otherCredit = null, defaultComm = null;
@@ -715,7 +726,8 @@ public class JsonImportService
 
             var payment = new Payment
             {
-                ConfirmationNumber = conf,
+                GuestId = guestId,  // FK to Guest.Id
+                ConfirmationNumber = conf,  // The booking/reservation number
                 FirstName = GetString(el, "f_name", "fname", "FirstName"),
                 LastName = GetString(el, "l_name", "lname", "LastName"),
                 Amount = GetDecimal(el, "AmountReceived", "amountreceived", "amount", "Amount"),
@@ -786,7 +798,6 @@ public class JsonImportService
     private async Task<int> ImportTravelAgentBookingsAsync()
     {
         Report("Importing Travel Agent Bookings...");
-        var validGuests = await _context.Guests.Select(g => g.ConfirmationNumber).ToListAsync();
         var agencies = await _context.TravelAgencies.ToDictionaryAsync(a => a.AccountNumber, a => a.Id);
 
         var items = await ReadJsonFileAsync("tagentbl");
@@ -795,14 +806,16 @@ public class JsonImportService
         foreach (var el in items)
         {
             var conf = GetLong(el, "conf", "ConfirmationNumber");
-            if (!validGuests.Contains(conf)) continue;
+            // Skip if no matching guest exists
+            if (!_legacyConfToGuestId.TryGetValue(conf, out var guestId)) continue;
 
             var agencyAccountNum = GetInt(el, "agencyaccountnum", "accountnum", "AccountNumber");
             int? agencyId = agencies.TryGetValue(agencyAccountNum, out var id) ? id : null;
 
             var booking = new TravelAgentBooking
             {
-                ConfirmationNumber = conf,
+                GuestId = guestId,  // FK to Guest.Id
+                ConfirmationNumber = conf,  // The booking/reservation number
                 TravelAgencyId = agencyId,
                 CommissionAmount = GetNullableDecimal(el, "commamount", "commission", "CommissionAmount"),
                 CommissionPaid = GetNullableDecimal(el, "commpaid", "CommissionPaid"),
@@ -822,7 +835,6 @@ public class JsonImportService
     private async Task<int> ImportCarRentalsAsync()
     {
         Report("Importing Car Rentals...");
-        var validGuests = await _context.Guests.Select(g => g.ConfirmationNumber).ToListAsync();
         var agencies = await _context.CarAgencies.ToListAsync();
 
         var items = await ReadJsonFileAsync("cartbl");
@@ -831,7 +843,8 @@ public class JsonImportService
         foreach (var el in items)
         {
             var conf = GetLong(el, "conf", "ConfirmationNumber");
-            if (!validGuests.Contains(conf)) continue;
+            // Skip if no matching guest exists
+            if (!_legacyConfToGuestId.TryGetValue(conf, out var guestId)) continue;
 
             var agencyName = GetString(el, "carcompany", "agency", "CarAgency");
             var agency = agencies.FirstOrDefault(a =>
@@ -839,7 +852,8 @@ public class JsonImportService
 
             var rental = new CarRental
             {
-                ConfirmationNumber = conf,
+                GuestId = guestId,  // FK to Guest.Id
+                ConfirmationNumber = conf,  // The booking/reservation number
                 CarAgencyId = agency?.Id,
                 PickupDate = GetDateTime(el, "pudate", "pickupdate", "PickupDate"),
                 ReturnDate = GetDateTime(el, "dropdate", "returndate", "ReturnDate"),

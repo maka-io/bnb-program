@@ -48,9 +48,10 @@ public class BnBDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         // Guest configuration (guesttbl)
+        // Guest has 1:many relationship with Accommodations (a guest can have multiple bookings)
         modelBuilder.Entity<Guest>(entity =>
         {
-            entity.HasKey(e => e.ConfirmationNumber);
+            entity.HasKey(e => e.Id);  // Auto-increment primary key
             entity.Property(e => e.FirstName).HasMaxLength(50).IsRequired();
             entity.Property(e => e.LastName).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Address).HasMaxLength(100);
@@ -137,7 +138,8 @@ public class BnBDbContext : DbContext
 
             entity.HasOne(e => e.Guest)
                 .WithMany(g => g.Accommodations)
-                .HasForeignKey(e => e.ConfirmationNumber);
+                .HasForeignKey(e => e.GuestId)
+                .IsRequired();  // Every accommodation must have a guest
 
             entity.HasOne(e => e.Property)
                 .WithMany(p => p.Accommodations)
@@ -163,7 +165,8 @@ public class BnBDbContext : DbContext
 
             entity.HasOne(e => e.Guest)
                 .WithMany(g => g.Payments)
-                .HasForeignKey(e => e.ConfirmationNumber);
+                .HasForeignKey(e => e.GuestId)
+                .IsRequired();
         });
 
         // Check configuration (checktbl)
@@ -276,7 +279,8 @@ public class BnBDbContext : DbContext
 
             entity.HasOne(e => e.Guest)
                 .WithMany()
-                .HasForeignKey(e => e.ConfirmationNumber);
+                .HasForeignKey(e => e.GuestId)
+                .IsRequired();
 
             entity.HasOne(e => e.TravelAgency)
                 .WithMany(ta => ta.Bookings)
@@ -312,7 +316,8 @@ public class BnBDbContext : DbContext
 
             entity.HasOne(e => e.Guest)
                 .WithMany()
-                .HasForeignKey(e => e.ConfirmationNumber);
+                .HasForeignKey(e => e.GuestId)
+                .IsRequired();
 
             entity.HasOne(e => e.CarAgency)
                 .WithMany(ca => ca.Rentals)
