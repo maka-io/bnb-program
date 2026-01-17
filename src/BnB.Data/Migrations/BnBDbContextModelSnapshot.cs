@@ -772,11 +772,6 @@ namespace BnB.Data.Migrations
                     b.Property<int>("PropertyAccountNumber")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("RoomCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasDefaultValue(1);
-
                     b.HasKey("Id");
 
                     b.HasIndex("PropertyAccountNumber");

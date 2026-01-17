@@ -929,8 +929,8 @@ public partial class AccommodationForm : Form
     }
 
     /// <summary>
-    /// Checks if the selected room type has availability for the requested dates.
-    /// Returns true if available, false if double-booked.
+    /// Checks if the selected room is available for the requested dates.
+    /// Returns true if available, false if already booked.
     /// </summary>
     private bool CheckRoomAvailability()
     {
@@ -940,52 +940,43 @@ public partial class AccommodationForm : Form
         var selectedRoomType = cboRoomType.SelectedItem as RoomTypeItem;
         if (selectedRoomType == null || string.IsNullOrEmpty(selectedRoomType.Name))
         {
-            // No room type selected, skip check
+            // No room selected, skip check
             return true;
         }
 
         var propertyAccountNum = _currentAccommodation.PropertyAccountNumber;
-        var roomTypeName = selectedRoomType.Name;
+        var roomName = selectedRoomType.Name;
         var arrivalDate = dtpArrivalDate.Value.Date;
         var departureDate = dtpDepartureDate.Value.Date;
 
-        // Get the room type to find how many rooms are available
-        var roomType = _dbContext.RoomTypes
-            .FirstOrDefault(rt => rt.PropertyAccountNumber == propertyAccountNum && rt.Name == roomTypeName);
-
-        if (roomType == null)
-        {
-            // Room type not found in database, skip check
-            return true;
-        }
-
-        int totalRoomsAvailable = roomType.RoomCount;
-
-        // Count overlapping accommodations for this property and room type
+        // Check for overlapping bookings for this property and room
         // Overlap: existing.ArrivalDate < requested.DepartureDate AND existing.DepartureDate > requested.ArrivalDate
-        var overlappingBookingsQuery = _dbContext.Accommodations
+        var overlappingBookingQuery = _dbContext.Accommodations
             .Where(a => a.PropertyAccountNumber == propertyAccountNum
-                && a.UnitName == roomTypeName
+                && a.UnitName == roomName
                 && a.ArrivalDate < departureDate
                 && a.DepartureDate > arrivalDate);
 
         // Exclude the current accommodation if we're updating an existing record
         if (_currentMode == FormMode.Update && _currentAccommodation.Id > 0)
         {
-            overlappingBookingsQuery = overlappingBookingsQuery.Where(a => a.Id != _currentAccommodation.Id);
+            overlappingBookingQuery = overlappingBookingQuery.Where(a => a.Id != _currentAccommodation.Id);
         }
 
-        int overlappingCount = overlappingBookingsQuery.Count();
+        var existingBooking = overlappingBookingQuery
+            .Select(a => new { a.ConfirmationNumber, a.FirstName, a.LastName, a.ArrivalDate, a.DepartureDate })
+            .FirstOrDefault();
 
-        if (overlappingCount >= totalRoomsAvailable)
+        if (existingBooking != null)
         {
-            // All rooms are booked
-            var message = $"Cannot book this room type.\n\n" +
-                $"Room Type: {selectedRoomType.Description}\n" +
-                $"Available Rooms: {totalRoomsAvailable}\n" +
-                $"Already Booked: {overlappingCount}\n" +
-                $"Dates: {arrivalDate:MM/dd/yyyy} - {departureDate:MM/dd/yyyy}\n\n" +
-                $"All rooms of this type are already booked during this period.";
+            // Room is already booked
+            var message = $"This room is already booked.\n\n" +
+                $"Room: {selectedRoomType.Description}\n" +
+                $"Requested Dates: {arrivalDate:MM/dd/yyyy} - {departureDate:MM/dd/yyyy}\n\n" +
+                $"Existing Booking:\n" +
+                $"  Conf#: {existingBooking.ConfirmationNumber}\n" +
+                $"  Guest: {existingBooking.FirstName} {existingBooking.LastName}\n" +
+                $"  Dates: {existingBooking.ArrivalDate:MM/dd/yyyy} - {existingBooking.DepartureDate:MM/dd/yyyy}";
 
             MessageBox.Show(message, "Room Not Available",
                 MessageBoxButtons.OK, MessageBoxIcon.Warning);

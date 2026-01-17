@@ -28,8 +28,6 @@ partial class RoomTypeForm
         txtDescription = new TextBox();
         lblDefaultRate = new Label();
         txtDefaultRate = new TextBox();
-        lblRoomCount = new Label();
-        nudRoomCount = new NumericUpDown();
         pnlButtons = new Panel();
         btnAdd = new Button();
         btnEdit = new Button();
@@ -40,7 +38,6 @@ partial class RoomTypeForm
         grpRoomTypes.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dgvRoomTypes).BeginInit();
         grpDetails.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)nudRoomCount).BeginInit();
         pnlButtons.SuspendLayout();
         SuspendLayout();
         //
@@ -71,7 +68,7 @@ partial class RoomTypeForm
         grpRoomTypes.Size = new Size(476, 240);
         grpRoomTypes.TabIndex = 1;
         grpRoomTypes.TabStop = false;
-        grpRoomTypes.Text = "Room Types";
+        grpRoomTypes.Text = "Rooms";
         //
         // dgvRoomTypes
         //
@@ -99,22 +96,20 @@ partial class RoomTypeForm
         grpDetails.Controls.Add(txtDescription);
         grpDetails.Controls.Add(lblDefaultRate);
         grpDetails.Controls.Add(txtDefaultRate);
-        grpDetails.Controls.Add(lblRoomCount);
-        grpDetails.Controls.Add(nudRoomCount);
         grpDetails.Location = new Point(12, 291);
         grpDetails.Name = "grpDetails";
         grpDetails.Size = new Size(476, 100);
         grpDetails.TabIndex = 2;
         grpDetails.TabStop = false;
-        grpDetails.Text = "Room Type Details";
+        grpDetails.Text = "Room Details";
         //
         // lblRoomType
         //
         lblRoomType.AutoSize = true;
         lblRoomType.Location = new Point(10, 28);
         lblRoomType.Name = "lblRoomType";
-        lblRoomType.Size = new Size(70, 15);
-        lblRoomType.Text = "Room Type:";
+        lblRoomType.Size = new Size(42, 15);
+        lblRoomType.Text = "Name:";
         //
         // txtRoomType
         //
@@ -160,25 +155,6 @@ partial class RoomTypeForm
         txtDefaultRate.Size = new Size(80, 23);
         txtDefaultRate.TabIndex = 2;
         txtDefaultRate.TextAlign = HorizontalAlignment.Right;
-        //
-        // lblRoomCount
-        //
-        lblRoomCount.AutoSize = true;
-        lblRoomCount.Location = new Point(400, 28);
-        lblRoomCount.Name = "lblRoomCount";
-        lblRoomCount.Size = new Size(41, 15);
-        lblRoomCount.Text = "Rooms:";
-        //
-        // nudRoomCount
-        //
-        nudRoomCount.Enabled = false;
-        nudRoomCount.Location = new Point(445, 25);
-        nudRoomCount.Maximum = new decimal(new int[] { 999, 0, 0, 0 });
-        nudRoomCount.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
-        nudRoomCount.Name = "nudRoomCount";
-        nudRoomCount.Size = new Size(50, 23);
-        nudRoomCount.TabIndex = 3;
-        nudRoomCount.Value = new decimal(new int[] { 1, 0, 0, 0 });
         //
         // pnlButtons
         //
@@ -267,13 +243,12 @@ partial class RoomTypeForm
         MinimumSize = new Size(450, 400);
         Name = "RoomTypeForm";
         StartPosition = FormStartPosition.CenterParent;
-        Text = "Room Types";
+        Text = "Rooms";
         Load += RoomTypeForm_Load;
         grpRoomTypes.ResumeLayout(false);
         ((System.ComponentModel.ISupportInitialize)dgvRoomTypes).EndInit();
         grpDetails.ResumeLayout(false);
         grpDetails.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)nudRoomCount).EndInit();
         pnlButtons.ResumeLayout(false);
         ResumeLayout(false);
         PerformLayout();
@@ -292,8 +267,6 @@ partial class RoomTypeForm
     private TextBox txtDescription;
     private Label lblDefaultRate;
     private TextBox txtDefaultRate;
-    private Label lblRoomCount;
-    private NumericUpDown nudRoomCount;
     private Panel pnlButtons;
     private Button btnAdd;
     private Button btnEdit;

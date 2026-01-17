@@ -7,12 +7,17 @@ using Microsoft.EntityFrameworkCore;
 namespace BnB.WinForms.Forms;
 
 /// <summary>
-/// Availability Calendar form - migrated from Avail.frm
-/// Shows room availability for properties within a date range.
+/// Availability Calendar form - Year view with monthly grids.
+/// Shows room availability for properties across an entire year.
 /// </summary>
 public partial class AvailabilityForm : Form
 {
     private readonly BnBDbContext _dbContext;
+    private int _selectedYear;
+    private List<Property> _properties = new();
+    private List<RoomType> _roomTypes = new();
+    private List<Accommodation> _accommodations = new();
+    private readonly Dictionary<int, DataGridView> _monthGrids = new();
 
     public AvailabilityForm(BnBDbContext dbContext)
     {
@@ -23,14 +28,17 @@ public partial class AvailabilityForm : Form
     private void AvailabilityForm_Load(object sender, EventArgs e)
     {
         this.ApplyTheme();
+
+        // Re-apply legend colors after theme (theme may override them)
+        pnlLegendAvailable.BackColor = Color.LightGreen;
+        pnlLegendBooked.BackColor = Color.LightCoral;
+        pnlLegendWeekend.BackColor = Color.FromArgb(220, 220, 220);
+
         LoadProperties();
-        LoadRoomTypes();
+        LoadYears();
 
-        // Default to current month
-        dtpStartDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-        dtpEndDate.Value = dtpStartDate.Value.AddMonths(1).AddDays(-1);
-
-        ConfigureCalendarGrid();
+        // Auto-load availability on form open
+        LoadAvailability();
     }
 
     private void LoadProperties()
@@ -48,56 +56,30 @@ public partial class AvailabilityForm : Form
         cboProperty.ValueMember = "AccountNumber";
     }
 
-    private void LoadRoomTypes()
+    private void LoadYears()
     {
-        cboRoomType.Items.Clear();
-        cboRoomType.Items.Add("(All Room Types)");
-
-        if (cboProperty.SelectedValue is int accountNum && accountNum > 0)
+        var currentYear = DateTime.Now.Year;
+        var years = new List<int>();
+        for (int y = currentYear - 2; y <= currentYear + 2; y++)
         {
-            var roomTypes = _dbContext.RoomTypes
-                .Where(r => r.PropertyAccountNumber == accountNum)
-                .OrderBy(r => r.Name)
-                .Select(r => r.Name)
-                .ToList();
-
-            foreach (var rt in roomTypes)
-            {
-                cboRoomType.Items.Add(rt);
-            }
+            years.Add(y);
         }
 
-        cboRoomType.SelectedIndex = 0;
+        cboYear.DataSource = years;
+        cboYear.SelectedItem = currentYear;
+        _selectedYear = currentYear;
     }
 
-    private void ConfigureCalendarGrid()
+    private void cboProperty_SelectedIndexChanged(object sender, EventArgs e)
     {
-        dgvCalendar.Columns.Clear();
-        dgvCalendar.Rows.Clear();
+        // Don't auto-refresh on property change to avoid slow updates
+    }
 
-        // Add property column
-        dgvCalendar.Columns.Add("Property", "Property");
-        dgvCalendar.Columns["Property"].Width = 150;
-        dgvCalendar.Columns["Property"].Frozen = true;
-
-        // Add date columns
-        var startDate = dtpStartDate.Value.Date;
-        var endDate = dtpEndDate.Value.Date;
-        var days = (endDate - startDate).Days + 1;
-
-        for (int i = 0; i < days; i++)
+    private void cboYear_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (cboYear.SelectedItem is int year)
         {
-            var date = startDate.AddDays(i);
-            var colName = $"Day{i}";
-            dgvCalendar.Columns.Add(colName, date.ToString("MM/dd"));
-            dgvCalendar.Columns[colName].Width = 45;
-            dgvCalendar.Columns[colName].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-
-            // Weekend highlighting
-            if (date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
-            {
-                dgvCalendar.Columns[colName].DefaultCellStyle.BackColor = Color.LightGray;
-            }
+            _selectedYear = year;
         }
     }
 
@@ -108,83 +90,245 @@ public partial class AvailabilityForm : Form
 
     private void LoadAvailability()
     {
-        ConfigureCalendarGrid();
-
-        var startDate = dtpStartDate.Value.Date;
-        var endDate = dtpEndDate.Value.Date;
-        var selectedProperty = cboProperty.SelectedValue as int? ?? 0;
-        var selectedRoomType = cboRoomType.SelectedItem?.ToString();
-
-        // Get properties to display
-        var propertiesQuery = _dbContext.Properties
-            .Where(p => !p.IsObsolete);
-
-        if (selectedProperty > 0)
+        Cursor = Cursors.WaitCursor;
+        try
         {
-            propertiesQuery = propertiesQuery.Where(p => p.AccountNumber == selectedProperty);
-        }
+            var selectedProperty = cboProperty.SelectedValue as int? ?? 0;
 
-        var properties = propertiesQuery.OrderBy(p => p.Location).ToList();
+            // Get properties to display
+            var propertiesQuery = _dbContext.Properties
+                .Where(p => !p.IsObsolete);
 
-        // Get accommodations in date range
-        var accommodationsQuery = _dbContext.Accommodations
-            .Where(a => a.ArrivalDate <= endDate && a.DepartureDate >= startDate);
+            if (selectedProperty > 0)
+            {
+                propertiesQuery = propertiesQuery.Where(p => p.AccountNumber == selectedProperty);
+            }
 
-        if (selectedProperty > 0)
-        {
-            accommodationsQuery = accommodationsQuery.Where(a => a.PropertyAccountNumber == selectedProperty);
-        }
+            _properties = propertiesQuery.OrderBy(p => p.Location).ToList();
 
-        var accommodations = accommodationsQuery.ToList();
-
-        // Build the grid
-        foreach (var property in properties)
-        {
-            var row = new DataGridViewRow();
-            row.CreateCells(dgvCalendar);
-            row.Cells[0].Value = property.Location;
-
-            var propertyAccoms = accommodations
-                .Where(a => a.PropertyAccountNumber == property.AccountNumber)
+            // Get room types for these properties
+            var propertyIds = _properties.Select(p => p.AccountNumber).ToList();
+            _roomTypes = _dbContext.RoomTypes
+                .Where(r => propertyIds.Contains(r.PropertyAccountNumber))
+                .OrderBy(r => r.PropertyAccountNumber)
+                .ThenBy(r => r.Name)
                 .ToList();
 
-            var days = (endDate - startDate).Days + 1;
-            for (int i = 0; i < days; i++)
+            // Get accommodations for the entire year
+            var yearStart = new DateTime(_selectedYear, 1, 1);
+            var yearEnd = new DateTime(_selectedYear, 12, 31);
+
+            var accommodationsQuery = _dbContext.Accommodations
+                .Where(a => a.ArrivalDate <= yearEnd && a.DepartureDate >= yearStart);
+
+            if (selectedProperty > 0)
             {
-                var date = startDate.AddDays(i);
+                accommodationsQuery = accommodationsQuery.Where(a => a.PropertyAccountNumber == selectedProperty);
+            }
 
-                // Count bookings for this date
-                var bookingsOnDate = propertyAccoms
-                    .Count(a => a.ArrivalDate <= date && a.DepartureDate > date);
+            _accommodations = accommodationsQuery.ToList();
 
-                if (bookingsOnDate > 0)
+            // Build the monthly grids
+            BuildYearView();
+
+            if (_roomTypes.Count == 0)
+            {
+                lblStatus.Text = $"No rooms found. Properties have {_dbContext.RoomTypes.Count()} total room types defined.";
+            }
+            else
+            {
+                lblStatus.Text = $"Showing {_roomTypes.Count} rooms across {_properties.Count} properties for {_selectedYear}";
+            }
+        }
+        finally
+        {
+            Cursor = Cursors.Default;
+        }
+    }
+
+    private void BuildYearView()
+    {
+        pnlCalendars.SuspendLayout();
+        pnlCalendars.Controls.Clear();
+        _monthGrids.Clear();
+
+        if (_roomTypes.Count == 0)
+        {
+            var lblNoRooms = new Label
+            {
+                Text = "No rooms found for the selected property.",
+                AutoSize = true,
+                Font = new Font(Font.FontFamily, 12),
+                Margin = new Padding(20)
+            };
+            pnlCalendars.Controls.Add(lblNoRooms);
+            pnlCalendars.ResumeLayout();
+            return;
+        }
+
+        // Create 12 grids, one for each month (FlowLayoutPanel handles positioning)
+        for (int month = 1; month <= 12; month++)
+        {
+            var monthStart = new DateTime(_selectedYear, month, 1);
+            var daysInMonth = DateTime.DaysInMonth(_selectedYear, month);
+
+            // Month header label
+            var lblMonth = new Label
+            {
+                Text = monthStart.ToString("MMMM yyyy"),
+                Font = new Font(Font.FontFamily, 11, FontStyle.Bold),
+                AutoSize = true,
+                Margin = new Padding(10, 15, 10, 5)
+            };
+            pnlCalendars.Controls.Add(lblMonth);
+
+            // Create DataGridView for this month
+            var gridWidth = 150 + (daysInMonth * 25) + 3;
+            var gridHeight = 25 + (_roomTypes.Count * 22) + 3;
+
+            // Extra bottom margin for December to ensure it's fully visible
+            var bottomMargin = (month == 12) ? 120 : 10;
+
+            var dgv = new DataGridView
+            {
+                Size = new Size(gridWidth, gridHeight),
+                Margin = new Padding(10, 0, 10, bottomMargin),
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                ReadOnly = true,
+                RowHeadersVisible = false,
+                ColumnHeadersHeight = 25,
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
+                RowTemplate = { Height = 22 },
+                ScrollBars = ScrollBars.None,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None,
+                AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None,
+                BorderStyle = BorderStyle.FixedSingle,
+                CellBorderStyle = DataGridViewCellBorderStyle.Single,
+                GridColor = Color.LightGray,
+                Tag = month,
+                SelectionMode = DataGridViewSelectionMode.CellSelect,
+                MultiSelect = false
+            };
+
+            dgv.CellDoubleClick += MonthGrid_CellDoubleClick;
+
+            // Configure columns: Room name + days
+            dgv.Columns.Add("Room", "Room");
+            dgv.Columns["Room"].Width = 150;
+            dgv.Columns["Room"].Frozen = true;
+
+            for (int day = 1; day <= daysInMonth; day++)
+            {
+                var date = new DateTime(_selectedYear, month, day);
+                var colName = $"Day{day}";
+                dgv.Columns.Add(colName, day.ToString());
+                dgv.Columns[colName].Width = 25;
+                dgv.Columns[colName].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+
+                if (date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
                 {
-                    row.Cells[i + 1].Value = bookingsOnDate.ToString();
-                    row.Cells[i + 1].Style.BackColor = Color.LightCoral;
-                    row.Cells[i + 1].ToolTipText = $"{bookingsOnDate} booking(s)";
-                }
-                else
-                {
-                    row.Cells[i + 1].Style.BackColor = Color.LightGreen;
+                    dgv.Columns[colName].DefaultCellStyle.BackColor = Color.FromArgb(220, 220, 220);
                 }
             }
 
-            dgvCalendar.Rows.Add(row);
+            // Add rows for each room type
+            foreach (var roomType in _roomTypes)
+            {
+                var property = _properties.FirstOrDefault(p => p.AccountNumber == roomType.PropertyAccountNumber);
+                if (property == null) continue;
+
+                var rowIndex = dgv.Rows.Add();
+                var row = dgv.Rows[rowIndex];
+
+                var roomDisplay = $"{roomType.Description ?? roomType.Name}";
+                row.Cells[0].Value = roomDisplay;
+                row.Cells[0].ToolTipText = $"{property.Location}\n{roomType.Description ?? roomType.Name}";
+
+                row.Tag = new RoomTypeInfo
+                {
+                    PropertyAccountNumber = roomType.PropertyAccountNumber,
+                    PropertyLocation = property.Location,
+                    RoomTypeName = roomType.Name,
+                    RoomTypeDescription = roomType.Description ?? roomType.Name
+                };
+
+                var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+                var roomAccoms = _accommodations
+                    .Where(a => a.PropertyAccountNumber == roomType.PropertyAccountNumber
+                             && a.UnitName == roomType.Name
+                             && a.ArrivalDate <= monthEnd
+                             && a.DepartureDate >= monthStart)
+                    .ToList();
+
+                for (int day = 1; day <= daysInMonth; day++)
+                {
+                    var date = new DateTime(_selectedYear, month, day);
+                    var booking = roomAccoms
+                        .FirstOrDefault(a => a.ArrivalDate <= date && a.DepartureDate > date);
+
+                    if (booking != null)
+                    {
+                        row.Cells[day].Style.BackColor = Color.LightCoral;
+                        row.Cells[day].ToolTipText = $"{booking.FirstName} {booking.LastName}\nConf# {booking.ConfirmationNumber}\n{booking.ArrivalDate:MM/dd} - {booking.DepartureDate:MM/dd}";
+                    }
+                    else
+                    {
+                        var isWeekend = date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
+                        if (!isWeekend)
+                        {
+                            row.Cells[day].Style.BackColor = Color.LightGreen;
+                        }
+                    }
+                }
+            }
+
+            _monthGrids[month] = dgv;
+            pnlCalendars.Controls.Add(dgv);
         }
 
-        lblStatus.Text = $"Showing {properties.Count} properties, {startDate:MM/dd/yyyy} - {endDate:MM/dd/yyyy}";
+        pnlCalendars.ResumeLayout(true);
     }
 
-    private void cboProperty_SelectedIndexChanged(object sender, EventArgs e)
+    private void MonthGrid_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)
     {
-        LoadRoomTypes();
-    }
+        if (sender is not DataGridView dgv) return;
+        if (e.RowIndex < 0 || e.ColumnIndex < 1) return;
 
-    private void dtpStartDate_ValueChanged(object sender, EventArgs e)
-    {
-        if (dtpEndDate.Value < dtpStartDate.Value)
+        var row = dgv.Rows[e.RowIndex];
+        var roomInfo = row.Tag as RoomTypeInfo;
+        if (roomInfo == null) return;
+
+        var month = (int)(dgv.Tag ?? 1);
+        var day = e.ColumnIndex;
+        var clickedDate = new DateTime(_selectedYear, month, day);
+
+        // Show booking for this specific room on this date
+        var booking = _dbContext.Accommodations
+            .Include(a => a.Guest)
+            .FirstOrDefault(a => a.PropertyAccountNumber == roomInfo.PropertyAccountNumber &&
+                       a.UnitName == roomInfo.RoomTypeName &&
+                       a.ArrivalDate <= clickedDate &&
+                       a.DepartureDate > clickedDate);
+
+        if (booking != null)
         {
-            dtpEndDate.Value = dtpStartDate.Value.AddMonths(1).AddDays(-1);
+            var message = $"Booking for {roomInfo.RoomTypeDescription} at {roomInfo.PropertyLocation}\n" +
+                $"Date: {clickedDate:MM/dd/yyyy}\n\n" +
+                $"Conf# {booking.ConfirmationNumber}\n" +
+                $"Guest: {booking.FirstName} {booking.LastName}\n" +
+                $"Dates: {booking.ArrivalDate:MM/dd/yyyy} - {booking.DepartureDate:MM/dd/yyyy}\n" +
+                $"Nights: {booking.NumberOfNights}";
+
+            MessageBox.Show(message, "Booking Details", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        else
+        {
+            var message = $"{roomInfo.RoomTypeDescription} at {roomInfo.PropertyLocation}\n" +
+                $"Date: {clickedDate:MM/dd/yyyy}\n\n" +
+                $"This room is available.";
+
+            MessageBox.Show(message, "Room Available", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 
@@ -200,34 +344,11 @@ public partial class AvailabilityForm : Form
 
     private void ShowReport(bool autoPrint)
     {
-        var startDate = dtpStartDate.Value.Date;
-        var endDate = dtpEndDate.Value.Date;
-        var selectedProperty = cboProperty.SelectedValue as int? ?? 0;
-
-        // Get properties to display
-        var propertiesQuery = _dbContext.Properties
-            .Where(p => !p.IsObsolete);
-
-        if (selectedProperty > 0)
-        {
-            propertiesQuery = propertiesQuery.Where(p => p.AccountNumber == selectedProperty);
-        }
-
-        var properties = propertiesQuery.OrderBy(p => p.Location).ToList();
-
-        // Get accommodations in date range
-        var accommodationsQuery = _dbContext.Accommodations
-            .Where(a => a.ArrivalDate <= endDate && a.DepartureDate >= startDate);
-
-        if (selectedProperty > 0)
-        {
-            accommodationsQuery = accommodationsQuery.Where(a => a.PropertyAccountNumber == selectedProperty);
-        }
-
-        var accommodations = accommodationsQuery.ToList();
+        var yearStart = new DateTime(_selectedYear, 1, 1);
+        var yearEnd = new DateTime(_selectedYear, 12, 31);
 
         var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
-        var report = new AvailabilityReport(startDate, endDate, properties, accommodations, companyInfo);
+        var report = new AvailabilityReport(yearStart, yearEnd, _properties, _roomTypes, _accommodations, companyInfo);
         using var viewer = new ReportViewerForm(report, autoPrint);
         viewer.ShowDialog(this);
     }
@@ -237,32 +358,14 @@ public partial class AvailabilityForm : Form
         Close();
     }
 
-    private void dgvCalendar_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+    /// <summary>
+    /// Helper class to store room type information for grid rows.
+    /// </summary>
+    private class RoomTypeInfo
     {
-        if (e.RowIndex < 0 || e.ColumnIndex < 1) return;
-
-        var propertyName = dgvCalendar.Rows[e.RowIndex].Cells[0].Value?.ToString();
-        var startDate = dtpStartDate.Value.Date;
-        var clickedDate = startDate.AddDays(e.ColumnIndex - 1);
-
-        // Show bookings for this property/date
-        var bookings = _dbContext.Accommodations
-            .Include(a => a.Guest)
-            .Where(a => a.Location == propertyName &&
-                       a.ArrivalDate <= clickedDate &&
-                       a.DepartureDate > clickedDate)
-            .ToList();
-
-        if (bookings.Any())
-        {
-            var message = $"Bookings for {propertyName} on {clickedDate:MM/dd/yyyy}:\n\n";
-            foreach (var booking in bookings)
-            {
-                message += $"- Conf# {booking.ConfirmationNumber}: {booking.FirstName} {booking.LastName}\n";
-                message += $"  {booking.ArrivalDate:MM/dd} - {booking.DepartureDate:MM/dd}\n\n";
-            }
-
-            MessageBox.Show(message, "Bookings", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
+        public int PropertyAccountNumber { get; set; }
+        public string PropertyLocation { get; set; } = string.Empty;
+        public string RoomTypeName { get; set; } = string.Empty;
+        public string RoomTypeDescription { get; set; } = string.Empty;
     }
 }

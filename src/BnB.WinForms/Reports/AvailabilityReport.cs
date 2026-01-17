@@ -13,14 +13,16 @@ public class AvailabilityReport : BaseReport
     private readonly DateTime _startDate;
     private readonly DateTime _endDate;
     private readonly List<Property> _properties;
+    private readonly List<RoomType> _roomTypes;
     private readonly List<Accommodation> _accommodations;
 
-    public AvailabilityReport(DateTime startDate, DateTime endDate, List<Property> properties, List<Accommodation> accommodations, CompanyInfo? companyInfo = null)
+    public AvailabilityReport(DateTime startDate, DateTime endDate, List<Property> properties, List<RoomType> roomTypes, List<Accommodation> accommodations, CompanyInfo? companyInfo = null)
     {
         CompanyInfo = companyInfo;
         _startDate = startDate;
         _endDate = endDate;
         _properties = properties;
+        _roomTypes = roomTypes;
         _accommodations = accommodations;
     }
 
@@ -44,9 +46,9 @@ public class AvailabilityReport : BaseReport
     {
         container.Column(column =>
         {
-            if (_properties.Count == 0)
+            if (_roomTypes.Count == 0)
             {
-                column.Item().Text("No properties found.")
+                column.Item().Text("No rooms found.")
                     .FontSize(11).Italic();
                 return;
             }
@@ -87,10 +89,11 @@ public class AvailabilityReport : BaseReport
 
         column.Item().Table(table =>
         {
-            // Define columns: Property name + day columns
+            // Define columns: Property name + Room type + day columns
             table.ColumnsDefinition(columns =>
             {
-                columns.ConstantColumn(120); // Property column
+                columns.ConstantColumn(100); // Property column
+                columns.ConstantColumn(80);  // Room type column
                 for (int i = 0; i < daysToShow; i++)
                 {
                     columns.RelativeColumn(1);
@@ -101,6 +104,7 @@ public class AvailabilityReport : BaseReport
             table.Header(header =>
             {
                 header.Cell().TableHeader().Text("Property").TableHeaderText();
+                header.Cell().TableHeader().Text("Room").TableHeaderText();
                 for (int i = 0; i < daysToShow; i++)
                 {
                     var date = sectionStart.AddDays(i);
@@ -112,30 +116,48 @@ public class AvailabilityReport : BaseReport
                 }
             });
 
-            // Property rows
+            // Room type rows
             bool alternate = false;
-            foreach (var property in _properties.OrderBy(p => p.Location))
+            string? lastPropertyLocation = null;
+
+            foreach (var roomType in _roomTypes.OrderBy(r => r.PropertyAccountNumber).ThenBy(r => r.Name))
             {
-                var propertyAccoms = _accommodations
-                    .Where(a => a.PropertyAccountNumber == property.AccountNumber)
+                var property = _properties.FirstOrDefault(p => p.AccountNumber == roomType.PropertyAccountNumber);
+                if (property == null) continue;
+
+                var roomAccoms = _accommodations
+                    .Where(a => a.PropertyAccountNumber == roomType.PropertyAccountNumber
+                             && a.UnitName == roomType.Name)
                     .ToList();
 
-                table.Cell().TableCell(alternate).Text(SafeString(property.Location)).FontSize(8);
+                // Only show property name on first row for that property
+                if (lastPropertyLocation != property.Location)
+                {
+                    table.Cell().TableCell(alternate).Text(SafeString(property.Location)).FontSize(8);
+                    lastPropertyLocation = property.Location;
+                }
+                else
+                {
+                    table.Cell().TableCell(alternate).Text("");
+                }
+
+                table.Cell().TableCell(alternate).Text(SafeString(roomType.Description ?? roomType.Name)).FontSize(8);
 
                 for (int i = 0; i < daysToShow; i++)
                 {
                     var date = sectionStart.AddDays(i);
                     var isWeekend = date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
 
-                    // Count bookings for this date
-                    var bookingsOnDate = propertyAccoms
-                        .Count(a => a.ArrivalDate <= date && a.DepartureDate > date);
+                    // Check if room is booked on this date
+                    var booking = roomAccoms
+                        .FirstOrDefault(a => a.ArrivalDate <= date && a.DepartureDate > date);
 
                     var cell = table.Cell();
-                    if (bookingsOnDate > 0)
+                    if (booking != null)
                     {
+                        var initials = $"{booking.FirstName?.FirstOrDefault()}{booking.LastName?.FirstOrDefault()}";
                         cell.Background("#F08080").AlignCenter().AlignMiddle()
-                            .Text(bookingsOnDate.ToString()).FontSize(8).Bold();
+                            .Text(!string.IsNullOrEmpty(initials) ? initials : "X").FontSize(7).Bold();
                     }
                     else if (isWeekend)
                     {

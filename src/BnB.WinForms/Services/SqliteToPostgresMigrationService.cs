@@ -306,50 +306,7 @@ public class SqliteToPostgresMigrationService
 
     private void MigrateRoomTypes(BnBDbContext source, BnBDbContext target)
     {
-        // Use raw SQL to handle missing RoomCount column in older databases
-        var connection = source.Database.GetDbConnection();
-        if (connection.State != System.Data.ConnectionState.Open)
-            connection.Open();
-
-        // Check if RoomCount column exists in source database
-        bool hasRoomCount = false;
-        using (var checkCmd = connection.CreateCommand())
-        {
-            checkCmd.CommandText = "PRAGMA table_info(RoomTypes)";
-            using var checkReader = checkCmd.ExecuteReader();
-            while (checkReader.Read())
-            {
-                var columnName = checkReader.GetString(1);
-                if (columnName.Equals("RoomCount", StringComparison.OrdinalIgnoreCase))
-                {
-                    hasRoomCount = true;
-                    break;
-                }
-            }
-        }
-
-        using var command = connection.CreateCommand();
-        command.CommandText = hasRoomCount
-            ? "SELECT Id, PropertyAccountNumber, Name, Description, DefaultRate, RoomCount FROM RoomTypes"
-            : "SELECT Id, PropertyAccountNumber, Name, Description, DefaultRate FROM RoomTypes";
-
-        var items = new List<RoomType>();
-        using (var reader = command.ExecuteReader())
-        {
-            while (reader.Read())
-            {
-                items.Add(new RoomType
-                {
-                    Id = reader.GetInt32(0),
-                    PropertyAccountNumber = reader.GetInt32(1),
-                    Name = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                    Description = reader.IsDBNull(3) ? null : reader.GetString(3),
-                    DefaultRate = reader.IsDBNull(4) ? null : reader.GetDecimal(4),
-                    RoomCount = hasRoomCount && !reader.IsDBNull(5) ? reader.GetInt32(5) : 1
-                });
-            }
-        }
-
+        var items = FixDateTimeKinds(source.RoomTypes.AsNoTracking().ToList());
         if (items.Count == 0) return;
 
         foreach (var item in items)

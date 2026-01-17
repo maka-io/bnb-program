@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BnB.Core.Models;
 
 /// <summary>
-/// Room type for a property
+/// Room type for a property - represents a unique room in a B&B
 /// </summary>
 public class RoomType
 {
@@ -12,7 +12,6 @@ public class RoomType
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public decimal? DefaultRate { get; set; }
-    public int RoomCount { get; set; } = 1;  // Number of rooms of this type
 
     [NotMapped]
     public bool IsActive { get; set; } = true;  // Not in database

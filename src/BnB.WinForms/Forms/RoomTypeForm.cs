@@ -132,7 +132,6 @@ public partial class RoomTypeForm : Form
         txtRoomType.Clear();
         txtDescription.Clear();
         txtDefaultRate.Clear();
-        nudRoomCount.Value = 1;
         txtRoomType.Focus();
         SetEditMode(true);
     }
@@ -147,7 +146,6 @@ public partial class RoomTypeForm : Form
         txtRoomType.Text = roomType.Name;
         txtDescription.Text = roomType.Description;
         txtDefaultRate.Text = roomType.DefaultRate?.ToString("F2") ?? "";
-        nudRoomCount.Value = roomType.RoomCount > 0 ? roomType.RoomCount : 1;
         SetEditMode(true);
     }
 
@@ -238,7 +236,6 @@ public partial class RoomTypeForm : Form
 
             roomType.Description = txtDescription.Text.Trim();
             roomType.DefaultRate = defaultRate;
-            roomType.RoomCount = (int)nudRoomCount.Value;
             _dbContext.SaveChanges();
 
             LoadRoomTypes();
@@ -256,7 +253,6 @@ public partial class RoomTypeForm : Form
         txtRoomType.Clear();
         txtDescription.Clear();
         txtDefaultRate.Clear();
-        nudRoomCount.Value = 1;
         SetEditMode(false);
     }
 
@@ -275,7 +271,6 @@ public partial class RoomTypeForm : Form
         txtRoomType.Enabled = editing;
         txtDescription.Enabled = editing;
         txtDefaultRate.Enabled = editing;
-        nudRoomCount.Enabled = editing;
         btnSave.Enabled = editing;
         btnCancel.Enabled = editing;
         btnAdd.Enabled = !editing;

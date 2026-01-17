@@ -347,9 +347,11 @@ public class JsonImportService
     private async Task<int> ImportPropertiesAsync()
     {
         Report("Importing Properties...");
-        await _context.Database.ExecuteSqlRawAsync("DELETE FROM Accommodations");
-        await _context.Database.ExecuteSqlRawAsync("DELETE FROM RoomTypes");
-        await _context.Database.ExecuteSqlRawAsync("DELETE FROM Properties");
+        // Delete in order to respect foreign key constraints
+        await _context.Checks.ExecuteDeleteAsync();
+        await _context.Accommodations.ExecuteDeleteAsync();
+        await _context.RoomTypes.ExecuteDeleteAsync();
+        await _context.Properties.ExecuteDeleteAsync();
 
         var propertyTaxCodes = new HashSet<string>();
         var items = await ReadJsonFileAsync("proptbl");
@@ -495,8 +497,7 @@ public class JsonImportService
                 PropertyAccountNumber = accountNum,
                 Name = name,
                 Description = description,
-                DefaultRate = GetNullableDecimal(el, "rate", "defaultrate", "DefaultRate"),
-                RoomCount = 1
+                DefaultRate = GetNullableDecimal(el, "rate", "defaultrate", "DefaultRate")
             };
             _context.RoomTypes.Add(roomType);
             count++;
@@ -510,12 +511,13 @@ public class JsonImportService
     private async Task<int> ImportGuestsAsync()
     {
         Report("Importing Guests...");
-        await _context.Database.ExecuteSqlRawAsync("DELETE FROM TravelAgentBookings");
-        await _context.Database.ExecuteSqlRawAsync("DELETE FROM CarRentals");
-        await _context.Database.ExecuteSqlRawAsync("DELETE FROM Payments");
-        await _context.Database.ExecuteSqlRawAsync("DELETE FROM Checks");
-        await _context.Database.ExecuteSqlRawAsync("DELETE FROM Accommodations");
-        await _context.Database.ExecuteSqlRawAsync("DELETE FROM Guests");
+        // Delete in order to respect foreign key constraints
+        await _context.TravelAgentBookings.ExecuteDeleteAsync();
+        await _context.CarRentals.ExecuteDeleteAsync();
+        await _context.Payments.ExecuteDeleteAsync();
+        await _context.Checks.ExecuteDeleteAsync();
+        await _context.Accommodations.ExecuteDeleteAsync();
+        await _context.Guests.ExecuteDeleteAsync();
 
         var items = await ReadJsonFileAsync("guesttbl");
         var count = 0;

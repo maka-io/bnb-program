@@ -413,8 +413,7 @@ public class DataMigrationService
                 PropertyAccountNumber = accountNum,
                 Name = name ?? "Room",
                 Description = description,
-                DefaultRate = AccessDataReader.GetNullableDecimal(row, "rate") ?? AccessDataReader.GetNullableDecimal(row, "defaultrate"),
-                RoomCount = 1 // Default to 1, user can adjust as needed
+                DefaultRate = AccessDataReader.GetNullableDecimal(row, "rate") ?? AccessDataReader.GetNullableDecimal(row, "defaultrate")
             };
 
             _context.RoomTypes.Add(roomType);

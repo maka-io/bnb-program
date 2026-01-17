@@ -48,8 +48,13 @@ static class Program
 
             if (provider.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase))
             {
-                // For PostgreSQL, use EnsureCreated since migrations were generated for SQLite
-                dbContext.Database.EnsureCreated();
+                // For PostgreSQL, ensure all tables exist
+                // EnsureCreated() creates database and schema if needed
+                var created = dbContext.Database.EnsureCreated();
+                if (created)
+                {
+                    System.Diagnostics.Debug.WriteLine("PostgreSQL database and schema created.");
+                }
 
                 // Apply schema updates for new columns
                 ApplyPostgresSchemaUpdates(dbContext);
@@ -202,26 +207,6 @@ static class Program
 
         try
         {
-            // Add RoomCount column to RoomTypes if it doesn't exist
-            dbContext.Database.ExecuteSqlRaw(@"
-                DO $$
-                BEGIN
-                    IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name = 'RoomTypes' AND column_name = 'RoomCount'
-                    ) THEN
-                        ALTER TABLE ""RoomTypes"" ADD COLUMN ""RoomCount"" INTEGER DEFAULT 1 NOT NULL;
-                    END IF;
-                END $$;
-            ");
-        }
-        catch
-        {
-            // Ignore errors - column may already exist or table may not exist yet
-        }
-
-        try
-        {
             // Add TaxPlan rate fields if they don't exist
             dbContext.Database.ExecuteSqlRaw(@"
                 DO $$
@@ -300,16 +285,6 @@ static class Program
         {
             // Add ConfirmationNumber column to Checks if it doesn't exist
             dbContext.Database.ExecuteSqlRaw("ALTER TABLE Checks ADD COLUMN ConfirmationNumber INTEGER DEFAULT 0");
-        }
-        catch
-        {
-            // Column already exists
-        }
-
-        try
-        {
-            // Add RoomCount column to RoomTypes if it doesn't exist
-            dbContext.Database.ExecuteSqlRaw("ALTER TABLE RoomTypes ADD COLUMN RoomCount INTEGER DEFAULT 1");
         }
         catch
         {
