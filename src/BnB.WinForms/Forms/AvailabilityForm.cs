@@ -17,7 +17,18 @@ public partial class AvailabilityForm : Form
     private List<Property> _properties = new();
     private List<RoomType> _roomTypes = new();
     private List<Accommodation> _accommodations = new();
+    private List<RoomBlackout> _blackouts = new();
     private readonly Dictionary<int, DataGridView> _monthGrids = new();
+
+    // Context menu for right-click actions
+    private ContextMenuStrip _cellContextMenu = null!;
+    private ToolStripMenuItem _menuNewBooking = null!;
+    private ToolStripMenuItem _menuBlockRoom = null!;
+    private ToolStripMenuItem _menuRemoveBlackout = null!;
+    private ToolStripMenuItem _menuViewBooking = null!;
+    private DataGridView? _contextMenuGrid;
+    private int _contextMenuRow;
+    private int _contextMenuCol;
 
     public AvailabilityForm(BnBDbContext dbContext)
     {
@@ -33,12 +44,40 @@ public partial class AvailabilityForm : Form
         pnlLegendAvailable.BackColor = Color.LightGreen;
         pnlLegendBooked.BackColor = Color.LightCoral;
         pnlLegendWeekend.BackColor = Color.FromArgb(220, 220, 220);
+        pnlLegendBlocked.BackColor = Color.FromArgb(255, 200, 100);
 
+        CreateContextMenu();
         LoadProperties();
         LoadYears();
 
         // Auto-load availability on form open
         LoadAvailability();
+    }
+
+    private void CreateContextMenu()
+    {
+        _cellContextMenu = new ContextMenuStrip();
+
+        _menuNewBooking = new ToolStripMenuItem("New Booking...");
+        _menuNewBooking.Click += MenuNewBooking_Click;
+
+        _menuBlockRoom = new ToolStripMenuItem("Block Room...");
+        _menuBlockRoom.Click += MenuBlockRoom_Click;
+
+        _menuRemoveBlackout = new ToolStripMenuItem("Remove Blackout");
+        _menuRemoveBlackout.Click += MenuRemoveBlackout_Click;
+
+        _menuViewBooking = new ToolStripMenuItem("View/Edit Booking...");
+        _menuViewBooking.Click += MenuViewBooking_Click;
+
+        _cellContextMenu.Items.AddRange(new ToolStripItem[] {
+            _menuNewBooking,
+            _menuBlockRoom,
+            new ToolStripSeparator(),
+            _menuRemoveBlackout,
+            new ToolStripSeparator(),
+            _menuViewBooking
+        });
     }
 
     private void LoadProperties()
@@ -128,6 +167,14 @@ public partial class AvailabilityForm : Form
 
             _accommodations = accommodationsQuery.ToList();
 
+            // Get blackouts for the selected room types in the year
+            var roomTypeIds = _roomTypes.Select(r => r.Id).ToList();
+            _blackouts = _dbContext.RoomBlackouts
+                .Where(b => roomTypeIds.Contains(b.RoomTypeId)
+                         && b.StartDate <= yearEnd
+                         && b.EndDate >= yearStart)
+                .ToList();
+
             // Build the monthly grids
             BuildYearView();
 
@@ -212,6 +259,7 @@ public partial class AvailabilityForm : Form
             };
 
             dgv.CellDoubleClick += MonthGrid_CellDoubleClick;
+            dgv.CellMouseClick += MonthGrid_CellMouseClick;
 
             // Configure columns: Room name + days
             dgv.Columns.Add("Room", "Room");
@@ -247,6 +295,7 @@ public partial class AvailabilityForm : Form
 
                 row.Tag = new RoomTypeInfo
                 {
+                    RoomTypeId = roomType.Id,
                     PropertyAccountNumber = roomType.PropertyAccountNumber,
                     PropertyLocation = property.Location,
                     RoomTypeName = roomType.Name,
@@ -259,6 +308,12 @@ public partial class AvailabilityForm : Form
                              && a.UnitName == roomType.Name
                              && a.ArrivalDate <= monthEnd
                              && a.DepartureDate >= monthStart)
+                    .ToList();
+
+                var roomBlackouts = _blackouts
+                    .Where(b => b.RoomTypeId == roomType.Id
+                             && b.StartDate <= monthEnd
+                             && b.EndDate >= monthStart)
                     .ToList();
 
                 for (int day = 1; day <= daysInMonth; day++)
@@ -274,10 +329,22 @@ public partial class AvailabilityForm : Form
                     }
                     else
                     {
-                        var isWeekend = date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
-                        if (!isWeekend)
+                        // Check for blackout
+                        var blackout = roomBlackouts
+                            .FirstOrDefault(b => b.StartDate <= date && b.EndDate >= date);
+
+                        if (blackout != null)
                         {
-                            row.Cells[day].Style.BackColor = Color.LightGreen;
+                            row.Cells[day].Style.BackColor = Color.FromArgb(255, 200, 100);
+                            row.Cells[day].ToolTipText = $"BLOCKED: {blackout.Reason}\n{blackout.StartDate:MM/dd} - {blackout.EndDate:MM/dd}";
+                        }
+                        else
+                        {
+                            var isWeekend = date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
+                            if (!isWeekend)
+                            {
+                                row.Cells[day].Style.BackColor = Color.LightGreen;
+                            }
                         }
                     }
                 }
@@ -327,6 +394,152 @@ public partial class AvailabilityForm : Form
         LoadAvailability();
     }
 
+    private void MonthGrid_CellMouseClick(object? sender, DataGridViewCellMouseEventArgs e)
+    {
+        if (e.Button != MouseButtons.Right) return;
+        if (sender is not DataGridView dgv) return;
+        if (e.RowIndex < 0 || e.ColumnIndex < 1) return;
+
+        var row = dgv.Rows[e.RowIndex];
+        var roomInfo = row.Tag as RoomTypeInfo;
+        if (roomInfo == null) return;
+
+        var month = (int)(dgv.Tag ?? 1);
+        var day = e.ColumnIndex;
+        var clickedDate = new DateTime(_selectedYear, month, day);
+
+        // Store context for menu handlers
+        _contextMenuGrid = dgv;
+        _contextMenuRow = e.RowIndex;
+        _contextMenuCol = e.ColumnIndex;
+
+        // Check cell state to determine which menu items to show
+        var hasBooking = _accommodations.Any(a =>
+            a.PropertyAccountNumber == roomInfo.PropertyAccountNumber &&
+            a.UnitName == roomInfo.RoomTypeName &&
+            a.ArrivalDate <= clickedDate &&
+            a.DepartureDate > clickedDate);
+
+        var blackout = _blackouts.FirstOrDefault(b =>
+            b.RoomTypeId == roomInfo.RoomTypeId &&
+            b.StartDate <= clickedDate &&
+            b.EndDate >= clickedDate);
+
+        var hasBlackout = blackout != null;
+
+        // Configure menu visibility based on cell state
+        _menuNewBooking.Visible = !hasBooking && !hasBlackout;
+        _menuBlockRoom.Visible = !hasBooking && !hasBlackout;
+        _menuRemoveBlackout.Visible = hasBlackout;
+        _menuViewBooking.Visible = hasBooking;
+
+        // Update separator visibility
+        _cellContextMenu.Items[2].Visible = (!hasBooking && !hasBlackout) || hasBlackout;
+        _cellContextMenu.Items[4].Visible = hasBlackout && hasBooking;
+
+        // Show menu at cursor position
+        var cellRect = dgv.GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, true);
+        _cellContextMenu.Show(dgv, new Point(cellRect.Left + e.X, cellRect.Top + e.Y));
+    }
+
+    private void MenuNewBooking_Click(object? sender, EventArgs e)
+    {
+        if (_contextMenuGrid == null) return;
+
+        var row = _contextMenuGrid.Rows[_contextMenuRow];
+        var roomInfo = row.Tag as RoomTypeInfo;
+        if (roomInfo == null) return;
+
+        var month = (int)(_contextMenuGrid.Tag ?? 1);
+        var day = _contextMenuCol;
+        var clickedDate = new DateTime(_selectedYear, month, day);
+
+        using var form = new AccommodationForm(_dbContext, roomInfo.PropertyAccountNumber, roomInfo.RoomTypeName, clickedDate);
+        form.ShowDialog(this);
+        LoadAvailability();
+    }
+
+    private void MenuBlockRoom_Click(object? sender, EventArgs e)
+    {
+        if (_contextMenuGrid == null) return;
+
+        var row = _contextMenuGrid.Rows[_contextMenuRow];
+        var roomInfo = row.Tag as RoomTypeInfo;
+        if (roomInfo == null) return;
+
+        var month = (int)(_contextMenuGrid.Tag ?? 1);
+        var day = _contextMenuCol;
+        var clickedDate = new DateTime(_selectedYear, month, day);
+
+        using var form = new RoomBlackoutForm(_dbContext, roomInfo.RoomTypeId, roomInfo.RoomTypeDescription, clickedDate);
+        if (form.ShowDialog(this) == DialogResult.OK)
+        {
+            LoadAvailability();
+        }
+    }
+
+    private void MenuRemoveBlackout_Click(object? sender, EventArgs e)
+    {
+        if (_contextMenuGrid == null) return;
+
+        var row = _contextMenuGrid.Rows[_contextMenuRow];
+        var roomInfo = row.Tag as RoomTypeInfo;
+        if (roomInfo == null) return;
+
+        var month = (int)(_contextMenuGrid.Tag ?? 1);
+        var day = _contextMenuCol;
+        var clickedDate = new DateTime(_selectedYear, month, day);
+
+        var blackout = _blackouts.FirstOrDefault(b =>
+            b.RoomTypeId == roomInfo.RoomTypeId &&
+            b.StartDate <= clickedDate &&
+            b.EndDate >= clickedDate);
+
+        if (blackout != null)
+        {
+            var result = MessageBox.Show(
+                $"Remove blackout for {roomInfo.RoomTypeDescription}?\n\n" +
+                $"Dates: {blackout.StartDate:MM/dd/yyyy} - {blackout.EndDate:MM/dd/yyyy}\n" +
+                $"Reason: {blackout.Reason}",
+                "Confirm Remove Blackout",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                _dbContext.RoomBlackouts.Remove(blackout);
+                _dbContext.SaveChanges();
+                LoadAvailability();
+            }
+        }
+    }
+
+    private void MenuViewBooking_Click(object? sender, EventArgs e)
+    {
+        if (_contextMenuGrid == null) return;
+
+        var row = _contextMenuGrid.Rows[_contextMenuRow];
+        var roomInfo = row.Tag as RoomTypeInfo;
+        if (roomInfo == null) return;
+
+        var month = (int)(_contextMenuGrid.Tag ?? 1);
+        var day = _contextMenuCol;
+        var clickedDate = new DateTime(_selectedYear, month, day);
+
+        var booking = _dbContext.Accommodations
+            .FirstOrDefault(a => a.PropertyAccountNumber == roomInfo.PropertyAccountNumber &&
+                       a.UnitName == roomInfo.RoomTypeName &&
+                       a.ArrivalDate <= clickedDate &&
+                       a.DepartureDate > clickedDate);
+
+        if (booking != null)
+        {
+            using var form = new AccommodationForm(_dbContext, booking.ConfirmationNumber);
+            form.ShowDialog(this);
+            LoadAvailability();
+        }
+    }
+
     private void btnPreview_Click(object sender, EventArgs e)
     {
         ShowReport(autoPrint: false);
@@ -358,6 +571,7 @@ public partial class AvailabilityForm : Form
     /// </summary>
     private class RoomTypeInfo
     {
+        public int RoomTypeId { get; set; }
         public int PropertyAccountNumber { get; set; }
         public string PropertyLocation { get; set; } = string.Empty;
         public string RoomTypeName { get; set; } = string.Empty;

@@ -24,6 +24,7 @@ public class BnBDbContext : DbContext
     public DbSet<TaxRate> TaxRates => Set<TaxRate>();
     public DbSet<TaxPlan> TaxPlans => Set<TaxPlan>();
     public DbSet<RoomType> RoomTypes => Set<RoomType>();
+    public DbSet<RoomBlackout> RoomBlackouts => Set<RoomBlackout>();
 
     // Travel agency entities
     public DbSet<TravelAgency> TravelAgencies => Set<TravelAgency>();
@@ -231,6 +232,22 @@ public class BnBDbContext : DbContext
             entity.HasOne(e => e.Property)
                 .WithMany(p => p.RoomTypes)
                 .HasForeignKey(e => e.PropertyAccountNumber);
+        });
+
+        // RoomBlackout configuration
+        modelBuilder.Entity<RoomBlackout>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Reason).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.EntryUser).HasMaxLength(50);
+
+            entity.HasOne(e => e.RoomType)
+                .WithMany(r => r.Blackouts)
+                .HasForeignKey(e => e.RoomTypeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Index for efficient date range queries
+            entity.HasIndex(e => new { e.RoomTypeId, e.StartDate, e.EndDate });
         });
 
         // TravelAgency configuration (tamaster)

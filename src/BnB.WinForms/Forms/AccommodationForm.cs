@@ -736,7 +736,12 @@ public partial class AccommodationForm : Form
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error saving: {ex.Message}", "Error",
+            // Get the innermost exception for actual error details
+            var innerEx = ex;
+            while (innerEx.InnerException != null)
+                innerEx = innerEx.InnerException;
+
+            MessageBox.Show($"Error saving: {ex.Message}\n\nDetails: {innerEx.Message}", "Error",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
@@ -875,8 +880,8 @@ public partial class AccommodationForm : Form
 
             if (_currentAccommodation != null)
             {
-                // Update the accommodation with the selected guest info
-                // Note: Don't change ConfirmationNumber - it's auto-incremented for the accommodation
+                // Link the accommodation to the selected guest
+                _currentAccommodation.ConfirmationNumber = guest.ConfirmationNumber;
                 _currentAccommodation.FirstName = guest.FirstName;
                 _currentAccommodation.LastName = guest.LastName;
 
@@ -1021,6 +1026,18 @@ public partial class AccommodationForm : Form
             return false;
         }
 
+        // Check that a guest has been selected (required for foreign key)
+        if (_currentAccommodation != null && _currentMode == FormMode.Insert)
+        {
+            var guestExists = _dbContext.Guests.Any(g => g.ConfirmationNumber == _currentAccommodation.ConfirmationNumber);
+            if (!guestExists)
+            {
+                MessageBox.Show("Please select a guest using the 'Lookup Guest' link before saving.", "Validation Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+        }
+
         // Check for double booking
         if (!CheckRoomAvailability())
         {
@@ -1081,6 +1098,32 @@ public partial class AccommodationForm : Form
                 $"  Dates: {existingBooking.ArrivalDate:MM/dd/yyyy} - {existingBooking.DepartureDate:MM/dd/yyyy}";
 
             MessageBox.Show(message, "Room Not Available",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            cboRoomType.Focus();
+            return false;
+        }
+
+        // Check for blackout periods on this room
+        // Blackout overlap: blackout.StartDate <= departureDate-1 AND blackout.EndDate >= arrivalDate
+        // (EndDate is inclusive for blackouts, so a booking arriving on EndDate+1 is OK)
+        var adjustedDepartureDate = departureDate.AddDays(-1); // Departure date is checkout day, so don't count it
+        var blackout = _dbContext.RoomBlackouts
+            .Where(b => b.RoomTypeId == selectedRoomType.Id
+                && b.StartDate <= adjustedDepartureDate
+                && b.EndDate >= arrivalDate)
+            .Select(b => new { b.StartDate, b.EndDate, b.Reason })
+            .FirstOrDefault();
+
+        if (blackout != null)
+        {
+            var message = $"This room is blocked during the requested dates.\n\n" +
+                $"Room: {selectedRoomType.Description}\n" +
+                $"Requested Dates: {arrivalDate:MM/dd/yyyy} - {departureDate:MM/dd/yyyy}\n\n" +
+                $"Blackout Period:\n" +
+                $"  Dates: {blackout.StartDate:MM/dd/yyyy} - {blackout.EndDate:MM/dd/yyyy}\n" +
+                $"  Reason: {blackout.Reason}";
+
+            MessageBox.Show(message, "Room Blocked",
                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
             cboRoomType.Focus();
             return false;

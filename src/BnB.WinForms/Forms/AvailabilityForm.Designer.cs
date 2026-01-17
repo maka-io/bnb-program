@@ -36,6 +36,8 @@ partial class AvailabilityForm
         lblBooked = new Label();
         pnlLegendWeekend = new Panel();
         lblWeekend = new Label();
+        pnlLegendBlocked = new Panel();
+        lblBlocked = new Label();
         pnlFilter.SuspendLayout();
         pnlBottom.SuspendLayout();
         SuspendLayout();
@@ -118,6 +120,8 @@ partial class AvailabilityForm
         pnlBottom.Controls.Add(lblBooked);
         pnlBottom.Controls.Add(pnlLegendWeekend);
         pnlBottom.Controls.Add(lblWeekend);
+        pnlBottom.Controls.Add(pnlLegendBlocked);
+        pnlBottom.Controls.Add(lblBlocked);
         pnlBottom.Controls.Add(btnPreview);
         pnlBottom.Controls.Add(btnPrint);
         pnlBottom.Controls.Add(btnClose);
@@ -190,6 +194,22 @@ partial class AvailabilityForm
         lblWeekend.Size = new Size(55, 15);
         lblWeekend.Text = "Weekend";
         //
+        // pnlLegendBlocked
+        //
+        pnlLegendBlocked.BackColor = Color.FromArgb(255, 200, 100);
+        pnlLegendBlocked.BorderStyle = BorderStyle.FixedSingle;
+        pnlLegendBlocked.Location = new Point(695, 15);
+        pnlLegendBlocked.Name = "pnlLegendBlocked";
+        pnlLegendBlocked.Size = new Size(20, 20);
+        //
+        // lblBlocked
+        //
+        lblBlocked.AutoSize = true;
+        lblBlocked.Location = new Point(720, 18);
+        lblBlocked.Name = "lblBlocked";
+        lblBlocked.Size = new Size(48, 15);
+        lblBlocked.Text = "Blocked";
+        //
         // btnPreview
         //
         btnPreview.Anchor = AnchorStyles.Top | AnchorStyles.Right;
@@ -258,6 +278,8 @@ partial class AvailabilityForm
     private Label lblBooked;
     private Panel pnlLegendWeekend;
     private Label lblWeekend;
+    private Panel pnlLegendBlocked;
+    private Label lblBlocked;
     private Button btnPreview;
     private Button btnPrint;
     private Button btnClose;

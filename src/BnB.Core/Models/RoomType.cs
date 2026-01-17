@@ -16,6 +16,7 @@ public class RoomType
     [NotMapped]
     public bool IsActive { get; set; } = true;  // Not in database
 
-    // Navigation property
+    // Navigation properties
     public virtual Property Property { get; set; } = null!;
+    public virtual ICollection<RoomBlackout> Blackouts { get; set; } = new List<RoomBlackout>();
 }

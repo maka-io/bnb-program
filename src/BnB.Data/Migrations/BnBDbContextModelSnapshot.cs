@@ -779,6 +779,40 @@ namespace BnB.Data.Migrations
                     b.ToTable("RoomTypes");
                 });
 
+            modelBuilder.Entity("BnB.Core.Models.RoomBlackout", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("EntryDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EntryUser")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RoomTypeId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomTypeId", "StartDate", "EndDate");
+
+                    b.ToTable("RoomBlackouts");
+                });
+
             modelBuilder.Entity("BnB.Core.Models.TaxPlan", b =>
                 {
                     b.Property<int>("Id")
@@ -1071,6 +1105,17 @@ namespace BnB.Data.Migrations
                     b.Navigation("Guest");
                 });
 
+            modelBuilder.Entity("BnB.Core.Models.RoomBlackout", b =>
+                {
+                    b.HasOne("BnB.Core.Models.RoomType", "RoomType")
+                        .WithMany("Blackouts")
+                        .HasForeignKey("RoomTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RoomType");
+                });
+
             modelBuilder.Entity("BnB.Core.Models.RoomType", b =>
                 {
                     b.HasOne("BnB.Core.Models.Property", "Property")
@@ -1116,6 +1161,11 @@ namespace BnB.Data.Migrations
                     b.Navigation("Accommodations");
 
                     b.Navigation("RoomTypes");
+                });
+
+            modelBuilder.Entity("BnB.Core.Models.RoomType", b =>
+                {
+                    b.Navigation("Blackouts");
                 });
 
             modelBuilder.Entity("BnB.Core.Models.TravelAgency", b =>

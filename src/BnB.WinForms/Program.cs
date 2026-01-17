@@ -263,6 +263,30 @@ static class Program
         {
             // Ignore errors - columns may already exist or table may not exist yet
         }
+
+        // Create RoomBlackouts table if it doesn't exist
+        try
+        {
+            dbContext.Database.ExecuteSqlRaw(@"
+                CREATE TABLE IF NOT EXISTS ""RoomBlackouts"" (
+                    ""Id"" SERIAL PRIMARY KEY,
+                    ""RoomTypeId"" INTEGER NOT NULL,
+                    ""StartDate"" TIMESTAMP NOT NULL,
+                    ""EndDate"" TIMESTAMP NOT NULL,
+                    ""Reason"" VARCHAR(200) NOT NULL,
+                    ""EntryDate"" TIMESTAMP,
+                    ""EntryUser"" VARCHAR(50),
+                    FOREIGN KEY (""RoomTypeId"") REFERENCES ""RoomTypes""(""Id"") ON DELETE CASCADE
+                );
+
+                CREATE INDEX IF NOT EXISTS ""IX_RoomBlackouts_RoomTypeId_StartDate_EndDate""
+                ON ""RoomBlackouts"" (""RoomTypeId"", ""StartDate"", ""EndDate"");
+            ");
+        }
+        catch
+        {
+            // Table already exists or other error
+        }
     }
 
     /// <summary>
@@ -321,6 +345,31 @@ static class Program
             {
                 // Column already exists
             }
+        }
+
+        // Create RoomBlackouts table if it doesn't exist
+        try
+        {
+            dbContext.Database.ExecuteSqlRaw(@"
+                CREATE TABLE IF NOT EXISTS RoomBlackouts (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    RoomTypeId INTEGER NOT NULL,
+                    StartDate TEXT NOT NULL,
+                    EndDate TEXT NOT NULL,
+                    Reason TEXT NOT NULL,
+                    EntryDate TEXT,
+                    EntryUser TEXT,
+                    FOREIGN KEY (RoomTypeId) REFERENCES RoomTypes(Id) ON DELETE CASCADE
+                )");
+
+            // Create index if it doesn't exist
+            dbContext.Database.ExecuteSqlRaw(@"
+                CREATE INDEX IF NOT EXISTS IX_RoomBlackouts_RoomTypeId_StartDate_EndDate
+                ON RoomBlackouts (RoomTypeId, StartDate, EndDate)");
+        }
+        catch
+        {
+            // Table already exists or other error
         }
     }
 }
