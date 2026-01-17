@@ -27,6 +27,11 @@ public partial class AccommodationForm : Form
     private bool _isLoadingRoomTypes = false;
     private bool _isLoadingData = false;
 
+    // Prefill values for new accommodation
+    private int? _prefillPropertyAccountNumber;
+    private string? _prefillRoomTypeName;
+    private DateTime? _prefillArrivalDate;
+
     public AccommodationForm(BnBDbContext dbContext, long? confirmationNumber = null)
     {
         _dbContext = dbContext;
@@ -39,6 +44,17 @@ public partial class AccommodationForm : Form
         InitializeGoToMenu();
         SetupRoomTypeComboBox();
         SetupCalculationEvents();
+    }
+
+    /// <summary>
+    /// Constructor for creating a new accommodation with prefilled values.
+    /// </summary>
+    public AccommodationForm(BnBDbContext dbContext, int propertyAccountNumber, string roomTypeName, DateTime arrivalDate)
+        : this(dbContext)
+    {
+        _prefillPropertyAccountNumber = propertyAccountNumber;
+        _prefillRoomTypeName = roomTypeName;
+        _prefillArrivalDate = arrivalDate;
     }
 
     private void SetupCalculationEvents()
@@ -226,6 +242,92 @@ public partial class AccommodationForm : Form
         LoadAccommodations();
         SetupDataBindings();
         SetMode(FormMode.Browse);
+
+        // If prefill values were provided, start a new accommodation
+        if (_prefillPropertyAccountNumber.HasValue)
+        {
+            StartNewAccommodationWithPrefill();
+        }
+    }
+
+    private void StartNewAccommodationWithPrefill()
+    {
+        SetMode(FormMode.Insert);
+
+        // Get next confirmation number
+        long nextConfNum = 1;
+        var maxConf = _dbContext.Accommodations.Max(a => (long?)a.ConfirmationNumber);
+        if (maxConf.HasValue)
+        {
+            nextConfNum = maxConf.Value + 1;
+        }
+        else
+        {
+            var maxGuestConf = _dbContext.Guests.Max(g => (long?)g.ConfirmationNumber);
+            if (maxGuestConf.HasValue)
+            {
+                nextConfNum = maxGuestConf.Value + 1;
+            }
+        }
+
+        _currentAccommodation = new Accommodation
+        {
+            ConfirmationNumber = nextConfNum,
+            ArrivalDate = _prefillArrivalDate ?? DateTime.Today,
+            DepartureDate = (_prefillArrivalDate ?? DateTime.Today).AddDays(1),
+            NumberOfNights = 1,
+            PaymentType = "Prepay",
+            EntryDate = DateTime.Now,
+            EntryUser = Environment.UserName,
+            PropertyAccountNumber = _prefillPropertyAccountNumber!.Value
+        };
+
+        // Set location from property
+        var property = _dbContext.Properties.Find(_prefillPropertyAccountNumber.Value);
+        if (property != null)
+        {
+            _currentAccommodation.Location = property.Location;
+        }
+
+        _bindingSource.Add(_currentAccommodation);
+        _bindingSource.Position = _bindingSource.Count - 1;
+
+        // Select the prefilled property
+        for (int i = 0; i < cboProperty.Items.Count; i++)
+        {
+            var item = cboProperty.Items[i];
+            var accountNumProp = item.GetType().GetProperty("AccountNumber");
+            if (accountNumProp != null)
+            {
+                var val = accountNumProp.GetValue(item);
+                if (val is int accNum && accNum == _prefillPropertyAccountNumber.Value)
+                {
+                    cboProperty.SelectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // Load room types and select the prefilled one
+        LoadRoomTypesForProperty();
+
+        if (!string.IsNullOrEmpty(_prefillRoomTypeName))
+        {
+            for (int i = 0; i < cboRoomType.Items.Count; i++)
+            {
+                if (cboRoomType.Items[i] is RoomTypeItem roomItem && roomItem.Name == _prefillRoomTypeName)
+                {
+                    cboRoomType.SelectedIndex = i;
+                    _currentAccommodation.UnitName = roomItem.Name;
+                    _currentAccommodation.UnitNameDescription = roomItem.Description;
+                    break;
+                }
+            }
+        }
+
+        // Enable guest lookup button and set focus
+        lblLookupGuest.Enabled = true;
+        cboProperty.Focus();
     }
 
     private void SetupDataBindings()

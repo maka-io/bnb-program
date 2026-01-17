@@ -303,9 +303,8 @@ public partial class AvailabilityForm : Form
         var day = e.ColumnIndex;
         var clickedDate = new DateTime(_selectedYear, month, day);
 
-        // Show booking for this specific room on this date
+        // Check if there's a booking for this specific room on this date
         var booking = _dbContext.Accommodations
-            .Include(a => a.Guest)
             .FirstOrDefault(a => a.PropertyAccountNumber == roomInfo.PropertyAccountNumber &&
                        a.UnitName == roomInfo.RoomTypeName &&
                        a.ArrivalDate <= clickedDate &&
@@ -313,23 +312,19 @@ public partial class AvailabilityForm : Form
 
         if (booking != null)
         {
-            var message = $"Booking for {roomInfo.RoomTypeDescription} at {roomInfo.PropertyLocation}\n" +
-                $"Date: {clickedDate:MM/dd/yyyy}\n\n" +
-                $"Conf# {booking.ConfirmationNumber}\n" +
-                $"Guest: {booking.FirstName} {booking.LastName}\n" +
-                $"Dates: {booking.ArrivalDate:MM/dd/yyyy} - {booking.DepartureDate:MM/dd/yyyy}\n" +
-                $"Nights: {booking.NumberOfNights}";
-
-            MessageBox.Show(message, "Booking Details", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            // Open existing accommodation
+            using var form = new AccommodationForm(_dbContext, booking.ConfirmationNumber);
+            form.ShowDialog(this);
         }
         else
         {
-            var message = $"{roomInfo.RoomTypeDescription} at {roomInfo.PropertyLocation}\n" +
-                $"Date: {clickedDate:MM/dd/yyyy}\n\n" +
-                $"This room is available.";
-
-            MessageBox.Show(message, "Room Available", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            // Create new accommodation with prefilled values
+            using var form = new AccommodationForm(_dbContext, roomInfo.PropertyAccountNumber, roomInfo.RoomTypeName, clickedDate);
+            form.ShowDialog(this);
         }
+
+        // Refresh the calendar after closing the form
+        LoadAvailability();
     }
 
     private void btnPreview_Click(object sender, EventArgs e)

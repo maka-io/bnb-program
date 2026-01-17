@@ -232,7 +232,6 @@ partial class AvailabilityForm
         Name = "AvailabilityForm";
         StartPosition = FormStartPosition.CenterScreen;
         Text = "Availability Calendar - Year View";
-        WindowState = FormWindowState.Maximized;
         Load += AvailabilityForm_Load;
         pnlFilter.ResumeLayout(false);
         pnlFilter.PerformLayout();
