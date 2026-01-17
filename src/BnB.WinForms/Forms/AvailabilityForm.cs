@@ -370,8 +370,8 @@ public partial class AvailabilityForm : Form
         var day = e.ColumnIndex;
         var clickedDate = new DateTime(_selectedYear, month, day);
 
-        // Check if there's a booking for this specific room on this date
-        var booking = _dbContext.Accommodations
+        // Check for booking
+        var booking = _accommodations
             .FirstOrDefault(a => a.PropertyAccountNumber == roomInfo.PropertyAccountNumber &&
                        a.UnitName == roomInfo.RoomTypeName &&
                        a.ArrivalDate <= clickedDate &&
@@ -379,19 +379,54 @@ public partial class AvailabilityForm : Form
 
         if (booking != null)
         {
-            // Open existing accommodation
-            using var form = new AccommodationForm(_dbContext, booking.ConfirmationNumber);
-            form.ShowDialog(this);
-        }
-        else
-        {
-            // Create new accommodation with prefilled values
-            using var form = new AccommodationForm(_dbContext, roomInfo.PropertyAccountNumber, roomInfo.RoomTypeName, clickedDate);
-            form.ShowDialog(this);
+            MessageBox.Show(
+                $"Booking Information\n\n" +
+                $"Room: {roomInfo.RoomTypeDescription}\n" +
+                $"Property: {roomInfo.PropertyLocation}\n" +
+                $"Date: {clickedDate:dddd, MMMM d, yyyy}\n\n" +
+                $"Guest: {booking.FirstName} {booking.LastName}\n" +
+                $"Confirmation #: {booking.ConfirmationNumber}\n" +
+                $"Arrival: {booking.ArrivalDate:MM/dd/yyyy}\n" +
+                $"Departure: {booking.DepartureDate:MM/dd/yyyy}",
+                "Booking Details",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
         }
 
-        // Refresh the calendar after closing the form
-        LoadAvailability();
+        // Check for blackout
+        var blackout = _blackouts
+            .FirstOrDefault(b => b.RoomTypeId == roomInfo.RoomTypeId &&
+                       b.StartDate <= clickedDate &&
+                       b.EndDate >= clickedDate);
+
+        if (blackout != null)
+        {
+            MessageBox.Show(
+                $"Blackout Information\n\n" +
+                $"Room: {roomInfo.RoomTypeDescription}\n" +
+                $"Property: {roomInfo.PropertyLocation}\n" +
+                $"Date: {clickedDate:dddd, MMMM d, yyyy}\n\n" +
+                $"Reason: {blackout.Reason}\n" +
+                $"Start: {blackout.StartDate:MM/dd/yyyy}\n" +
+                $"End: {blackout.EndDate:MM/dd/yyyy}",
+                "Blackout Details",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
+        // Available
+        MessageBox.Show(
+            $"Room Available\n\n" +
+            $"Room: {roomInfo.RoomTypeDescription}\n" +
+            $"Property: {roomInfo.PropertyLocation}\n" +
+            $"Date: {clickedDate:dddd, MMMM d, yyyy}\n\n" +
+            $"This room is available for booking.\n" +
+            $"Right-click for options.",
+            "Availability",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information);
     }
 
     private void MonthGrid_CellMouseClick(object? sender, DataGridViewCellMouseEventArgs e)
