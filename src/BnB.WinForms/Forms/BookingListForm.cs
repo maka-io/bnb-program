@@ -15,6 +15,8 @@ public partial class BookingListForm : Form
     private readonly BnBDbContext _dbContext;
     private BindingSource _bindingSource = new();
     private List<Accommodation> _accommodations = new();
+    private List<Accommodation> _searchResults = new(); // Full results from text search
+    private string _lastSearchText = ""; // Track if search text changed
 
     public BookingListForm(BnBDbContext dbContext)
     {
@@ -27,9 +29,9 @@ public partial class BookingListForm : Form
         this.ApplyTheme();
         LoadProperties();
 
-        // Default date range - 15 days before and after today
-        dtpStartDate.Value = DateTime.Today.AddDays(-15);
-        dtpEndDate.Value = DateTime.Today.AddDays(15);
+        // Default date range - 14 days before and 60 days after today
+        dtpStartDate.Value = DateTime.Today.AddDays(-14);
+        dtpEndDate.Value = DateTime.Today.AddDays(60);
 
         cboDateField.Items.AddRange(new object[] { "Arrival Date", "Departure Date", "Booked Date" });
         cboDateField.SelectedIndex = 0;
@@ -88,25 +90,64 @@ public partial class BookingListForm : Form
         LoadBookings();
     }
 
+    private void btnReset_Click(object sender, EventArgs e)
+    {
+        // Clear search text and reset date range to defaults
+        txtSearch.Clear();
+        dtpStartDate.Value = DateTime.Today.AddDays(-14);
+        dtpEndDate.Value = DateTime.Today.AddDays(60);
+        cboProperty.SelectedIndex = 0;
+        cboStatus.SelectedIndex = 0;
+        cboDateField.SelectedIndex = 0;
+
+        // Clear stored search results
+        _searchResults.Clear();
+        _lastSearchText = "";
+
+        LoadBookings();
+    }
+
     private void LoadBookings()
     {
         var startDate = dtpStartDate.Value.Date;
         var endDate = dtpEndDate.Value.Date;
         var selectedProperty = cboProperty.SelectedValue as int? ?? 0;
         var dateField = cboDateField.SelectedIndex;
+        var searchText = txtSearch.Text.Trim();
+        var hasSearchText = !string.IsNullOrEmpty(searchText);
+        var searchTextChanged = searchText != _lastSearchText;
 
+        // If search text exists and hasn't changed, filter the existing search results by date
+        if (hasSearchText && !searchTextChanged && _searchResults.Count > 0)
+        {
+            // Filter the stored search results by the current date range
+            _accommodations = FilterByDate(_searchResults, startDate, endDate, dateField)
+                .OrderBy(a => a.ArrivalDate)
+                .ToList();
+
+            _bindingSource.DataSource = _accommodations;
+            dgvBookings.DataSource = _bindingSource;
+            ConfigureGrid();
+            UpdateSummary();
+            return;
+        }
+
+        // Query the database
         IQueryable<Accommodation> query = _dbContext.Accommodations
             .Include(a => a.Guest)
             .Include(a => a.Property);
 
-        // Apply date filter based on selected field
-        query = dateField switch
+        // Apply date filter based on selected field - but skip if search text is entered
+        if (!hasSearchText)
         {
-            0 => query.Where(a => a.ArrivalDate >= startDate && a.ArrivalDate <= endDate),
-            1 => query.Where(a => a.DepartureDate >= startDate && a.DepartureDate <= endDate),
-            2 => query.Where(a => a.Guest.DateBooked >= startDate && a.Guest.DateBooked <= endDate),
-            _ => query
-        };
+            query = dateField switch
+            {
+                0 => query.Where(a => a.ArrivalDate >= startDate && a.ArrivalDate <= endDate),
+                1 => query.Where(a => a.DepartureDate >= startDate && a.DepartureDate <= endDate),
+                2 => query.Where(a => a.Guest.DateBooked >= startDate && a.Guest.DateBooked <= endDate),
+                _ => query
+            };
+        }
 
         // Apply property filter
         if (selectedProperty > 0)
@@ -128,8 +169,7 @@ public partial class BookingListForm : Form
         }
 
         // Apply search text filter
-        var searchText = txtSearch.Text.Trim();
-        if (!string.IsNullOrEmpty(searchText))
+        if (hasSearchText)
         {
             query = query.Where(a =>
                 a.ConfirmationNumber.ToString().Contains(searchText) ||
@@ -142,11 +182,42 @@ public partial class BookingListForm : Form
             .OrderBy(a => a.ArrivalDate)
             .ToList();
 
+        // If search text was used, store the full results and update date pickers
+        if (hasSearchText)
+        {
+            _searchResults = _accommodations.ToList();
+            _lastSearchText = searchText;
+
+            if (_accommodations.Count > 0)
+            {
+                var minDate = _accommodations.Min(a => a.ArrivalDate);
+                var maxDate = _accommodations.Max(a => a.ArrivalDate);
+                dtpStartDate.Value = minDate;
+                dtpEndDate.Value = maxDate;
+            }
+        }
+        else
+        {
+            // Clear search results when not searching
+            _searchResults.Clear();
+            _lastSearchText = "";
+        }
+
         _bindingSource.DataSource = _accommodations;
         dgvBookings.DataSource = _bindingSource;
         ConfigureGrid();
-
         UpdateSummary();
+    }
+
+    private IEnumerable<Accommodation> FilterByDate(List<Accommodation> source, DateTime startDate, DateTime endDate, int dateField)
+    {
+        return dateField switch
+        {
+            0 => source.Where(a => a.ArrivalDate >= startDate && a.ArrivalDate <= endDate),
+            1 => source.Where(a => a.DepartureDate >= startDate && a.DepartureDate <= endDate),
+            2 => source.Where(a => a.Guest?.DateBooked >= startDate && a.Guest?.DateBooked <= endDate),
+            _ => source
+        };
     }
 
     private void ConfigureGrid()

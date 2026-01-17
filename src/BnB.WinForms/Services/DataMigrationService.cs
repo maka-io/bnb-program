@@ -619,7 +619,11 @@ public class DataMigrationService
                 FirstName = AccessDataReader.GetString(row, "f_name") ?? AccessDataReader.GetString(row, "fname"),
                 LastName = AccessDataReader.GetString(row, "l_name") ?? AccessDataReader.GetString(row, "lname"),
                 Amount = AccessDataReader.GetDecimal(row, "amountreceived", 0) + AccessDataReader.GetDecimal(row, "amount", 0),
-                PaymentDate = AccessDataReader.GetDateTime(row, "datereceived") ?? AccessDataReader.GetDateTime(row, "paymentdate") ?? DateTime.Today,
+                // Use deposit due date as fallback if payment date is null, otherwise use a historical sentinel date
+                PaymentDate = AccessDataReader.GetDateTime(row, "datereceived")
+                    ?? AccessDataReader.GetDateTime(row, "paymentdate")
+                    ?? AccessDataReader.GetDateTime(row, "depdate")
+                    ?? new DateTime(2000, 1, 1),  // Sentinel date for truly unknown dates
                 CheckNumber = AccessDataReader.GetString(row, "checknumber") ?? AccessDataReader.GetString(row, "checknum"),
                 ReceivedFrom = AccessDataReader.GetString(row, "receivedfrom"),
                 AppliedTo = AccessDataReader.GetString(row, "appliedto"),

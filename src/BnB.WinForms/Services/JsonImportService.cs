@@ -731,7 +731,10 @@ public class JsonImportService
                 FirstName = GetString(el, "f_name", "fname", "FirstName"),
                 LastName = GetString(el, "l_name", "lname", "LastName"),
                 Amount = GetDecimal(el, "AmountReceived", "amountreceived", "amount", "Amount"),
-                PaymentDate = GetDateTime(el, "DateReceived", "datereceived", "paymentdate", "PaymentDate") ?? DateTime.Today,
+                // Use deposit due date as fallback, or a historical sentinel date for unknown dates
+                PaymentDate = GetDateTime(el, "DateReceived", "datereceived", "paymentdate", "PaymentDate")
+                    ?? depositDueDate
+                    ?? new DateTime(2000, 1, 1),
                 CheckNumber = GetString(el, "CheckNumber", "checknumber", "checknum"),
                 ReceivedFrom = GetString(el, "ReceivedFrom", "receivedfrom"),
                 AppliedTo = GetString(el, "AppliedTo", "appliedto"),

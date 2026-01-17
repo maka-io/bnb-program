@@ -1227,18 +1227,32 @@ public partial class AccommodationForm : Form
 
     /// <summary>
     /// Creates a payment record for a newly created accommodation, applying the property's payment policy.
+    /// Only creates for future/current reservations, not historical ones.
     /// </summary>
     private void CreatePaymentRecordForAccommodation(Accommodation accommodation)
     {
         try
         {
-            // Check if a payment record already exists for this confirmation
-            var existingPayment = _dbContext.Payments
-                .AsNoTracking()
-                .FirstOrDefault(p => p.ConfirmationNumber == accommodation.ConfirmationNumber);
+            // Don't create payment records for historical reservations (arrival date in the past)
+            if (accommodation.ArrivalDate < DateTime.Today.AddDays(-7))
+            {
+                System.Diagnostics.Debug.WriteLine($"Skipping payment creation for historical reservation: Conf#{accommodation.ConfirmationNumber}, Arrival: {accommodation.ArrivalDate}");
+                return; // Skip historical reservations
+            }
 
-            if (existingPayment != null)
+            // Check if a payment record already exists for this confirmation
+            // Use a fresh query to avoid any caching issues
+            var existingPaymentCount = _dbContext.Payments
+                .AsNoTracking()
+                .Count(p => p.ConfirmationNumber == accommodation.ConfirmationNumber);
+
+            if (existingPaymentCount > 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"Skipping payment creation - {existingPaymentCount} payment(s) already exist for Conf#{accommodation.ConfirmationNumber}");
                 return; // Payment already exists, don't create a duplicate
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Creating payment record for new accommodation: Conf#{accommodation.ConfirmationNumber}, Arrival: {accommodation.ArrivalDate}");
 
             // Get property with payment policy
             var property = _dbContext.Properties

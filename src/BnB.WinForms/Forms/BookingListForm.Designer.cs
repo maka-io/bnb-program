@@ -31,6 +31,7 @@ partial class BookingListForm
         lblSearch = new Label();
         txtSearch = new TextBox();
         btnSearch = new Button();
+        btnReset = new Button();
         pnlGrid = new Panel();
         dgvBookings = new DataGridView();
         pnlBottom = new Panel();
@@ -63,6 +64,7 @@ partial class BookingListForm
         pnlFilter.Controls.Add(lblSearch);
         pnlFilter.Controls.Add(txtSearch);
         pnlFilter.Controls.Add(btnSearch);
+        pnlFilter.Controls.Add(btnReset);
         pnlFilter.Dock = DockStyle.Top;
         pnlFilter.Location = new Point(0, 0);
         pnlFilter.Padding = new Padding(10);
@@ -165,6 +167,15 @@ partial class BookingListForm
         btnSearch.TabIndex = 6;
         btnSearch.Text = "&Search";
         btnSearch.Click += btnSearch_Click;
+
+        //
+        // btnReset
+        //
+        btnReset.Location = new Point(605, 45);
+        btnReset.Size = new Size(65, 27);
+        btnReset.TabIndex = 7;
+        btnReset.Text = "&Reset";
+        btnReset.Click += btnReset_Click;
 
         //
         // pnlBottom - Docked to bottom
@@ -300,6 +311,7 @@ partial class BookingListForm
     private Label lblSearch;
     private TextBox txtSearch;
     private Button btnSearch;
+    private Button btnReset;
     private Panel pnlGrid;
     private DataGridView dgvBookings;
     private Panel pnlBottom;
