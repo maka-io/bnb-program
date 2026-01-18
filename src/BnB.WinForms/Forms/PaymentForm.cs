@@ -463,16 +463,12 @@ public partial class PaymentForm : Form
             lblTotalReceived.Text = $"Total Received: {totalReceived:C2}";
             lblTotalDue.Text = $"Total Due: {totalDue:C2}";
             lblTotalBalance.Text = $"Total Balance: {totalBalance:C2}";
-
-            // Update the Payments Received summary
-            lblPaymentsReceivedSummary.Text = $"Total Received: {totalReceived:C2} from {paymentCount} payment record(s)";
         }
         else
         {
             lblTotalReceived.Text = "Total Received: $0.00";
             lblTotalDue.Text = "Total Due: $0.00";
             lblTotalBalance.Text = "Total Balance: $0.00";
-            lblPaymentsReceivedSummary.Text = "Total Received: $0.00 from 0 payment(s)";
         }
     }
 

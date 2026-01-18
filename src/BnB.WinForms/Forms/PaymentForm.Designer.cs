@@ -29,7 +29,6 @@ partial class PaymentForm
         this.grpPaymentsDue = new GroupBox();
         this.grpRefund = new GroupBox();
         this.grpOtherCredits = new GroupBox();
-        this.grpPaymentsReceived = new GroupBox();
 
         // Guest Info controls
         this.lblConfirmationNumber = new Label();
@@ -38,9 +37,6 @@ partial class PaymentForm
         this.txtConfirmationNumber = new TextBox();
         this.txtFirstName = new TextBox();
         this.txtLastName = new TextBox();
-
-        // Payments Received summary label
-        this.lblPaymentsReceivedSummary = new Label();
 
         // Payments Due controls
         this.lblDepositDue = new Label();
@@ -116,6 +112,8 @@ partial class PaymentForm
         this.panelForm.Padding = new Padding(10);
         this.panelForm.AutoScroll = true;
 
+        // === ROW 1: Guest Info (left) and Payments Due (right) ===
+
         // === Guest Info Group ===
         this.grpGuestInfo.Text = "Guest Information";
         this.grpGuestInfo.Location = new Point(10, 10);
@@ -124,28 +122,15 @@ partial class PaymentForm
 
         int y = 25;
         AddLabelAndField(grpGuestInfo, lblConfirmationNumber, "Conf #:", txtConfirmationNumber, 10, y, 80, 100);
-
         y += 30;
         AddLabelAndField(grpGuestInfo, lblFirstName, "First Name:", txtFirstName, 10, y, 80, 150);
         y += 30;
         AddLabelAndField(grpGuestInfo, lblLastName, "Last Name:", txtLastName, 10, y, 80, 150);
 
-        // === Payments Received Summary Group ===
-        this.grpPaymentsReceived.Text = "Payments Received";
-        this.grpPaymentsReceived.Location = new Point(10, 140);
-        this.grpPaymentsReceived.Size = new Size(350, 55);
-        this.panelForm.Controls.Add(this.grpPaymentsReceived);
-
-        lblPaymentsReceivedSummary.Text = "Total Received: $0.00 from 0 payment(s)";
-        lblPaymentsReceivedSummary.Location = new Point(15, 22);
-        lblPaymentsReceivedSummary.AutoSize = true;
-        lblPaymentsReceivedSummary.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
-        grpPaymentsReceived.Controls.Add(lblPaymentsReceivedSummary);
-
         // === Payments Due Group ===
         this.grpPaymentsDue.Text = "Payments Due from Guest";
         this.grpPaymentsDue.Location = new Point(370, 10);
-        this.grpPaymentsDue.Size = new Size(360, 140);
+        this.grpPaymentsDue.Size = new Size(360, 120);
         this.panelForm.Controls.Add(this.grpPaymentsDue);
 
         y = 22;
@@ -181,43 +166,13 @@ partial class PaymentForm
         dtpCancellationFeeDueDate.Format = DateTimePickerFormat.Short;
         grpPaymentsDue.Controls.Add(dtpCancellationFeeDueDate);
 
-        // === Refund Group ===
-        this.grpRefund.Text = "Refund Due to Guest";
-        this.grpRefund.Location = new Point(370, 160);
-        this.grpRefund.Size = new Size(175, 60);
-        this.panelForm.Controls.Add(this.grpRefund);
+        // === ROW 2: Payments Received (tall) | Refund stacked on Other Credits ===
 
-        y = 25;
-        AddLabelAndField(grpRefund, lblRefundOwed, "Amount:", txtRefundOwed, 10, y, 70, 90);
-
-        // === Other Credits Group ===
-        this.grpOtherCredits.Text = "Other Credits";
-        this.grpOtherCredits.Location = new Point(555, 160);
-        this.grpOtherCredits.Size = new Size(175, 90);
-        this.panelForm.Controls.Add(this.grpOtherCredits);
-
-        y = 22;
-        AddLabelAndField(grpOtherCredits, lblDefaultCommission, "Def Comm:", txtDefaultCommission, 10, y, 80, 80);
-        y += 28;
-        AddLabelAndField(grpOtherCredits, lblOtherCredit, "Other:", txtOtherCredit, 10, y, 80, 80);
-
-        // === Comments ===
-        lblComments.Text = "Comments:";
-        lblComments.Location = new Point(10, 205);
-        lblComments.AutoSize = true;
-        panelForm.Controls.Add(lblComments);
-
-        txtComments.Location = new Point(10, 223);
-        txtComments.Size = new Size(350, 70);
-        txtComments.Multiline = true;
-        txtComments.ScrollBars = ScrollBars.Vertical;
-        panelForm.Controls.Add(txtComments);
-
-        // === Selected Record Summary ===
+        // === Payments Received Summary (taller with items on separate lines) ===
         this.grpRecordSummary = new GroupBox();
-        this.grpRecordSummary.Text = "Selected Record";
-        this.grpRecordSummary.Location = new Point(370, 260);
-        this.grpRecordSummary.Size = new Size(360, 55);
+        this.grpRecordSummary.Text = "Payments Received";
+        this.grpRecordSummary.Location = new Point(10, 140);
+        this.grpRecordSummary.Size = new Size(350, 105);
         this.panelForm.Controls.Add(this.grpRecordSummary);
 
         lblRecordReceived.Text = "Received: $0.00";
@@ -226,19 +181,50 @@ partial class PaymentForm
         grpRecordSummary.Controls.Add(lblRecordReceived);
 
         lblRecordDue.Text = "Due: $0.00";
-        lblRecordDue.Location = new Point(130, 22);
+        lblRecordDue.Location = new Point(10, 42);
         lblRecordDue.AutoSize = true;
         grpRecordSummary.Controls.Add(lblRecordDue);
 
         lblRecordBalance.Text = "Balance: $0.00";
-        lblRecordBalance.Location = new Point(230, 22);
+        lblRecordBalance.Location = new Point(10, 62);
         lblRecordBalance.AutoSize = true;
         lblRecordBalance.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
         grpRecordSummary.Controls.Add(lblRecordBalance);
 
+        // === Refund Group (stacked on top) ===
+        this.grpRefund.Text = "Refund Due to Guest";
+        this.grpRefund.Location = new Point(370, 140);
+        this.grpRefund.Size = new Size(360, 55);
+        this.panelForm.Controls.Add(this.grpRefund);
+
+        y = 18;
+        AddLabelAndField(grpRefund, lblRefundOwed, "Amount:", txtRefundOwed, 10, y, 70, 120);
+
+        // === Other Credits Group (stacked below Refund) ===
+        this.grpOtherCredits.Text = "Other Credits";
+        this.grpOtherCredits.Location = new Point(370, 200);
+        this.grpOtherCredits.Size = new Size(360, 55);
+        this.panelForm.Controls.Add(this.grpOtherCredits);
+
+        y = 18;
+        AddLabelAndField(grpOtherCredits, lblDefaultCommission, "Def Comm:", txtDefaultCommission, 10, y, 80, 110);
+
+        // === ROW 3: Comments spanning full width ===
+
+        lblComments.Text = "Comments:";
+        lblComments.Location = new Point(10, 265);
+        lblComments.AutoSize = true;
+        panelForm.Controls.Add(lblComments);
+
+        txtComments.Location = new Point(10, 283);
+        txtComments.Size = new Size(720, 60);
+        txtComments.Multiline = true;
+        txtComments.ScrollBars = ScrollBars.Vertical;
+        panelForm.Controls.Add(txtComments);
+
         // === Record Count ===
         this.lblRecordCount.Text = "Record 0 of 0";
-        this.lblRecordCount.Location = new Point(370, 320);
+        this.lblRecordCount.Location = new Point(10, 350);
         this.lblRecordCount.AutoSize = true;
         this.panelForm.Controls.Add(lblRecordCount);
 
@@ -363,7 +349,6 @@ partial class PaymentForm
     private GroupBox grpPaymentsDue;
     private GroupBox grpRefund;
     private GroupBox grpOtherCredits;
-    private GroupBox grpPaymentsReceived;
     private Panel panelSummary;
 
     // Guest Info
@@ -373,9 +358,6 @@ partial class PaymentForm
     private TextBox txtConfirmationNumber;
     private TextBox txtFirstName;
     private TextBox txtLastName;
-
-    // Payments Received Summary
-    private Label lblPaymentsReceivedSummary;
 
     // Payments Due
     private Label lblDepositDue;
