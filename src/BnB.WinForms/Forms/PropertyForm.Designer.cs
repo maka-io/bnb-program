@@ -83,7 +83,6 @@ partial class PropertyForm
         this.txtEmail = new TextBox();
         this.txtWebUrl = new TextBox();
         this.txtComments = new TextBox();
-        this.btnCopyAddress = new Button();
 
         // Tax Info controls
         this.lblFederalTaxId = new Label();
@@ -217,13 +216,6 @@ partial class PropertyForm
         this.panelForm.Controls.Add(this.grpMailingAddress);
 
         y = 22;
-        btnCopyAddress.Text = "Copy from Property";
-        btnCopyAddress.Location = new Point(130, y - 2);
-        btnCopyAddress.Size = new Size(120, 23);
-        btnCopyAddress.Click += btnCopyAddress_Click;
-        grpMailingAddress.Controls.Add(btnCopyAddress);
-
-        y += 28;
         AddLabelAndField(grpMailingAddress, lblMailingAddress, "Address:", txtMailingAddress, 10, y, 70, 210);
         y += 26;
         AddLabelAndField(grpMailingAddress, lblMailingCity, "City:", txtMailingCity, 10, y, 70, 210);
@@ -444,7 +436,7 @@ partial class PropertyForm
         // === Form ===
         this.AutoScaleDimensions = new SizeF(7F, 15F);
         this.AutoScaleMode = AutoScaleMode.Font;
-        this.ClientSize = new Size(1200, 750);
+        this.ClientSize = new Size(1400, 750);
         this.Controls.Add(this.splitContainer);
         this.Name = "PropertyForm";
         this.Text = "Host Properties";
@@ -543,7 +535,6 @@ partial class PropertyForm
     private TextBox txtEmail;
     private TextBox txtWebUrl;
     private TextBox txtComments;
-    private Button btnCopyAddress;
 
     // Tax Info
     private Label lblFederalTaxId;

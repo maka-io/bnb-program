@@ -470,22 +470,6 @@ public partial class PropertyForm : Form
         }
     }
 
-    private void btnCopyAddress_Click(object sender, EventArgs e)
-    {
-        // Copy property address to mailing address
-        if (_bindingSource.Current is Property property)
-        {
-            property.MailingAddress = property.PropertyAddress;
-            property.MailingCity = property.PropertyCity;
-            property.MailingState = property.PropertyState;
-            property.MailingZipCode = property.PropertyZipCode;
-            property.MailingPhone1 = property.PropertyPhone;
-            property.MailingFax = property.PropertyFax;
-
-            _bindingSource.ResetCurrentItem();
-        }
-    }
-
     #endregion
 
     private bool ValidateInput()
