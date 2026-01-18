@@ -20,6 +20,7 @@ public partial class PaymentForm : Form
     private FormMode _currentMode = FormMode.Browse;
     private Payment? _currentPayment;
     private long? _filterConfirmationNumber;
+    private int? _filterGuestId;
     private ContextMenuStrip _goToMenu;
 
     public PaymentForm(BnBDbContext dbContext, long? confirmationNumber = null)
@@ -31,6 +32,16 @@ public partial class PaymentForm : Form
 
         InitializeComponent();
         InitializeGoToMenu();
+    }
+
+    /// <summary>
+    /// Factory method for filtering by Guest ID.
+    /// </summary>
+    public static PaymentForm CreateForGuest(BnBDbContext dbContext, int guestId)
+    {
+        var form = new PaymentForm(dbContext);
+        form._filterGuestId = guestId;
+        return form;
     }
 
     private void InitializeGoToMenu()
@@ -339,6 +350,11 @@ public partial class PaymentForm : Form
             if (_filterConfirmationNumber.HasValue)
             {
                 query = query.Where(p => p.ConfirmationNumber == _filterConfirmationNumber.Value);
+            }
+
+            if (_filterGuestId.HasValue)
+            {
+                query = query.Where(p => p.GuestId == _filterGuestId.Value);
             }
 
             var payments = query
@@ -765,6 +781,7 @@ public partial class PaymentForm : Form
     private void btnRefresh_Click(object sender, EventArgs e)
     {
         _filterConfirmationNumber = null;
+        _filterGuestId = null;
         LoadPayments();
     }
 

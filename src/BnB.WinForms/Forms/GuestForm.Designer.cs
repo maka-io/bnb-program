@@ -73,6 +73,12 @@ partial class GuestForm
         this.btnCancel = new Button();
         this.btnFind = new Button();
         this.btnRefresh = new Button();
+        this.btnGoTo = new Button();
+
+        // Go To context menu
+        this._goToMenu = new ContextMenuStrip();
+        this._menuAccommodations = new ToolStripMenuItem();
+        this._menuPayments = new ToolStripMenuItem();
 
         // DataGridView for navigation
         this.dgvGuests = new DataGridView();
@@ -112,8 +118,8 @@ partial class GuestForm
         int rowHeight = 30;
         int y = 15;
 
-        // Row 1: Confirmation Number
-        AddLabelAndField(panelForm, lblConfirmationNumber, "Conf #:", txtConfirmationNumber,
+        // Row 1: Guest Number (Id)
+        AddLabelAndField(panelForm, lblConfirmationNumber, "Guest #:", txtConfirmationNumber,
             labelX, y, fieldX, 100);
         txtConfirmationNumber.ReadOnly = true;
 
@@ -210,6 +216,15 @@ partial class GuestForm
         AddButton(panelButtons, btnFind, "&Find", btnY);
         btnY += btnSpacing;
         AddButton(panelButtons, btnRefresh, "&Refresh", btnY);
+        btnY += btnSpacing + 10;
+        AddButton(panelButtons, btnGoTo, "&Go to...", btnY);
+
+        // Configure Go To menu
+        _menuAccommodations.Text = "Guest Accommodations";
+        _menuAccommodations.Click += menuAccommodations_Click;
+        _menuPayments.Text = "Guest Payments";
+        _menuPayments.Click += menuPayments_Click;
+        _goToMenu.Items.AddRange(new ToolStripItem[] { _menuAccommodations, _menuPayments });
 
         btnInsert.Click += btnInsert_Click;
         btnUpdate.Click += btnUpdate_Click;
@@ -218,6 +233,7 @@ partial class GuestForm
         btnCancel.Click += btnCancel_Click;
         btnFind.Click += btnFind_Click;
         btnRefresh.Click += btnRefresh_Click;
+        btnGoTo.Click += btnGoTo_Click;
 
         // === Panel Navigation ===
         this.panelNavigation.Dock = DockStyle.Top;
@@ -330,6 +346,11 @@ partial class GuestForm
     private Button btnCancel;
     private Button btnFind;
     private Button btnRefresh;
+    private Button btnGoTo;
+
+    private ContextMenuStrip _goToMenu;
+    private ToolStripMenuItem _menuAccommodations;
+    private ToolStripMenuItem _menuPayments;
 
     private DataGridView dgvGuests;
 }

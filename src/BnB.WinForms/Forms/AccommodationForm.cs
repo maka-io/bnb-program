@@ -23,6 +23,7 @@ public partial class AccommodationForm : Form
     private FormMode _currentMode = FormMode.Browse;
     private Accommodation? _currentAccommodation;
     private long? _filterConfirmationNumber;
+    private int? _filterGuestId;
     private ContextMenuStrip _goToMenu;
     private bool _isLoadingRoomTypes = false;
     private bool _isLoadingData = false;
@@ -44,6 +45,16 @@ public partial class AccommodationForm : Form
         InitializeGoToMenu();
         SetupRoomTypeComboBox();
         SetupCalculationEvents();
+    }
+
+    /// <summary>
+    /// Constructor for filtering by Guest ID.
+    /// </summary>
+    public static AccommodationForm CreateForGuest(BnBDbContext dbContext, int guestId)
+    {
+        var form = new AccommodationForm(dbContext);
+        form._filterGuestId = guestId;
+        return form;
     }
 
     /// <summary>
@@ -483,6 +494,11 @@ public partial class AccommodationForm : Form
                 query = query.Where(a => a.ConfirmationNumber == _filterConfirmationNumber.Value);
             }
 
+            if (_filterGuestId.HasValue)
+            {
+                query = query.Where(a => a.GuestId == _filterGuestId.Value);
+            }
+
             var accommodations = query
                 .OrderByDescending(a => a.ConfirmationNumber)
                 .ToList();
@@ -854,6 +870,7 @@ public partial class AccommodationForm : Form
     private void btnRefresh_Click(object sender, EventArgs e)
     {
         _filterConfirmationNumber = null;
+        _filterGuestId = null;
         LoadAccommodations();
     }
 

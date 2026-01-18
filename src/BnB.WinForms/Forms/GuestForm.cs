@@ -108,6 +108,13 @@ public partial class GuestForm : Form
             dgvGuests.Columns["ReservationFee"].Visible = false;
         if (dgvGuests.Columns.Contains("DateBooked"))
             dgvGuests.Columns["DateBooked"].Visible = false;
+
+        // Configure LabelFlag column
+        if (dgvGuests.Columns.Contains("LabelFlag"))
+        {
+            dgvGuests.Columns["LabelFlag"].HeaderText = "Mailing Label";
+            dgvGuests.Columns["LabelFlag"].Width = 100;
+        }
     }
 
     private void LoadGuests()
@@ -366,6 +373,32 @@ public partial class GuestForm : Form
     private void btnRefresh_Click(object sender, EventArgs e)
     {
         LoadGuests();
+    }
+
+    private void btnGoTo_Click(object sender, EventArgs e)
+    {
+        if (sender is Button btn)
+        {
+            _goToMenu.Show(btn, new Point(0, btn.Height));
+        }
+    }
+
+    private void menuAccommodations_Click(object sender, EventArgs e)
+    {
+        if (_bindingSource.Current is Guest guest)
+        {
+            using var form = AccommodationForm.CreateForGuest(_dbContext, guest.Id);
+            form.ShowDialog(this);
+        }
+    }
+
+    private void menuPayments_Click(object sender, EventArgs e)
+    {
+        if (_bindingSource.Current is Guest guest)
+        {
+            using var form = PaymentForm.CreateForGuest(_dbContext, guest.Id);
+            form.ShowDialog(this);
+        }
     }
 
     #endregion
