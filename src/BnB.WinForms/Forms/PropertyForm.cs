@@ -159,6 +159,89 @@ public partial class PropertyForm : Form
 
         // Navigation grid
         dgvProperties.DataSource = _bindingSource;
+
+        // Configure grid columns after data binding
+        ConfigureGrid();
+    }
+
+    private void ConfigureGrid()
+    {
+        if (dgvProperties.Columns.Count == 0) return;
+
+        // Hide navigation properties and internal columns
+        var columnsToHide = new[] { "RoomTypes", "Blackouts", "EntryDate", "EntryUser", "UpdateDate", "UpdateUser" };
+        foreach (var colName in columnsToHide)
+        {
+            if (dgvProperties.Columns.Contains(colName))
+                dgvProperties.Columns[colName].Visible = false;
+        }
+
+        // Configure visible columns with proper headers and auto-size to header
+        foreach (DataGridViewColumn col in dgvProperties.Columns)
+        {
+            if (!col.Visible) continue;
+
+            col.HeaderText = col.Name switch
+            {
+                "AccountNumber" => "Account #",
+                "Location" => "Location",
+                "FullName" => "Full Name",
+                "CheckTo" => "Check To",
+                "PercentToHost" => "% to Host",
+                "GrossRatePercent" => "Gross Rate %",
+                "PropertyAddress" => "Property Address",
+                "PropertyCity" => "Property City",
+                "PropertyState" => "State",
+                "PropertyZipCode" => "Zip Code",
+                "PropertyPhone" => "Phone",
+                "PropertyFax" => "Fax",
+                "MailingAddress" => "Mailing Address",
+                "MailingCity" => "Mailing City",
+                "MailingState" => "Mailing State",
+                "MailingZipCode" => "Mailing Zip",
+                "MailingPhone1" => "Phone 1",
+                "MailingPhone2" => "Phone 2",
+                "MailingFax" => "Mailing Fax",
+                "Email" => "Email",
+                "WebUrl" => "Website",
+                "FederalTaxId" => "Federal Tax ID",
+                "DBA" => "DBA",
+                "TaxPlanCode" => "Tax Plan",
+                "FuturePercent" => "Future %",
+                "FuturePercentDate" => "Future % Date",
+                "SuppressFlag" => "Suppress",
+                "IsObsolete" => "Obsolete",
+                "DepositRequired" => "Deposit Req'd",
+                "Exceptions" => "Exceptions",
+                "ExceptionsDescription" => "Exceptions Desc",
+                "Comments" => "Comments",
+                "DefaultDepositPercent" => "Deposit %",
+                "DefaultDepositDueDays" => "Deposit Due Days",
+                "DefaultPrepaymentDueDays" => "Prepay Due Days",
+                "DefaultCancellationNoticeDays" => "Cancel Notice Days",
+                "DefaultCancellationFeePercent" => "Cancel Fee %",
+                "CancellationProcessingFee" => "Processing Fee",
+                "HasPeakPeriodPolicy" => "Has Peak Policy",
+                "PeakPeriodPrepaymentDueDays" => "Peak Prepay Days",
+                "PeakPeriodCancellationNoticeDays" => "Peak Cancel Days",
+                "PeakPeriodCancellationFeePercent" => "Peak Cancel Fee %",
+                "PeakPeriodStartMonth" => "Peak Start Month",
+                "PeakPeriodStartDay" => "Peak Start Day",
+                "PeakPeriodEndMonth" => "Peak End Month",
+                "PeakPeriodEndDay" => "Peak End Day",
+                _ => col.HeaderText
+            };
+
+            // Comments fills remaining space, others size to header
+            if (col.Name == "Comments")
+            {
+                col.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            }
+            else
+            {
+                col.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            }
+        }
     }
 
     private void LoadTaxPlans()

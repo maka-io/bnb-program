@@ -109,25 +109,80 @@ public partial class GuestForm : Form
         if (dgvGuests.Columns.Contains("DateBooked"))
             dgvGuests.Columns["DateBooked"].Visible = false;
 
-        // Configure LabelFlag column - position before Comments and prevent auto-expand
-        if (dgvGuests.Columns.Contains("LabelFlag") && dgvGuests.Columns.Contains("Comments"))
+        // Configure column headers with proper names
+        foreach (DataGridViewColumn col in dgvGuests.Columns)
         {
-            var labelFlagCol = dgvGuests.Columns["LabelFlag"];
-            var commentsCol = dgvGuests.Columns["Comments"];
+            if (!col.Visible) continue;
 
-            labelFlagCol.HeaderText = "Mailing Label";
-            labelFlagCol.Width = 80;
-            labelFlagCol.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            col.HeaderText = col.Name switch
+            {
+                "Id" => "Guest #",
+                "FirstName" => "First Name",
+                "LastName" => "Last Name",
+                "Address" => "Address",
+                "City" => "City",
+                "State" => "State",
+                "ZipCode" => "Zip Code",
+                "Country" => "Country",
+                "HomePhone" => "Home Phone",
+                "BusinessPhone" => "Business Phone",
+                "Fax" => "Fax",
+                "Email" => "Email",
+                "Referral" => "Referral",
+                "BookedBy" => "Booked By",
+                "TravelingWith" => "Traveling With",
+                "LabelFlag" => "Mailing Label",
+                _ => col.HeaderText
+            };
 
-            // Position LabelFlag just before Comments
-            labelFlagCol.DisplayIndex = commentsCol.DisplayIndex;
+            // Comments fills remaining space, others size to header
+            if (col.Name == "Comments")
+            {
+                col.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            }
+            else
+            {
+                col.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            }
         }
-        else if (dgvGuests.Columns.Contains("LabelFlag"))
+
+        // Replace LabelFlag checkbox column with text column showing Yes/No
+        if (dgvGuests.Columns.Contains("LabelFlag"))
         {
-            dgvGuests.Columns["LabelFlag"].HeaderText = "Mailing Label";
-            dgvGuests.Columns["LabelFlag"].Width = 80;
-            dgvGuests.Columns["LabelFlag"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            var oldCol = dgvGuests.Columns["LabelFlag"];
+            var displayIndex = oldCol.DisplayIndex;
+
+            // If Comments exists, position LabelFlag just before it
+            if (dgvGuests.Columns.Contains("Comments"))
+            {
+                displayIndex = dgvGuests.Columns["Comments"].DisplayIndex;
+            }
+
+            // Remove the checkbox column
+            dgvGuests.Columns.Remove(oldCol);
+
+            // Add a text column instead
+            var textCol = new DataGridViewTextBoxColumn
+            {
+                Name = "LabelFlagText",
+                HeaderText = "Mailing Label",
+                DataPropertyName = "LabelFlag",
+                Width = 80,
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
+                DisplayIndex = displayIndex
+            };
+            dgvGuests.Columns.Add(textCol);
         }
+
+        // Format LabelFlag to show Yes/No
+        dgvGuests.CellFormatting += (s, e) =>
+        {
+            if (dgvGuests.Columns[e.ColumnIndex].Name == "LabelFlagText" && e.Value != null)
+            {
+                e.Value = (bool)e.Value ? "Yes" : "No";
+                e.FormattingApplied = true;
+            }
+        };
     }
 
     private void LoadGuests()
