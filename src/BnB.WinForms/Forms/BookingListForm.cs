@@ -1,5 +1,6 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
+using BnB.WinForms.Helpers;
 using BnB.WinForms.Reports;
 using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
@@ -125,7 +126,7 @@ public partial class BookingListForm : Form
                 .OrderBy(a => a.ArrivalDate)
                 .ToList();
 
-            _bindingSource.DataSource = _accommodations;
+            _bindingSource.DataSource = SortableBindingList<Accommodation>.FromList(_accommodations);
             dgvBookings.DataSource = _bindingSource;
             ConfigureGrid();
             UpdateSummary();
@@ -203,7 +204,7 @@ public partial class BookingListForm : Form
             _lastSearchText = "";
         }
 
-        _bindingSource.DataSource = _accommodations;
+        _bindingSource.DataSource = SortableBindingList<Accommodation>.FromList(_accommodations);
         dgvBookings.DataSource = _bindingSource;
         ConfigureGrid();
         UpdateSummary();

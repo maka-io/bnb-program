@@ -1,5 +1,6 @@
 using BnB.Core.Models;
 using BnB.Data.Context;
+using BnB.WinForms.Helpers;
 using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
 
@@ -84,7 +85,8 @@ public partial class RoomTypeForm : Form
             .OrderBy(r => r.Name)
             .ToList();
 
-        _bindingSource.DataSource = _roomTypes;
+        // Use SortableBindingList for click-to-sort on column headers
+        _bindingSource.DataSource = SortableBindingList<RoomType>.FromList(_roomTypes);
         dgvRoomTypes.DataSource = _bindingSource;
 
         ConfigureGrid();

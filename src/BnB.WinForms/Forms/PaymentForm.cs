@@ -1,6 +1,7 @@
 using BnB.Core.Enums;
 using BnB.Core.Models;
 using BnB.Data.Context;
+using BnB.WinForms.Helpers;
 using BnB.WinForms.Services;
 using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
@@ -374,7 +375,8 @@ public partial class PaymentForm : Form
                 }
             }
 
-            _bindingSource.DataSource = payments;
+            // Use SortableBindingList for click-to-sort on column headers
+            _bindingSource.DataSource = SortableBindingList<Payment>.FromList(payments);
 
             if (payments.Count == 0)
             {
@@ -761,7 +763,7 @@ public partial class PaymentForm : Form
                     payment.LastName = payment.Guest.LastName;
             }
 
-            _bindingSource.DataSource = results;
+            _bindingSource.DataSource = SortableBindingList<Payment>.FromList(results);
 
             if (results.Count == 0)
             {

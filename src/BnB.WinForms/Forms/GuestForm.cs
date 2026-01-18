@@ -1,6 +1,7 @@
 using BnB.Core.Enums;
 using BnB.Core.Models;
 using BnB.Data.Context;
+using BnB.WinForms.Helpers;
 using BnB.WinForms.Services;
 using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
@@ -193,7 +194,8 @@ public partial class GuestForm : Form
                 .OrderByDescending(g => g.Id)
                 .ToList();
 
-            _bindingSource.DataSource = guests;
+            // Use SortableBindingList for click-to-sort on column headers
+            _bindingSource.DataSource = SortableBindingList<Guest>.FromList(guests);
 
             if (guests.Count == 0)
             {

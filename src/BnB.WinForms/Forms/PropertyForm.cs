@@ -1,6 +1,7 @@
 using BnB.Core.Enums;
 using BnB.Core.Models;
 using BnB.Data.Context;
+using BnB.WinForms.Helpers;
 using BnB.WinForms.Services;
 using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
@@ -272,7 +273,8 @@ public partial class PropertyForm : Form
                 .OrderBy(p => p.Location)
                 .ToList();
 
-            _bindingSource.DataSource = properties;
+            // Use SortableBindingList for click-to-sort on column headers
+            _bindingSource.DataSource = SortableBindingList<Property>.FromList(properties);
 
             if (properties.Count == 0)
             {

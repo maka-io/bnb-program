@@ -2,6 +2,7 @@ using BnB.Core.Enums;
 using BnB.Core.Models;
 using BnB.Core.Services;
 using BnB.Data.Context;
+using BnB.WinForms.Helpers;
 using BnB.WinForms.Services;
 using BnB.WinForms.UI;
 using Microsoft.EntityFrameworkCore;
@@ -519,7 +520,8 @@ public partial class AccommodationForm : Form
                 }
             }
 
-            _bindingSource.DataSource = accommodations;
+            // Use SortableBindingList for click-to-sort on column headers
+            _bindingSource.DataSource = SortableBindingList<Accommodation>.FromList(accommodations);
 
             if (accommodations.Count == 0)
             {
@@ -852,7 +854,7 @@ public partial class AccommodationForm : Form
                 query = query.Where(a => a.ArrivalDate <= criteria.ArrivalDateTo);
 
             var results = query.OrderByDescending(a => a.ArrivalDate).ToList();
-            _bindingSource.DataSource = results;
+            _bindingSource.DataSource = SortableBindingList<Accommodation>.FromList(results);
 
             if (results.Count == 0)
             {
