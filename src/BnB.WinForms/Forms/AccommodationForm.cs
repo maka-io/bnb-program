@@ -409,6 +409,13 @@ public partial class AccommodationForm : Form
 
         dgvAccommodations.Columns.Add(new DataGridViewTextBoxColumn
         {
+            DataPropertyName = "UnitNameDescription",
+            HeaderText = "Room Type",
+            Width = 100
+        });
+
+        dgvAccommodations.Columns.Add(new DataGridViewTextBoxColumn
+        {
             DataPropertyName = "ArrivalDate",
             HeaderText = "Arrival",
             Width = 85,
@@ -479,6 +486,22 @@ public partial class AccommodationForm : Form
             var accommodations = query
                 .OrderByDescending(a => a.ConfirmationNumber)
                 .ToList();
+
+            // Populate UnitNameDescription from RoomType if not already set
+            var roomTypes = _dbContext.RoomTypes.ToList();
+            foreach (var acc in accommodations)
+            {
+                if (string.IsNullOrEmpty(acc.UnitNameDescription) && !string.IsNullOrEmpty(acc.UnitName))
+                {
+                    var roomType = roomTypes.FirstOrDefault(r =>
+                        r.PropertyAccountNumber == acc.PropertyAccountNumber &&
+                        r.Name == acc.UnitName);
+                    if (roomType != null)
+                    {
+                        acc.UnitNameDescription = roomType.Description ?? roomType.Name;
+                    }
+                }
+            }
 
             _bindingSource.DataSource = accommodations;
 

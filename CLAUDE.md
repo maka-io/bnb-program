@@ -4,116 +4,146 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-BnB is a bed & breakfast reservation and property management system built with Visual Basic 5.0. It's a Windows MDI (Multiple Document Interface) desktop application used by Hawaii's Best Bed & Breakfasts (HBBB) for managing guests, properties, reservations, payments, and commissions.
+BnB is a bed & breakfast reservation and property management system for Hawaii's Best Bed & Breakfasts (HBBB). The project contains both a legacy VB5 application (reference only) and an active .NET 8 WinForms modernization.
+
+**Active development is in the `src/` directory** - the modern C#/.NET 8 application.
+
+## Build Commands
+
+```powershell
+# Build solution
+dotnet build src/BnB.sln
+
+# Run tests
+dotnet test src/BnB.Tests/BnB.Tests.csproj
+
+# Run the application
+dotnet run --project src/BnB.WinForms/BnB.WinForms.csproj
+
+# Build and publish (self-contained single-file exe)
+.\build.ps1 -Publish
+
+# Clean build
+.\build.ps1 -Clean -Publish
+```
+
+### EF Core Migrations
+
+```powershell
+# Add a new migration
+dotnet ef migrations add MigrationName --project src/BnB.Data --startup-project src/BnB.WinForms
+
+# Update database
+dotnet ef database update --project src/BnB.Data --startup-project src/BnB.WinForms
+```
 
 ## Technology Stack
 
-- **Language:** Visual Basic 5.0
-- **Database:** Microsoft Access (Jet/DAO 2.5)
-- **Reporting:** Crystal Reports 5.x (CRYSTL32.OCX)
-- **UI Controls:** Sheridan Software data-bound grids (SSDATB32.OCX, SSDATA32.OCX)
-- **Charting:** Graphs32.OCX
-- **Runtime:** MSVBVM50.DLL (VB5 Runtime)
+- **Language:** C# / .NET 8.0-windows (LTS)
+- **UI Framework:** WinForms (MDI application)
+- **Data Access:** Entity Framework Core 8.0
+- **Database:** SQLite (default) or PostgreSQL
+- **Reporting:** QuestPDF
+- **Charting:** ScottPlot.WinForms
+- **Platform:** x86 (32-bit), Windows 10+
 
 ## Directory Structure
 
 ```
-BNBCode/          # Main application source (bnb.vbp)
-├── *.BAS         # 4 code modules (BNB1, BNBMODE, CONSTANT, WINAPI)
-└── *.FRM         # 45 forms
+src/                      # Modern .NET 8 application (ACTIVE)
+├── BnB.sln              # Solution file
+├── BnB.Core/            # Domain models (Guest, Property, Accommodation, etc.)
+├── BnB.Data/            # EF Core DbContext and migrations
+├── BnB.WinForms/        # UI layer - Forms, Controls, Reports
+│   └── Forms/           # All form implementations
+└── BnB.Tests/           # Unit tests
 
-BNB1_MDB/         # Database files
-├── bnb1.mdb      # Production database (21 MB)
-└── bnbNoDat.mdb  # Empty template database
-
-InstCode/         # Setup/installation application (Setup1.vbp)
-Distrib/          # Pre-built distribution with compressed dependencies
-Reports/          # 27 Crystal Reports (.rpt files)
-BNBHelp/          # Windows Help system (HLP/RTF)
-KeyGen/           # License key generator
-Patch/            # Version patches (1-12)
+BNBCode/                 # Legacy VB5 source (REFERENCE ONLY)
+BNB1_MDB/                # Original Access database files
+Reports/                 # Legacy Crystal Reports (.rpt files)
+tools/                   # Data migration utilities
+installer/               # Inno Setup installer configuration
 ```
-
-## Build Instructions
-
-1. Open `BNBCode/bnb.vbp` in Visual Basic 5.0 IDE
-2. Ensure all OCX controls are registered on the system
-3. File → Make bnb.exe
-
-**Required OCX registrations:**
-- CRYSTL32.OCX, SSDATB32.OCX, SSDATA32.OCX
-- GRAPHS32.OCX, THREED32.OCX, SPIN32.OCX, COMDLG32.OCX
 
 ## Architecture
 
-### Core Modules
+### Solution Projects
 
-| Module | Purpose |
-|--------|---------|
-| BNB1.BAS | Global variables, database connection (`gBNB As Database`), helper functions |
-| BNBMODE.BAS | Form state management (Browse/Insert/Update/Delete/Find modes) |
-| CONSTANT.BAS | Global constants (key codes, currency formats, VB constants) |
-| WINAPI.BAS | Windows API declarations |
+| Project | Purpose |
+|---------|---------|
+| BnB.Core | Domain models, enums (FormMode), business entities |
+| BnB.Data | BnBDbContext, EF Core configuration, migrations |
+| BnB.WinForms | UI forms, controls, PDF reports, application entry point |
+| BnB.Tests | Unit tests |
+
+### Key Domain Models (BnB.Core/Models/)
+
+- **Guest** - Guest records with auto-increment Id, links to Accommodations and Payments
+- **Property** - Host properties with AccountNumber as PK, commission rates, payment policies
+- **Accommodation** - Bookings linking Guest to Property with dates, rates, taxes
+- **Payment** - Payment records linked to Guest
+- **RoomType/RoomBlackout** - Room availability management
+- **TaxRate/TaxPlan** - Tax configuration
+- **Check/CheckNumberConfig** - Check printing functionality
 
 ### Form Mode System
 
-Forms operate in distinct modes managed by `BNBMODE.BAS`:
-- **Browse** - Read-only viewing
-- **Insert** - Adding new records
-- **Update** - Editing existing records
-- **Delete** - Removing records
-- **Find** - Search functionality
-
-The mode system dynamically enables/disables controls and updates form captions.
-
-### Data Access Pattern
-
-Forms use data-bound controls connected directly to DAO recordsets:
-```
-Form Controls ←→ DAO Recordset ←→ Access Database (bnb1.mdb)
+Forms use a mode-based state pattern defined in `BnB.Core/FormMode.cs`:
+```csharp
+public enum FormMode { Browse, Insert, Update, Delete, Find, NoRows }
 ```
 
-Global database connection: `Public gBNB As Database` (declared in BNB1.BAS)
+The mode controls which UI elements are enabled and how data binding behaves.
 
-### Main Form Hierarchy
+### Data Access (BnB.Data/)
 
-`MDIBNB.FRM` is the MDI container with menus:
-- **File** - Backup, printer setup, exit
-- **Guests** - General info, accommodations, travel, autos
-- **Accounts** - Hosts, travel agencies, car agencies
-- **Availability** - Room/car availability calendars
-- **Reports** - Business reports via Crystal Reports
-- **Tools** - Data analysis, configuration
+`BnBDbContext` configures all entity relationships with Fluent API:
+- Guest → Accommodations (1:many via GuestId)
+- Guest → Payments (1:many via GuestId)
+- Property → Accommodations (1:many via PropertyAccountNumber)
+- Property → RoomTypes (1:many)
+- RoomType → RoomBlackouts (1:many)
 
-## Key Form Files
+### Database Configuration
 
-| Form | Lines | Purpose |
-|------|-------|---------|
-| MDIBNB.FRM | 2,525 | Main MDI container |
-| PAYMENT.FRM | 2,511 | Payment processing |
-| PROPERTY.FRM | 2,338 | Property/host management |
-| GENGUEST.FRM | 1,755 | Guest information |
+Default SQLite database location: `%LOCALAPPDATA%\BnB\bnb.db`
 
-## Database
+Configure in `appsettings.json` for PostgreSQL:
+```json
+{
+  "Database": {
+    "Provider": "PostgreSQL",
+    "PostgreSQL": { "Host": "localhost", "Database": "bnb", ... }
+  }
+}
+```
 
-- **bnb1.mdb** - Production database with sample data
-- **bnbNoDat.mdb** - Empty template for testing/new installations
+## Key Forms (src/BnB.WinForms/Forms/)
 
-Tables include: Guests, Properties, Accommodations, Reservations, Payments, Commissions, Travel Agencies, Car Rental Agencies, Check/Ledger records.
+| Form | Purpose |
+|------|---------|
+| MainForm | MDI container, menu system |
+| GuestForm | Guest management |
+| AccommodationForm | Booking/reservation management |
+| PaymentForm, RecordPaymentForm | Payment processing |
+| PropertyForm | Host/property management |
+| AvailabilityForm | Year-at-a-glance room calendar |
+| BookingListForm | Booking search and listing |
+| CheckPrintForm, CheckEditForm | Check printing |
 
-## Modernization Notes
+## Legacy VB5 Reference (BNBCode/)
 
-This codebase targets Windows 95/98/NT/2000 era systems. Key challenges for modernizing to Windows 10/11:
+The `BNBCode/` directory contains the original VB5 application for reference when implementing features:
 
-1. **VB5 to VB.NET/C# Migration** - VB5 is not supported on modern systems; requires rewrite
-2. **OCX Dependencies** - Third-party OCX controls (Sheridan, Crystal Reports 5.x) are obsolete
-3. **DAO to ADO.NET/EF** - DAO 2.5 should be replaced with modern data access
-4. **Access Database** - Consider migrating to SQL Server Express or SQLite
-5. **Crystal Reports** - Replace with modern reporting (RDLC, Telerik, or web-based)
-6. **Help System** - WinHelp (.HLP) is not supported on 64-bit Windows; use CHM or HTML
+| Module | Purpose |
+|--------|---------|
+| BNB1.BAS | Global functions (CurrencyToText, tax calculations) |
+| BNBMODE.BAS | Original form mode management |
+| *.FRM files | Original form layouts and logic |
 
-## Code Statistics
+## Installer
 
-- ~25,000 lines of VB code
-- 45 forms, 4 modules
-- 27 Crystal Reports
+Build installer using Inno Setup:
+1. Run `.\build.ps1 -Publish`
+2. Open `installer/BnB.iss` in Inno Setup Compiler
+3. Compile to create `installer/output/BnB_Setup.exe`
