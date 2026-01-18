@@ -109,11 +109,24 @@ public partial class GuestForm : Form
         if (dgvGuests.Columns.Contains("DateBooked"))
             dgvGuests.Columns["DateBooked"].Visible = false;
 
-        // Configure LabelFlag column
-        if (dgvGuests.Columns.Contains("LabelFlag"))
+        // Configure LabelFlag column - position before Comments and prevent auto-expand
+        if (dgvGuests.Columns.Contains("LabelFlag") && dgvGuests.Columns.Contains("Comments"))
+        {
+            var labelFlagCol = dgvGuests.Columns["LabelFlag"];
+            var commentsCol = dgvGuests.Columns["Comments"];
+
+            labelFlagCol.HeaderText = "Mailing Label";
+            labelFlagCol.Width = 80;
+            labelFlagCol.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+
+            // Position LabelFlag just before Comments
+            labelFlagCol.DisplayIndex = commentsCol.DisplayIndex;
+        }
+        else if (dgvGuests.Columns.Contains("LabelFlag"))
         {
             dgvGuests.Columns["LabelFlag"].HeaderText = "Mailing Label";
-            dgvGuests.Columns["LabelFlag"].Width = 100;
+            dgvGuests.Columns["LabelFlag"].Width = 80;
+            dgvGuests.Columns["LabelFlag"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
         }
     }
 

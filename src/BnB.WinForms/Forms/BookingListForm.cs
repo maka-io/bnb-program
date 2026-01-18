@@ -408,6 +408,7 @@ public partial class BookingListForm : Form
         var prepayPayment = payments.FirstOrDefault(p => (p.AppliedTo == "Prepayment" || p.AppliedTo == "Balance Due") && !string.IsNullOrEmpty(p.CheckNumber));
 
         var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
+        var property = accommodations.FirstOrDefault()?.Property;
         var report = new ConfirmationReport(
             guest,
             accommodations,
@@ -418,7 +419,8 @@ public partial class BookingListForm : Form
             totalPrepaymentReceived,
             depositPayment?.CheckNumber,
             prepayPayment?.CheckNumber,
-            companyInfo);
+            companyInfo,
+            property);
 
         using var viewer = new ReportViewerForm(report, autoPrint: true);
         viewer.ShowDialog(this);

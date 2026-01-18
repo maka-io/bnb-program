@@ -14,6 +14,7 @@ public class ConfirmationReport : BaseReport
     private readonly Guest _guest;
     private readonly IEnumerable<Accommodation> _accommodations;
     private readonly Payment? _payment;
+    private readonly Property? _property;
     private readonly string _confirmationType;
     private readonly string _confirmationTo;
     private readonly decimal _totalDeposit;
@@ -34,12 +35,14 @@ public class ConfirmationReport : BaseReport
         decimal totalPrepayment = 0,
         string? depositCheckNum = null,
         string? prepayCheckNum = null,
-        CompanyInfo? companyInfo = null)
+        CompanyInfo? companyInfo = null,
+        Property? property = null)
     {
         CompanyInfo = companyInfo;
         _guest = guest;
         _accommodations = accommodations.ToList();
         _payment = payment;
+        _property = property;
         _confirmationType = confirmationType;
         _confirmationTo = confirmationTo;
         _totalDeposit = totalDeposit;
@@ -412,12 +415,61 @@ public class ConfirmationReport : BaseReport
             column.Item().Text("Terms and Conditions").FontSize(10).Bold().FontColor(ReportStyles.PrimaryColor);
             column.Item().PaddingTop(3);
 
-            column.Item().Text(text =>
+            // Payment Policy from Property
+            if (_property != null)
             {
-                text.Span("Cancellation Policy: ").Bold().FontSize(8);
-                text.Span("Cancellations made 30 or more days prior to arrival will receive a full refund less a $25 processing fee. " +
-                         "Cancellations made within 30 days of arrival may result in forfeiture of deposit.").FontSize(8);
-            });
+                // Check if arrival date falls within peak period
+                var arrivalDate = _accommodations.FirstOrDefault()?.ArrivalDate ?? DateTime.Today;
+                var isInPeakPeriod = _property.IsInPeakPeriod(arrivalDate);
+
+                // Deposit Policy
+                if (_property.DefaultDepositPercent.HasValue && _property.DefaultDepositPercent > 0)
+                {
+                    column.Item().Text(text =>
+                    {
+                        text.Span("Deposit: ").Bold().FontSize(8);
+                        var depositText = $"A {_property.DefaultDepositPercent:0}% deposit is required";
+                        if (_property.DefaultDepositDueDays.HasValue)
+                            depositText += $" within {_property.DefaultDepositDueDays} days of booking";
+                        depositText += ".";
+                        text.Span(depositText).FontSize(8);
+                    });
+                }
+
+                // Prepayment Policy - use peak override if applicable
+                var prepaymentDays = _property.GetPrepaymentDueDays(arrivalDate);
+                if (prepaymentDays.HasValue)
+                {
+                    column.Item().PaddingTop(3).Text(text =>
+                    {
+                        text.Span("Balance Due: ").Bold().FontSize(8);
+                        var balanceText = $"Full payment is due {prepaymentDays} days before arrival.";
+                        if (isInPeakPeriod)
+                            balanceText += " (Peak season policy applies)";
+                        text.Span(balanceText).FontSize(8);
+                    });
+                }
+
+                // Cancellation Policy - use peak override if applicable
+                column.Item().PaddingTop(3).Text(text =>
+                {
+                    text.Span("Cancellation Policy: ").Bold().FontSize(8);
+                    var cancellationText = BuildCancellationPolicyText(_property, isPeak: isInPeakPeriod);
+                    if (isInPeakPeriod)
+                        cancellationText += " (Peak season policy applies)";
+                    text.Span(cancellationText).FontSize(8);
+                });
+            }
+            else
+            {
+                // Fallback to generic policy if no property specified
+                column.Item().Text(text =>
+                {
+                    text.Span("Cancellation Policy: ").Bold().FontSize(8);
+                    text.Span("Cancellations made 30 or more days prior to arrival will receive a full refund less a processing fee. " +
+                             "Cancellations made within 30 days of arrival may result in forfeiture of deposit.").FontSize(8);
+                });
+            }
 
             column.Item().PaddingTop(3).Text(text =>
             {
@@ -432,4 +484,34 @@ public class ConfirmationReport : BaseReport
                 .FontColor(ReportStyles.PrimaryColor);
         });
     }
+
+    private string BuildCancellationPolicyText(Property property, bool isPeak)
+    {
+        var noticeDays = isPeak && property.PeakPeriodCancellationNoticeDays.HasValue
+            ? property.PeakPeriodCancellationNoticeDays.Value
+            : property.DefaultCancellationNoticeDays ?? 30;
+
+        var feePercent = isPeak && property.PeakPeriodCancellationFeePercent.HasValue
+            ? property.PeakPeriodCancellationFeePercent.Value
+            : property.DefaultCancellationFeePercent ?? 100;
+
+        var processingFee = property.CancellationProcessingFee ?? 0;
+
+        var text = $"Cancellations made {noticeDays} or more days prior to arrival will receive a full refund";
+        if (processingFee > 0)
+            text += $" less a {processingFee:C0} processing fee";
+        text += ". ";
+
+        if (feePercent > 0)
+        {
+            text += $"Cancellations made within {noticeDays} days of arrival may result in forfeiture of ";
+            if (feePercent >= 100)
+                text += "deposit.";
+            else
+                text += $"{feePercent:0}% of deposit.";
+        }
+
+        return text;
+    }
+
 }
