@@ -38,7 +38,7 @@ public partial class RecordPaymentForm : Form
     private void InitializeComponent()
     {
         this.Text = "Record Payment";
-        this.Size = new Size(400, 380);
+        this.Size = new Size(420, 480);
         this.FormBorderStyle = FormBorderStyle.FixedDialog;
         this.StartPosition = FormStartPosition.CenterParent;
         this.MaximizeBox = false;
@@ -59,138 +59,222 @@ public partial class RecordPaymentForm : Form
             AutoSize = true
         };
 
-        // Summary panel
-        var pnlSummary = new Panel
+        // Balance Tally Panel - shows clear progression
+        var pnlTally = new Panel
         {
             Location = new Point(12, 60),
-            Size = new Size(360, 50),
-            BorderStyle = BorderStyle.FixedSingle
-        };
-
-        var lblDepositDue = new Label
-        {
-            Text = $"Deposit Due: {_depositDue:C2}",
-            Location = new Point(5, 5),
-            AutoSize = true
-        };
-
-        var lblPrepaymentDue = new Label
-        {
-            Text = $"Prepayment Due: {_prepaymentDue:C2}",
-            Location = new Point(5, 25),
-            AutoSize = true
-        };
-
-        var lblPreviouslyPaid = new Label
-        {
-            Text = $"Previously Paid: {_totalPreviouslyPaid:C2}",
-            Location = new Point(180, 5),
-            AutoSize = true
+            Size = new Size(380, 130),
+            BorderStyle = BorderStyle.FixedSingle,
+            BackColor = Color.FromArgb(250, 250, 250),
+            AutoScroll = true
         };
 
         var totalDue = (_depositDue ?? 0) + (_prepaymentDue ?? 0);
-        var balance = totalDue - (_totalPreviouslyPaid ?? 0);
-        var lblBalance = new Label
+        var previouslyPaid = _totalPreviouslyPaid ?? 0;
+        var balance = totalDue - previouslyPaid;
+
+        // Use a monospace-friendly format for alignment
+        int labelCol = 10;
+        int amountCol = 260;
+        int y = 8;
+
+        // Amounts Due section
+        var lblDueHeader = new Label
         {
-            Text = $"Balance: {balance:C2}",
-            Location = new Point(180, 25),
+            Text = "Amounts Due:",
+            Font = new Font("Segoe UI", 9, FontStyle.Bold),
+            Location = new Point(labelCol, y),
+            AutoSize = true
+        };
+        y += 20;
+
+        var lblDepositLabel = new Label
+        {
+            Text = "Deposit:",
+            Location = new Point(labelCol + 15, y),
+            AutoSize = true
+        };
+        var lblDepositValue = new Label
+        {
+            Text = $"{_depositDue ?? 0:C2}",
+            Location = new Point(amountCol, y),
             AutoSize = true,
-            ForeColor = balance > 0 ? Color.Red : Color.Green
+            TextAlign = ContentAlignment.MiddleRight
+        };
+        y += 18;
+
+        var lblPrepayLabel = new Label
+        {
+            Text = "Prepayment:",
+            Location = new Point(labelCol + 15, y),
+            AutoSize = true
+        };
+        var lblPrepayValue = new Label
+        {
+            Text = $"{_prepaymentDue ?? 0:C2}",
+            Location = new Point(amountCol, y),
+            AutoSize = true
+        };
+        y += 18;
+
+        // Separator and Total Due
+        var lblTotalDueLabel = new Label
+        {
+            Text = "Total Due:",
+            Font = new Font("Segoe UI", 9, FontStyle.Bold),
+            Location = new Point(labelCol + 15, y),
+            AutoSize = true
+        };
+        var lblTotalDueValue = new Label
+        {
+            Text = $"{totalDue:C2}",
+            Font = new Font("Segoe UI", 9, FontStyle.Bold),
+            Location = new Point(amountCol, y),
+            AutoSize = true
+        };
+        y += 22;
+
+        // Less Payments section
+        var lblPaidLabel = new Label
+        {
+            Text = "Less Payments Received:",
+            Location = new Point(labelCol + 15, y),
+            AutoSize = true
+        };
+        var lblPaidValue = new Label
+        {
+            Text = previouslyPaid > 0 ? $"({previouslyPaid:C2})" : "$0.00",
+            Location = new Point(amountCol, y),
+            AutoSize = true,
+            ForeColor = previouslyPaid > 0 ? Color.Green : Color.Black
+        };
+        y += 22;
+
+        // Balance Due - highlighted
+        var lblBalanceLabel = new Label
+        {
+            Text = "Balance Due:",
+            Font = new Font("Segoe UI", 9, FontStyle.Bold),
+            Location = new Point(labelCol, y),
+            AutoSize = true
+        };
+        var lblBalanceValue = new Label
+        {
+            Text = $"{balance:C2}",
+            Font = new Font("Segoe UI", 10, FontStyle.Bold),
+            Location = new Point(amountCol, y),
+            AutoSize = true,
+            ForeColor = balance > 0 ? Color.FromArgb(180, 0, 0) : Color.FromArgb(0, 128, 0)
         };
 
-        pnlSummary.Controls.AddRange(new Control[] { lblDepositDue, lblPrepaymentDue, lblPreviouslyPaid, lblBalance });
+        pnlTally.Controls.AddRange(new Control[] {
+            lblDueHeader,
+            lblDepositLabel, lblDepositValue,
+            lblPrepayLabel, lblPrepayValue,
+            lblTotalDueLabel, lblTotalDueValue,
+            lblPaidLabel, lblPaidValue,
+            lblBalanceLabel, lblBalanceValue
+        });
 
-        // Amount
+        // Amount input - positioned below tally
+        int inputY = 200;
+
         var lblAmount = new Label
         {
             Text = "Amount:",
-            Location = new Point(12, 125),
+            Location = new Point(12, inputY),
             Size = new Size(100, 23)
         };
 
         txtAmount = new TextBox
         {
-            Location = new Point(120, 122),
+            Location = new Point(120, inputY - 3),
             Size = new Size(120, 23)
         };
 
         // Payment Date
+        inputY += 30;
         var lblPaymentDate = new Label
         {
             Text = "Payment Date:",
-            Location = new Point(12, 155),
+            Location = new Point(12, inputY),
             Size = new Size(100, 23)
         };
 
         dtpPaymentDate = new DateTimePicker
         {
-            Location = new Point(120, 152),
+            Location = new Point(120, inputY - 3),
             Size = new Size(120, 23),
             Format = DateTimePickerFormat.Short
         };
 
         // Check Number
+        inputY += 30;
         var lblCheckNumber = new Label
         {
             Text = "Check #:",
-            Location = new Point(12, 185),
+            Location = new Point(12, inputY),
             Size = new Size(100, 23)
         };
 
         txtCheckNumber = new TextBox
         {
-            Location = new Point(120, 182),
+            Location = new Point(120, inputY - 3),
             Size = new Size(120, 23)
         };
 
         // Received From
+        inputY += 30;
         var lblReceivedFrom = new Label
         {
             Text = "Received From:",
-            Location = new Point(12, 215),
+            Location = new Point(12, inputY),
             Size = new Size(100, 23)
         };
 
         txtReceivedFrom = new TextBox
         {
-            Location = new Point(120, 212),
+            Location = new Point(120, inputY - 3),
             Size = new Size(200, 23)
         };
 
         // Applied To
+        inputY += 30;
         var lblAppliedTo = new Label
         {
             Text = "Applied To:",
-            Location = new Point(12, 245),
+            Location = new Point(12, inputY),
             Size = new Size(100, 23)
         };
 
         cboAppliedTo = new ComboBox
         {
-            Location = new Point(120, 242),
+            Location = new Point(120, inputY - 3),
             Size = new Size(150, 23),
             DropDownStyle = ComboBoxStyle.DropDownList
         };
 
         // Comments
+        inputY += 30;
         var lblComments = new Label
         {
             Text = "Comments:",
-            Location = new Point(12, 275),
+            Location = new Point(12, inputY),
             Size = new Size(100, 23)
         };
 
         txtComments = new TextBox
         {
-            Location = new Point(120, 272),
-            Size = new Size(252, 23)
+            Location = new Point(120, inputY - 3),
+            Size = new Size(270, 23)
         };
 
         // Buttons
+        inputY += 40;
         btnOK = new Button
         {
             Text = "Record Payment",
-            Location = new Point(120, 305),
+            Location = new Point(120, inputY),
             Size = new Size(120, 28),
             DialogResult = DialogResult.None
         };
@@ -199,14 +283,14 @@ public partial class RecordPaymentForm : Form
         btnCancel = new Button
         {
             Text = "Cancel",
-            Location = new Point(250, 305),
+            Location = new Point(250, inputY),
             Size = new Size(80, 28),
             DialogResult = DialogResult.Cancel
         };
 
         this.Controls.AddRange(new Control[]
         {
-            lblTitle, lblGuestName, pnlSummary,
+            lblTitle, lblGuestName, pnlTally,
             lblAmount, txtAmount,
             lblPaymentDate, dtpPaymentDate,
             lblCheckNumber, txtCheckNumber,
@@ -288,6 +372,25 @@ public partial class RecordPaymentForm : Form
                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
             txtAmount.Focus();
             return;
+        }
+
+        // Check if balance is already zero or negative (fully paid)
+        var totalDue = (_depositDue ?? 0) + (_prepaymentDue ?? 0);
+        var balance = totalDue - (_totalPreviouslyPaid ?? 0);
+
+        if (balance <= 0)
+        {
+            var result = MessageBox.Show(
+                "This reservation has no balance due. The account is already fully paid.\n\n" +
+                "Are you sure you want to record an additional payment?",
+                "No Balance Due",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result != DialogResult.Yes)
+            {
+                return;
+            }
         }
 
         Amount = amount;

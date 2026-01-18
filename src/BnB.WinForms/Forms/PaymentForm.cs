@@ -30,7 +30,6 @@ public partial class PaymentForm : Form
         _filterConfirmationNumber = confirmationNumber;
 
         InitializeComponent();
-        LoadAppliedToOptions();
         InitializeGoToMenu();
     }
 
@@ -109,7 +108,7 @@ public partial class PaymentForm : Form
         txtLastName.Text = guest?.LastName ?? "";
         txtLastName.ReadOnly = true;
 
-        txtAmount.Focus();
+        txtDepositDue.Focus();
     }
 
     /// <summary>
@@ -303,13 +302,6 @@ public partial class PaymentForm : Form
         txtFirstName.DataBindings.Add("Text", _bindingSource, nameof(Payment.FirstName), true);
         txtLastName.DataBindings.Add("Text", _bindingSource, nameof(Payment.LastName), true);
 
-        // Payment received
-        txtAmount.DataBindings.Add("Text", _bindingSource, nameof(Payment.Amount), true, DataSourceUpdateMode.OnPropertyChanged, "", "C2");
-        dtpPaymentDate.DataBindings.Add("Value", _bindingSource, nameof(Payment.PaymentDate), true);
-        txtCheckNumber.DataBindings.Add("Text", _bindingSource, nameof(Payment.CheckNumber), true);
-        txtReceivedFrom.DataBindings.Add("Text", _bindingSource, nameof(Payment.ReceivedFrom), true);
-        cboAppliedTo.DataBindings.Add("Text", _bindingSource, nameof(Payment.AppliedTo), true);
-
         // Payments due
         txtDepositDue.DataBindings.Add("Text", _bindingSource, nameof(Payment.DepositDue), true, DataSourceUpdateMode.OnPropertyChanged, "", "C2");
         dtpDepositDueDate.DataBindings.Add("Value", _bindingSource, nameof(Payment.DepositDueDate), true);
@@ -330,20 +322,6 @@ public partial class PaymentForm : Form
 
         // Navigation grid
         dgvPayments.DataSource = _bindingSource;
-    }
-
-    private void LoadAppliedToOptions()
-    {
-        cboAppliedTo.Items.Clear();
-        cboAppliedTo.Items.AddRange(new object[]
-        {
-            "Deposit",
-            "Prepayment",
-            "Balance Due",
-            "Service Fee",
-            "Cancellation Fee",
-            "Other"
-        });
     }
 
     private void LoadPayments()
@@ -480,16 +458,21 @@ public partial class PaymentForm : Form
             var totalReceived = payments.Sum(p => p.Amount);
             var totalDue = payments.Sum(p => (p.DepositDue ?? 0) + (p.PrepaymentDue ?? 0));
             var totalBalance = payments.Sum(p => p.Balance);
+            var paymentCount = payments.Count;
 
             lblTotalReceived.Text = $"Total Received: {totalReceived:C2}";
             lblTotalDue.Text = $"Total Due: {totalDue:C2}";
             lblTotalBalance.Text = $"Total Balance: {totalBalance:C2}";
+
+            // Update the Payments Received summary
+            lblPaymentsReceivedSummary.Text = $"Total Received: {totalReceived:C2} from {paymentCount} payment record(s)";
         }
         else
         {
             lblTotalReceived.Text = "Total Received: $0.00";
             lblTotalDue.Text = "Total Due: $0.00";
             lblTotalBalance.Text = "Total Balance: $0.00";
+            lblPaymentsReceivedSummary.Text = "Total Received: $0.00 from 0 payment(s)";
         }
     }
 
@@ -569,7 +552,7 @@ public partial class PaymentForm : Form
             }
 
             SetMode(FormMode.Update);
-            txtAmount.Focus();
+            txtDepositDue.Focus();
         }
     }
 
@@ -897,14 +880,6 @@ public partial class PaymentForm : Form
             MessageBox.Show("Please enter a valid confirmation number.", "Validation Error",
                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
             txtConfirmationNumber.Focus();
-            return false;
-        }
-
-        if (!decimal.TryParse(txtAmount.Text.Replace("$", "").Replace(",", ""), out var amount) || amount < 0)
-        {
-            MessageBox.Show("Please enter a valid payment amount.", "Validation Error",
-                MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            txtAmount.Focus();
             return false;
         }
 

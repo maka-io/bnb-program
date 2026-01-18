@@ -26,10 +26,10 @@ partial class PaymentForm
 
         // Group boxes
         this.grpGuestInfo = new GroupBox();
-        this.grpPaymentReceived = new GroupBox();
         this.grpPaymentsDue = new GroupBox();
         this.grpRefund = new GroupBox();
         this.grpOtherCredits = new GroupBox();
+        this.grpPaymentsReceived = new GroupBox();
 
         // Guest Info controls
         this.lblConfirmationNumber = new Label();
@@ -39,17 +39,8 @@ partial class PaymentForm
         this.txtFirstName = new TextBox();
         this.txtLastName = new TextBox();
 
-        // Payment Received controls
-        this.lblAmount = new Label();
-        this.lblPaymentDate = new Label();
-        this.lblCheckNumber = new Label();
-        this.lblReceivedFrom = new Label();
-        this.lblAppliedTo = new Label();
-        this.txtAmount = new TextBox();
-        this.dtpPaymentDate = new DateTimePicker();
-        this.txtCheckNumber = new TextBox();
-        this.txtReceivedFrom = new TextBox();
-        this.cboAppliedTo = new ComboBox();
+        // Payments Received summary label
+        this.lblPaymentsReceivedSummary = new Label();
 
         // Payments Due controls
         this.lblDepositDue = new Label();
@@ -139,37 +130,17 @@ partial class PaymentForm
         y += 30;
         AddLabelAndField(grpGuestInfo, lblLastName, "Last Name:", txtLastName, 10, y, 80, 150);
 
-        // === Payment Received Group ===
-        this.grpPaymentReceived.Text = "Payment Received";
-        this.grpPaymentReceived.Location = new Point(10, 140);
-        this.grpPaymentReceived.Size = new Size(350, 170);
-        this.panelForm.Controls.Add(this.grpPaymentReceived);
+        // === Payments Received Summary Group ===
+        this.grpPaymentsReceived.Text = "Payments Received";
+        this.grpPaymentsReceived.Location = new Point(10, 140);
+        this.grpPaymentsReceived.Size = new Size(350, 55);
+        this.panelForm.Controls.Add(this.grpPaymentsReceived);
 
-        y = 22;
-        AddLabelAndField(grpPaymentReceived, lblAmount, "Amount:", txtAmount, 10, y, 90, 100);
-        y += 28;
-        lblPaymentDate.Text = "Date:";
-        lblPaymentDate.Location = new Point(10, y + 3);
-        lblPaymentDate.AutoSize = true;
-        grpPaymentReceived.Controls.Add(lblPaymentDate);
-        dtpPaymentDate.Location = new Point(90, y);
-        dtpPaymentDate.Size = new Size(130, 23);
-        dtpPaymentDate.Format = DateTimePickerFormat.Short;
-        grpPaymentReceived.Controls.Add(dtpPaymentDate);
-
-        y += 28;
-        AddLabelAndField(grpPaymentReceived, lblCheckNumber, "Check/CC#:", txtCheckNumber, 10, y, 90, 150);
-        y += 28;
-        AddLabelAndField(grpPaymentReceived, lblReceivedFrom, "From:", txtReceivedFrom, 10, y, 90, 200);
-        y += 28;
-        lblAppliedTo.Text = "Applied To:";
-        lblAppliedTo.Location = new Point(10, y + 3);
-        lblAppliedTo.AutoSize = true;
-        grpPaymentReceived.Controls.Add(lblAppliedTo);
-        cboAppliedTo.Location = new Point(90, y);
-        cboAppliedTo.Size = new Size(150, 23);
-        cboAppliedTo.DropDownStyle = ComboBoxStyle.DropDownList;
-        grpPaymentReceived.Controls.Add(cboAppliedTo);
+        lblPaymentsReceivedSummary.Text = "Total Received: $0.00 from 0 payment(s)";
+        lblPaymentsReceivedSummary.Location = new Point(15, 22);
+        lblPaymentsReceivedSummary.AutoSize = true;
+        lblPaymentsReceivedSummary.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+        grpPaymentsReceived.Controls.Add(lblPaymentsReceivedSummary);
 
         // === Payments Due Group ===
         this.grpPaymentsDue.Text = "Payments Due from Guest";
@@ -232,11 +203,11 @@ partial class PaymentForm
 
         // === Comments ===
         lblComments.Text = "Comments:";
-        lblComments.Location = new Point(10, 320);
+        lblComments.Location = new Point(10, 205);
         lblComments.AutoSize = true;
         panelForm.Controls.Add(lblComments);
 
-        txtComments.Location = new Point(10, 338);
+        txtComments.Location = new Point(10, 223);
         txtComments.Size = new Size(350, 70);
         txtComments.Multiline = true;
         txtComments.ScrollBars = ScrollBars.Vertical;
@@ -244,7 +215,7 @@ partial class PaymentForm
 
         // === Selected Record Summary ===
         this.grpRecordSummary = new GroupBox();
-        this.grpRecordSummary.Text = "Summary";
+        this.grpRecordSummary.Text = "Selected Record";
         this.grpRecordSummary.Location = new Point(370, 260);
         this.grpRecordSummary.Size = new Size(360, 55);
         this.panelForm.Controls.Add(this.grpRecordSummary);
@@ -273,7 +244,7 @@ partial class PaymentForm
 
         // === Panel Buttons ===
         this.panelButtons.Dock = DockStyle.Right;
-        this.panelButtons.Width = 120;
+        this.panelButtons.Width = 130;
         this.panelButtons.Padding = new Padding(5);
 
         int btnY = 15;
@@ -295,7 +266,8 @@ partial class PaymentForm
         btnY += btnSpacing + 15;
         AddButton(panelButtons, btnGoToGuest, "&Go to...", btnY);
         btnY += btnSpacing + 10;
-        AddButton(panelButtons, btnRecordPayment, "Record &Pmt", btnY);
+        AddButton(panelButtons, btnRecordPayment, "Record Payment", btnY);
+        btnRecordPayment.Size = new Size(110, 32);  // Wider to fit "Record Payment"
         btnRecordPayment.BackColor = Color.FromArgb(230, 245, 230);
 
         btnInsert.Click += btnInsert_Click;
@@ -388,10 +360,10 @@ partial class PaymentForm
     private Panel panelButtons;
 
     private GroupBox grpGuestInfo;
-    private GroupBox grpPaymentReceived;
     private GroupBox grpPaymentsDue;
     private GroupBox grpRefund;
     private GroupBox grpOtherCredits;
+    private GroupBox grpPaymentsReceived;
     private Panel panelSummary;
 
     // Guest Info
@@ -402,17 +374,8 @@ partial class PaymentForm
     private TextBox txtFirstName;
     private TextBox txtLastName;
 
-    // Payment Received
-    private Label lblAmount;
-    private Label lblPaymentDate;
-    private Label lblCheckNumber;
-    private Label lblReceivedFrom;
-    private Label lblAppliedTo;
-    private TextBox txtAmount;
-    private DateTimePicker dtpPaymentDate;
-    private TextBox txtCheckNumber;
-    private TextBox txtReceivedFrom;
-    private ComboBox cboAppliedTo;
+    // Payments Received Summary
+    private Label lblPaymentsReceivedSummary;
 
     // Payments Due
     private Label lblDepositDue;
