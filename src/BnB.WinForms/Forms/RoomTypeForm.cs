@@ -88,7 +88,25 @@ public partial class RoomTypeForm : Form
         dgvRoomTypes.DataSource = _bindingSource;
 
         ConfigureGrid();
+
+        // Select the first row if there are any records
+        if (_roomTypes.Count > 0 && dgvRoomTypes.Rows.Count > 0)
+        {
+            dgvRoomTypes.ClearSelection();
+            dgvRoomTypes.Rows[0].Selected = true;
+            // Set current cell to first visible column
+            foreach (DataGridViewColumn col in dgvRoomTypes.Columns)
+            {
+                if (col.Visible)
+                {
+                    dgvRoomTypes.CurrentCell = dgvRoomTypes.Rows[0].Cells[col.Index];
+                    break;
+                }
+            }
+        }
+
         UpdateButtonStates();
+        PopulateDetailsFromSelection();
 
         // Update group box title to show count
         grpRoomTypes.Text = $"Room Types ({_roomTypes.Count})";
@@ -98,20 +116,42 @@ public partial class RoomTypeForm : Form
     {
         if (dgvRoomTypes.Columns.Count == 0) return;
 
+        // Hide system columns
         dgvRoomTypes.Columns["Id"].Visible = false;
         dgvRoomTypes.Columns["PropertyAccountNumber"].Visible = false;
         dgvRoomTypes.Columns["Property"].Visible = false;
+        if (dgvRoomTypes.Columns.Contains("Blackouts"))
+            dgvRoomTypes.Columns["Blackouts"].Visible = false;
 
+        // Configure visible columns with proper order, headers, and widths
         if (dgvRoomTypes.Columns.Contains("Name"))
         {
-            dgvRoomTypes.Columns["Name"].HeaderText = "Room Type";
+            dgvRoomTypes.Columns["Name"].HeaderText = "Room Name";
             dgvRoomTypes.Columns["Name"].Width = 100;
+            dgvRoomTypes.Columns["Name"].DisplayIndex = 0;
+        }
+
+        if (dgvRoomTypes.Columns.Contains("DefaultRate"))
+        {
+            dgvRoomTypes.Columns["DefaultRate"].HeaderText = "Default Rate";
+            dgvRoomTypes.Columns["DefaultRate"].Width = 85;
+            dgvRoomTypes.Columns["DefaultRate"].DisplayIndex = 1;
+            dgvRoomTypes.Columns["DefaultRate"].DefaultCellStyle.Format = "C2";
+            dgvRoomTypes.Columns["DefaultRate"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
         }
 
         if (dgvRoomTypes.Columns.Contains("Description"))
         {
             dgvRoomTypes.Columns["Description"].HeaderText = "Description";
-            dgvRoomTypes.Columns["Description"].Width = 250;
+            dgvRoomTypes.Columns["Description"].Width = 180;
+            dgvRoomTypes.Columns["Description"].DisplayIndex = 2;
+        }
+
+        if (dgvRoomTypes.Columns.Contains("IsActive"))
+        {
+            dgvRoomTypes.Columns["IsActive"].HeaderText = "Active";
+            dgvRoomTypes.Columns["IsActive"].Width = 50;
+            dgvRoomTypes.Columns["IsActive"].DisplayIndex = 3;
         }
     }
 
@@ -132,6 +172,7 @@ public partial class RoomTypeForm : Form
         txtRoomType.Clear();
         txtDescription.Clear();
         txtDefaultRate.Clear();
+        chkActive.Checked = true;  // Default to active for new rooms
         txtRoomType.Focus();
         SetEditMode(true);
     }
@@ -146,6 +187,7 @@ public partial class RoomTypeForm : Form
         txtRoomType.Text = roomType.Name;
         txtDescription.Text = roomType.Description;
         txtDefaultRate.Text = roomType.DefaultRate?.ToString("F2") ?? "";
+        chkActive.Checked = roomType.IsActive;
         SetEditMode(true);
     }
 
@@ -236,6 +278,7 @@ public partial class RoomTypeForm : Form
 
             roomType.Description = txtDescription.Text.Trim();
             roomType.DefaultRate = defaultRate;
+            roomType.IsActive = chkActive.Checked;
             _dbContext.SaveChanges();
 
             LoadRoomTypes();
@@ -258,7 +301,23 @@ public partial class RoomTypeForm : Form
         txtRoomType.Clear();
         txtDescription.Clear();
         txtDefaultRate.Clear();
+        chkActive.Checked = false;
         SetEditMode(false);
+    }
+
+    private void btnBlackouts_Click(object sender, EventArgs e)
+    {
+        if (dgvRoomTypes.CurrentRow == null) return;
+
+        var roomType = dgvRoomTypes.CurrentRow.DataBoundItem as RoomType;
+        if (roomType == null) return;
+
+        using var form = new RoomBlackoutForm(_dbContext, roomType.Id, roomType.Description ?? roomType.Name, DateTime.Today);
+        if (form.ShowDialog(this) == DialogResult.OK)
+        {
+            // Blackout was added, could refresh count display if needed
+            LoadRoomTypes();
+        }
     }
 
     private void btnClose_Click(object sender, EventArgs e)
@@ -269,6 +328,25 @@ public partial class RoomTypeForm : Form
     private void dgvRoomTypes_SelectionChanged(object sender, EventArgs e)
     {
         UpdateButtonStates();
+        PopulateDetailsFromSelection();
+    }
+
+    private void PopulateDetailsFromSelection()
+    {
+        if (dgvRoomTypes.CurrentRow?.DataBoundItem is RoomType roomType)
+        {
+            txtRoomType.Text = roomType.Name;
+            txtDescription.Text = roomType.Description ?? "";
+            txtDefaultRate.Text = roomType.DefaultRate?.ToString("F2") ?? "";
+            chkActive.Checked = roomType.IsActive;
+        }
+        else
+        {
+            txtRoomType.Clear();
+            txtDescription.Clear();
+            txtDefaultRate.Clear();
+            chkActive.Checked = false;
+        }
     }
 
     private void SetEditMode(bool editing)
@@ -276,11 +354,13 @@ public partial class RoomTypeForm : Form
         txtRoomType.Enabled = editing;
         txtDescription.Enabled = editing;
         txtDefaultRate.Enabled = editing;
+        chkActive.Enabled = editing;
         btnSave.Enabled = editing;
         btnCancel.Enabled = editing;
         btnAdd.Enabled = !editing;
         btnEdit.Enabled = !editing && dgvRoomTypes.CurrentRow != null;
         btnDelete.Enabled = !editing && dgvRoomTypes.CurrentRow != null;
+        btnBlackouts.Enabled = !editing && dgvRoomTypes.CurrentRow != null;
         cboProperty.Enabled = !editing;
     }
 
@@ -289,6 +369,7 @@ public partial class RoomTypeForm : Form
         var hasSelection = dgvRoomTypes.CurrentRow != null;
         btnEdit.Enabled = hasSelection;
         btnDelete.Enabled = hasSelection;
+        btnBlackouts.Enabled = hasSelection;
     }
 
     /// <summary>

@@ -28,6 +28,8 @@ partial class RoomTypeForm
         txtDescription = new TextBox();
         lblDefaultRate = new Label();
         txtDefaultRate = new TextBox();
+        chkActive = new CheckBox();
+        btnBlackouts = new Button();
         pnlButtons = new Panel();
         btnAdd = new Button();
         btnEdit = new Button();
@@ -92,10 +94,11 @@ partial class RoomTypeForm
         grpDetails.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         grpDetails.Controls.Add(lblRoomType);
         grpDetails.Controls.Add(txtRoomType);
-        grpDetails.Controls.Add(lblDescription);
-        grpDetails.Controls.Add(txtDescription);
         grpDetails.Controls.Add(lblDefaultRate);
         grpDetails.Controls.Add(txtDefaultRate);
+        grpDetails.Controls.Add(chkActive);
+        grpDetails.Controls.Add(lblDescription);
+        grpDetails.Controls.Add(txtDescription);
         grpDetails.Location = new Point(12, 291);
         grpDetails.Name = "grpDetails";
         grpDetails.Size = new Size(476, 100);
@@ -156,12 +159,23 @@ partial class RoomTypeForm
         txtDefaultRate.TabIndex = 2;
         txtDefaultRate.TextAlign = HorizontalAlignment.Right;
         //
+        // chkActive
+        //
+        chkActive.AutoSize = true;
+        chkActive.Enabled = false;
+        chkActive.Location = new Point(400, 27);
+        chkActive.Name = "chkActive";
+        chkActive.Size = new Size(59, 19);
+        chkActive.TabIndex = 3;
+        chkActive.Text = "Active";
+        //
         // pnlButtons
         //
         pnlButtons.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         pnlButtons.Controls.Add(btnAdd);
         pnlButtons.Controls.Add(btnEdit);
         pnlButtons.Controls.Add(btnDelete);
+        pnlButtons.Controls.Add(btnBlackouts);
         pnlButtons.Controls.Add(btnSave);
         pnlButtons.Controls.Add(btnCancel);
         pnlButtons.Controls.Add(btnClose);
@@ -197,23 +211,33 @@ partial class RoomTypeForm
         btnDelete.Text = "&Delete";
         btnDelete.Click += btnDelete_Click;
         //
+        // btnBlackouts
+        //
+        btnBlackouts.Enabled = false;
+        btnBlackouts.Location = new Point(198, 5);
+        btnBlackouts.Name = "btnBlackouts";
+        btnBlackouts.Size = new Size(70, 28);
+        btnBlackouts.TabIndex = 3;
+        btnBlackouts.Text = "B&lockouts";
+        btnBlackouts.Click += btnBlackouts_Click;
+        //
         // btnSave
         //
         btnSave.Enabled = false;
-        btnSave.Location = new Point(210, 5);
+        btnSave.Location = new Point(274, 5);
         btnSave.Name = "btnSave";
         btnSave.Size = new Size(60, 28);
-        btnSave.TabIndex = 3;
+        btnSave.TabIndex = 4;
         btnSave.Text = "&Save";
         btnSave.Click += btnSave_Click;
         //
         // btnCancel
         //
         btnCancel.Enabled = false;
-        btnCancel.Location = new Point(276, 5);
+        btnCancel.Location = new Point(340, 5);
         btnCancel.Name = "btnCancel";
         btnCancel.Size = new Size(60, 28);
-        btnCancel.TabIndex = 4;
+        btnCancel.TabIndex = 5;
         btnCancel.Text = "Ca&ncel";
         btnCancel.Click += btnCancel_Click;
         //
@@ -223,7 +247,7 @@ partial class RoomTypeForm
         btnClose.Location = new Point(406, 5);
         btnClose.Name = "btnClose";
         btnClose.Size = new Size(70, 28);
-        btnClose.TabIndex = 5;
+        btnClose.TabIndex = 6;
         btnClose.Text = "C&lose";
         btnClose.Click += btnClose_Click;
         //
@@ -267,10 +291,12 @@ partial class RoomTypeForm
     private TextBox txtDescription;
     private Label lblDefaultRate;
     private TextBox txtDefaultRate;
+    private CheckBox chkActive;
     private Panel pnlButtons;
     private Button btnAdd;
     private Button btnEdit;
     private Button btnDelete;
+    private Button btnBlackouts;
     private Button btnSave;
     private Button btnCancel;
     private Button btnClose;

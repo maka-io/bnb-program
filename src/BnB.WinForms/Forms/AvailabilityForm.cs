@@ -145,10 +145,10 @@ public partial class AvailabilityForm : Form
 
             _properties = propertiesQuery.OrderBy(p => p.Location).ToList();
 
-            // Get room types for these properties
+            // Get active room types for these properties
             var propertyIds = _properties.Select(p => p.AccountNumber).ToList();
             _roomTypes = _dbContext.RoomTypes
-                .Where(r => propertyIds.Contains(r.PropertyAccountNumber))
+                .Where(r => propertyIds.Contains(r.PropertyAccountNumber) && r.IsActive)
                 .OrderBy(r => r.PropertyAccountNumber)
                 .ThenBy(r => r.Name)
                 .ToList();

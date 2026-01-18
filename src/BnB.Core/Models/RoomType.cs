@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace BnB.Core.Models;
 
 /// <summary>
@@ -12,9 +10,7 @@ public class RoomType
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public decimal? DefaultRate { get; set; }
-
-    [NotMapped]
-    public bool IsActive { get; set; } = true;  // Not in database
+    public bool IsActive { get; set; } = true;
 
     // Navigation properties
     public virtual Property Property { get; set; } = null!;

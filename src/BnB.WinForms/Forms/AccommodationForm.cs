@@ -150,7 +150,7 @@ public partial class AccommodationForm : Form
             }
 
             var roomTypes = _dbContext.RoomTypes
-                .Where(r => r.PropertyAccountNumber == accountNum.Value)
+                .Where(r => r.PropertyAccountNumber == accountNum.Value && r.IsActive)
                 .OrderBy(r => r.Name)
                 .Select(r => new RoomTypeItem
                 {

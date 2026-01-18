@@ -560,6 +560,16 @@ static class Program
             // Column already exists
         }
 
+        // Add IsActive column to RoomTypes if it doesn't exist
+        try
+        {
+            dbContext.Database.ExecuteSqlRaw("ALTER TABLE RoomTypes ADD COLUMN IsActive INTEGER NOT NULL DEFAULT 1");
+        }
+        catch
+        {
+            // Column already exists
+        }
+
         // Create RoomBlackouts table if it doesn't exist
         try
         {
