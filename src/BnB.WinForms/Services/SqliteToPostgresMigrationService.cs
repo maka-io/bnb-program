@@ -201,7 +201,30 @@ public class SqliteToPostgresMigrationService
 
     private void MigrateCommonTexts(BnBDbContext source, BnBDbContext target)
     {
-        var items = FixDateTimeKinds(source.CommonTexts.AsNoTracking().ToList());
+        // Use raw SQL to handle missing CreatedDate/ModifiedDate columns in older databases
+        var connection = source.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"SELECT Id, Title, Text FROM CommonTexts";
+
+        var items = new List<CommonText>();
+        using (var reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                items.Add(new CommonText
+                {
+                    Id = reader.GetInt32(0),
+                    Title = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                    Text = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                    CreatedDate = null, // Column may not exist in source
+                    ModifiedDate = null // Column may not exist in source
+                });
+            }
+        }
+
         if (items.Count == 0) return;
 
         foreach (var item in items)
@@ -216,7 +239,62 @@ public class SqliteToPostgresMigrationService
 
     private void MigrateCheckNumberConfigs(BnBDbContext source, BnBDbContext target)
     {
-        var items = FixDateTimeKinds(source.CheckNumberConfigs.AsNoTracking().ToList());
+        // Use raw SQL to handle missing columns in older databases
+        var connection = source.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            connection.Open();
+
+        // First, check what columns exist in the table
+        using var schemaCommand = connection.CreateCommand();
+        schemaCommand.CommandText = "PRAGMA table_info(CheckNumberConfigs)";
+        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        using (var schemaReader = schemaCommand.ExecuteReader())
+        {
+            while (schemaReader.Read())
+            {
+                columns.Add(schemaReader.GetString(1)); // Column name is at index 1
+            }
+        }
+
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT Id FROM CheckNumberConfigs";
+
+        var items = new List<CheckNumberConfig>();
+        using (var reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                items.Add(new CheckNumberConfig
+                {
+                    Id = reader.GetInt32(0),
+                    HostCheckNum = 1,    // Default values for columns that may not exist
+                    TravelCheckNum = 1,
+                    MiscCheckNum = 1,
+                    SharedAccounts = 0
+                });
+            }
+        }
+
+        // If we have the new columns, read them in a second pass
+        if (columns.Contains("HostCheckNum") && items.Count > 0)
+        {
+            using var detailCommand = connection.CreateCommand();
+            detailCommand.CommandText = "SELECT Id, HostCheckNum, TravelCheckNum, MiscCheckNum, SharedAccounts FROM CheckNumberConfigs";
+            items.Clear();
+            using var detailReader = detailCommand.ExecuteReader();
+            while (detailReader.Read())
+            {
+                items.Add(new CheckNumberConfig
+                {
+                    Id = detailReader.GetInt32(0),
+                    HostCheckNum = detailReader.IsDBNull(1) ? 1 : detailReader.GetInt32(1),
+                    TravelCheckNum = detailReader.IsDBNull(2) ? 1 : detailReader.GetInt32(2),
+                    MiscCheckNum = detailReader.IsDBNull(3) ? 1 : detailReader.GetInt32(3),
+                    SharedAccounts = detailReader.IsDBNull(4) ? 0 : detailReader.GetInt32(4)
+                });
+            }
+        }
+
         if (items.Count == 0) return;
 
         foreach (var item in items)
@@ -231,7 +309,44 @@ public class SqliteToPostgresMigrationService
 
     private void MigrateFacts(BnBDbContext source, BnBDbContext target)
     {
-        var items = FixDateTimeKinds(source.Facts.AsNoTracking().ToList());
+        // Use raw SQL to handle missing IsActive column in older databases
+        var connection = source.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            connection.Open();
+
+        // Check what columns exist
+        using var schemaCommand = connection.CreateCommand();
+        schemaCommand.CommandText = "PRAGMA table_info(Facts)";
+        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        using (var schemaReader = schemaCommand.ExecuteReader())
+        {
+            while (schemaReader.Read())
+            {
+                columns.Add(schemaReader.GetString(1));
+            }
+        }
+
+        using var command = connection.CreateCommand();
+        var hasIsActive = columns.Contains("IsActive");
+        command.CommandText = hasIsActive
+            ? "SELECT FactId, Category, Description, IsActive FROM Facts"
+            : "SELECT FactId, Category, Description FROM Facts";
+
+        var items = new List<Fact>();
+        using (var reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                items.Add(new Fact
+                {
+                    FactId = reader.GetInt32(0),
+                    Category = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                    Description = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                    IsActive = hasIsActive ? (!reader.IsDBNull(3) && reader.GetBoolean(3)) : true
+                });
+            }
+        }
+
         if (items.Count == 0) return;
 
         foreach (var item in items)
