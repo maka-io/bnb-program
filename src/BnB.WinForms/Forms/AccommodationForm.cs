@@ -138,6 +138,12 @@ public partial class AccommodationForm : Form
                 if (property != null)
                 {
                     _currentAccommodation.Location = property.Location;
+
+                    // Apply default reservation fee for new accommodations
+                    if (_currentMode == FormMode.Insert && property.DefaultReservationFee.HasValue)
+                    {
+                        _currentAccommodation.ReservationFee = property.DefaultReservationFee.Value;
+                    }
                 }
 
                 // Recalculate with the new property's tax plan
@@ -287,11 +293,15 @@ public partial class AccommodationForm : Form
             PropertyAccountNumber = _prefillPropertyAccountNumber!.Value
         };
 
-        // Set location from property
+        // Set location and reservation fee from property
         var property = _dbContext.Properties.Find(_prefillPropertyAccountNumber.Value);
         if (property != null)
         {
             _currentAccommodation.Location = property.Location;
+            if (property.DefaultReservationFee.HasValue)
+            {
+                _currentAccommodation.ReservationFee = property.DefaultReservationFee.Value;
+            }
         }
 
         _bindingSource.Add(_currentAccommodation);
@@ -1335,7 +1345,6 @@ public partial class AccommodationForm : Form
     private void ApplyPropertyPaymentPolicy(Payment payment, Property property, Accommodation accommodation, Guest? guest)
     {
         var arrivalDate = accommodation.ArrivalDate;
-        var bookedDate = guest?.DateBooked ?? DateTime.Today;
 
         // Calculate total for all accommodations with the same confirmation number
         // Note: SQLite doesn't support Sum on decimal, so we load to memory first
@@ -1351,9 +1360,10 @@ public partial class AccommodationForm : Form
             var depositAmount = totalGross * (property.DefaultDepositPercent.Value / 100m);
             payment.DepositDue = Math.Round(depositAmount, 2);
 
-            // Calculate deposit due date
+            // Calculate deposit due date (days after booking)
             if (property.DefaultDepositDueDays.HasValue)
             {
+                var bookedDate = accommodation.EntryDate ?? DateTime.Today;
                 payment.DepositDueDate = bookedDate.AddDays(property.DefaultDepositDueDays.Value);
             }
         }

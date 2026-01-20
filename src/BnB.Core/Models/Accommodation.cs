@@ -24,7 +24,7 @@ public class Accommodation
     public int NumberInParty { get; set; }  // numpty
 
     [NotMapped]
-    public DateTime? BookedDate => Guest?.DateBooked;  // From Guest record
+    public DateTime? BookedDate => EntryDate;  // When this accommodation was booked
 
     // Room info
     public string? UnitName { get; set; }  // UnitName (room type code)
@@ -40,6 +40,7 @@ public class Accommodation
     public decimal? Tax2 { get; set; }  // tax2
     public decimal? Tax3 { get; set; }  // tax3
     public decimal? ServiceFee { get; set; }  // svcharge
+    public decimal? ReservationFee { get; set; }  // Booking fee charged to guest
 
     // Billing totals (not mapped - computed values)
     [NotMapped]

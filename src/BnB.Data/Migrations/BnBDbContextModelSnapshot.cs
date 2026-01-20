@@ -113,6 +113,9 @@ namespace BnB.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal?>("ReservationFee")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("Suppress")
                         .HasColumnType("INTEGER");
 
@@ -482,9 +485,6 @@ namespace BnB.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("DateBooked")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Email")
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
@@ -519,10 +519,6 @@ namespace BnB.Data.Migrations
 
                     b.Property<string>("Referral")
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("ReservationFee")
-                        .HasPrecision(10, 2)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("Revision")
@@ -678,6 +674,9 @@ namespace BnB.Data.Migrations
 
                     b.Property<int?>("DefaultPrepaymentDueDays")
                         .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("DefaultReservationFee")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
                         .HasMaxLength(100)

@@ -144,6 +144,7 @@ public partial class PropertyForm : Form
         txtDefaultCancellationNoticeDays.DataBindings.Add("Text", _bindingSource, nameof(Property.DefaultCancellationNoticeDays), true);
         txtDefaultCancellationFeePercent.DataBindings.Add("Text", _bindingSource, nameof(Property.DefaultCancellationFeePercent), true);
         txtCancellationProcessingFee.DataBindings.Add("Text", _bindingSource, nameof(Property.CancellationProcessingFee), true);
+        txtDefaultReservationFee.DataBindings.Add("Text", _bindingSource, nameof(Property.DefaultReservationFee), true);
 
         // Payment Policy - Peak Period Settings
         chkHasPeakPeriodPolicy.DataBindings.Add("Checked", _bindingSource, nameof(Property.HasPeakPeriodPolicy), true,
@@ -222,6 +223,7 @@ public partial class PropertyForm : Form
                 "DefaultCancellationNoticeDays" => "Cancel Notice Days",
                 "DefaultCancellationFeePercent" => "Cancel Fee %",
                 "CancellationProcessingFee" => "Processing Fee",
+                "DefaultReservationFee" => "Reservation Fee",
                 "HasPeakPeriodPolicy" => "Has Peak Policy",
                 "PeakPeriodPrepaymentDueDays" => "Peak Prepay Days",
                 "PeakPeriodCancellationNoticeDays" => "Peak Cancel Days",

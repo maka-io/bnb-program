@@ -120,6 +120,8 @@ partial class PropertyForm
         this.txtDefaultCancellationFeePercent = new TextBox();
         this.lblCancellationProcessingFee = new Label();
         this.txtCancellationProcessingFee = new TextBox();
+        this.lblDefaultReservationFee = new Label();
+        this.txtDefaultReservationFee = new TextBox();
 
         // Peak Period controls
         this.chkHasPeakPeriodPolicy = new CheckBox();
@@ -343,6 +345,8 @@ partial class PropertyForm
         AddLabelAndField(grpPaymentPolicy, lblDefaultCancellationFeePercent, "Forfeit %:", txtDefaultCancellationFeePercent, 10, y, 115, 50);
         y += 26;
         AddLabelAndField(grpPaymentPolicy, lblCancellationProcessingFee, "Process Fee $:", txtCancellationProcessingFee, 10, y, 115, 60);
+        y += 26;
+        AddLabelAndField(grpPaymentPolicy, lblDefaultReservationFee, "Reserv Fee $:", txtDefaultReservationFee, 10, y, 115, 60);
 
         // === Peak Period Group ===
         this.grpPeakPeriod.Text = "Peak Period Override (e.g., Christmas)";
@@ -573,6 +577,8 @@ partial class PropertyForm
     private TextBox txtDefaultCancellationFeePercent;
     private Label lblCancellationProcessingFee;
     private TextBox txtCancellationProcessingFee;
+    private Label lblDefaultReservationFee;
+    private TextBox txtDefaultReservationFee;
 
     // Peak Period
     private GroupBox grpPeakPeriod;

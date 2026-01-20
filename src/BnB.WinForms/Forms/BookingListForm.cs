@@ -145,7 +145,7 @@ public partial class BookingListForm : Form
             {
                 0 => query.Where(a => a.ArrivalDate >= startDate && a.ArrivalDate <= endDate),
                 1 => query.Where(a => a.DepartureDate >= startDate && a.DepartureDate <= endDate),
-                2 => query.Where(a => a.Guest.DateBooked >= startDate && a.Guest.DateBooked <= endDate),
+                2 => query.Where(a => a.EntryDate >= startDate && a.EntryDate <= endDate),
                 _ => query
             };
         }
@@ -216,7 +216,7 @@ public partial class BookingListForm : Form
         {
             0 => source.Where(a => a.ArrivalDate >= startDate && a.ArrivalDate <= endDate),
             1 => source.Where(a => a.DepartureDate >= startDate && a.DepartureDate <= endDate),
-            2 => source.Where(a => a.Guest?.DateBooked >= startDate && a.Guest?.DateBooked <= endDate),
+            2 => source.Where(a => a.EntryDate >= startDate && a.EntryDate <= endDate),
             _ => source
         };
     }
@@ -404,9 +404,9 @@ public partial class BookingListForm : Form
             .Where(p => p.AppliedTo == "Prepayment" || p.AppliedTo == "Balance Due")
             .Sum(p => p.Amount);
 
-        // Get check numbers for deposit and prepayment if available
-        var depositPayment = payments.FirstOrDefault(p => p.AppliedTo == "Deposit" && !string.IsNullOrEmpty(p.CheckNumber));
-        var prepayPayment = payments.FirstOrDefault(p => (p.AppliedTo == "Prepayment" || p.AppliedTo == "Balance Due") && !string.IsNullOrEmpty(p.CheckNumber));
+        // Get deposit and prepayment records (for check numbers and dates)
+        var depositPayment = payments.FirstOrDefault(p => p.AppliedTo == "Deposit");
+        var prepayPayment = payments.FirstOrDefault(p => p.AppliedTo == "Prepayment" || p.AppliedTo == "Balance Due");
 
         var companyInfo = _dbContext.CompanyInfo.FirstOrDefault();
         var property = accommodations.FirstOrDefault()?.Property;
@@ -420,6 +420,8 @@ public partial class BookingListForm : Form
             totalPrepaymentReceived,
             depositPayment?.CheckNumber,
             prepayPayment?.CheckNumber,
+            depositPayment?.PaymentDate,
+            prepayPayment?.PaymentDate,
             companyInfo,
             property);
 

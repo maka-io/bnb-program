@@ -66,7 +66,7 @@ public class BnBDbContext : DbContext
             entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.BookedBy).HasMaxLength(50);
             entity.Property(e => e.Referral).HasMaxLength(100);
-            entity.Property(e => e.ReservationFee).HasPrecision(10, 2);
+            // ReservationFee moved to Accommodation
             entity.Property(e => e.TravelingWith).HasMaxLength(200);
             entity.Property(e => e.Comments).HasMaxLength(2000);
             entity.Property(e => e.Closure).HasMaxLength(2000);  // Long confirmation text

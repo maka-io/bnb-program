@@ -23,11 +23,10 @@ public class Guest
     public string? FaxNumber { get; set; }  // faxnum
     public string? Email { get; set; }  // Email
 
-    // Booking info
-    public DateTime? DateBooked { get; set; }  // datebkd
+    // Booking info (DateBooked moved to Accommodation.EntryDate - each booking has its own date)
+    // ReservationFee moved to Accommodation - each booking has its own fee
     public string? BookedBy { get; set; }  // bookedby
     public string? Referral { get; set; }  // referral
-    public decimal? ReservationFee { get; set; }  // resfee
     public string? TravelingWith { get; set; }  // travwith
     public string? Comments { get; set; }  // cmmnts
 

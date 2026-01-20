@@ -490,6 +490,82 @@ static class Program
         {
             // Migration already done or other error
         }
+
+        // Add Property payment policy columns if they don't exist
+        try
+        {
+            dbContext.Database.ExecuteSqlRaw(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Properties' AND column_name = 'DefaultDepositPercent') THEN
+                        ALTER TABLE ""Properties"" ADD COLUMN ""DefaultDepositPercent"" DECIMAL(5,2);
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Properties' AND column_name = 'DefaultDepositDueDays') THEN
+                        ALTER TABLE ""Properties"" ADD COLUMN ""DefaultDepositDueDays"" INTEGER;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Properties' AND column_name = 'DefaultPrepaymentDueDays') THEN
+                        ALTER TABLE ""Properties"" ADD COLUMN ""DefaultPrepaymentDueDays"" INTEGER;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Properties' AND column_name = 'DefaultCancellationNoticeDays') THEN
+                        ALTER TABLE ""Properties"" ADD COLUMN ""DefaultCancellationNoticeDays"" INTEGER;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Properties' AND column_name = 'DefaultCancellationFeePercent') THEN
+                        ALTER TABLE ""Properties"" ADD COLUMN ""DefaultCancellationFeePercent"" DECIMAL(5,2);
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Properties' AND column_name = 'CancellationProcessingFee') THEN
+                        ALTER TABLE ""Properties"" ADD COLUMN ""CancellationProcessingFee"" DECIMAL(10,2);
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Properties' AND column_name = 'DefaultReservationFee') THEN
+                        ALTER TABLE ""Properties"" ADD COLUMN ""DefaultReservationFee"" DECIMAL(10,2);
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Properties' AND column_name = 'HasPeakPeriodPolicy') THEN
+                        ALTER TABLE ""Properties"" ADD COLUMN ""HasPeakPeriodPolicy"" BOOLEAN NOT NULL DEFAULT FALSE;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Properties' AND column_name = 'PeakPeriodPrepaymentDueDays') THEN
+                        ALTER TABLE ""Properties"" ADD COLUMN ""PeakPeriodPrepaymentDueDays"" INTEGER;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Properties' AND column_name = 'PeakPeriodCancellationNoticeDays') THEN
+                        ALTER TABLE ""Properties"" ADD COLUMN ""PeakPeriodCancellationNoticeDays"" INTEGER;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Properties' AND column_name = 'PeakPeriodCancellationFeePercent') THEN
+                        ALTER TABLE ""Properties"" ADD COLUMN ""PeakPeriodCancellationFeePercent"" DECIMAL(5,2);
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Properties' AND column_name = 'PeakPeriodStartMonth') THEN
+                        ALTER TABLE ""Properties"" ADD COLUMN ""PeakPeriodStartMonth"" INTEGER;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Properties' AND column_name = 'PeakPeriodStartDay') THEN
+                        ALTER TABLE ""Properties"" ADD COLUMN ""PeakPeriodStartDay"" INTEGER;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Properties' AND column_name = 'PeakPeriodEndMonth') THEN
+                        ALTER TABLE ""Properties"" ADD COLUMN ""PeakPeriodEndMonth"" INTEGER;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Properties' AND column_name = 'PeakPeriodEndDay') THEN
+                        ALTER TABLE ""Properties"" ADD COLUMN ""PeakPeriodEndDay"" INTEGER;
+                    END IF;
+                END $$;
+            ");
+        }
+        catch
+        {
+            // Columns already exist or other error
+        }
+
+        // Add ReservationFee to Accommodations if it doesn't exist
+        try
+        {
+            dbContext.Database.ExecuteSqlRaw(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Accommodations' AND column_name = 'ReservationFee') THEN
+                        ALTER TABLE ""Accommodations"" ADD COLUMN ""ReservationFee"" DECIMAL(10,2);
+                    END IF;
+                END $$;
+            ");
+        }
+        catch
+        {
+            // Column already exists or other error
+        }
     }
 
     /// <summary>
@@ -707,7 +783,6 @@ static class Program
                     BusinessPhone TEXT,
                     FaxNumber TEXT,
                     Email TEXT,
-                    DateBooked TEXT,
                     BookedBy TEXT,
                     Referral TEXT,
                     ReservationFee TEXT,
@@ -740,11 +815,11 @@ static class Program
                 dbContext.Database.ExecuteSqlRaw(@"
                     INSERT INTO Guests_new (FirstName, LastName, Address, BusinessAddress,
                         City, State, ZipCode, Country, HomePhone, BusinessPhone, FaxNumber, Email,
-                        DateBooked, BookedBy, Referral, ReservationFee, TravelingWith, Comments,
+                        BookedBy, Referral, ReservationFee, TravelingWith, Comments,
                         LabelFlag, Closure, EntryDate, EntryUser, UpdateDate, UpdateUser, RevisionDate, Revision)
                     SELECT FirstName, LastName, Address, BusinessAddress,
                         City, State, ZipCode, Country, HomePhone, BusinessPhone, FaxNumber, Email,
-                        DateBooked, BookedBy, Referral, ReservationFee, TravelingWith, Comments,
+                        BookedBy, Referral, ReservationFee, TravelingWith, Comments,
                         LabelFlag, Closure, EntryDate, EntryUser, UpdateDate, UpdateUser, RevisionDate, Revision
                     FROM Guests ORDER BY ConfirmationNumber");
 

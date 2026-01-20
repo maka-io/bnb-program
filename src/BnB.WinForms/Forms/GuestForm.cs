@@ -107,8 +107,6 @@ public partial class GuestForm : Form
             dgvGuests.Columns["Closure"].Visible = false;
         if (dgvGuests.Columns.Contains("ReservationFee"))
             dgvGuests.Columns["ReservationFee"].Visible = false;
-        if (dgvGuests.Columns.Contains("DateBooked"))
-            dgvGuests.Columns["DateBooked"].Visible = false;
 
         // Configure column headers with proper names
         foreach (DataGridViewColumn col in dgvGuests.Columns)
@@ -289,7 +287,6 @@ public partial class GuestForm : Form
         {
             FirstName = "",
             LastName = "",
-            DateBooked = DateTime.Today,
             EntryDate = DateTime.Now,
             EntryUser = Environment.UserName
         };

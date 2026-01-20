@@ -129,7 +129,6 @@ public partial class PaymentForm : Form
     private void ApplyPropertyPaymentPolicy(Payment payment, Property property, Accommodation accommodation)
     {
         var arrivalDate = accommodation.ArrivalDate;
-        var bookedDate = accommodation.Guest?.DateBooked ?? DateTime.Today;
 
         // Calculate total for all accommodations with the same confirmation number
         // Note: SQLite doesn't support Sum on decimal, so we load to memory first
@@ -145,9 +144,10 @@ public partial class PaymentForm : Form
             var depositAmount = totalGross * (property.DefaultDepositPercent.Value / 100m);
             payment.DepositDue = Math.Round(depositAmount, 2);
 
-            // Calculate deposit due date
+            // Calculate deposit due date (days after booking)
             if (property.DefaultDepositDueDays.HasValue)
             {
+                var bookedDate = accommodation.EntryDate ?? DateTime.Today;
                 payment.DepositDueDate = bookedDate.AddDays(property.DefaultDepositDueDays.Value);
             }
         }

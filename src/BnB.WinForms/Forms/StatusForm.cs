@@ -48,10 +48,9 @@ public partial class StatusForm : Form
                 .Count(a => a.ArrivalDate <= today && a.DepartureDate > today && !a.Suppress);
             txtInHouse.Text = inHouse.ToString();
 
-            // This month's bookings (using Guest.DateBooked since Accommodation.BookedDate is not mapped)
+            // This month's bookings (by entry date - when each booking was created)
             var thisMonthBookings = _dbContext.Accommodations
-                .Include(a => a.Guest)
-                .Where(a => a.Guest.DateBooked >= thisMonth && a.Guest.DateBooked < nextMonth)
+                .Where(a => a.EntryDate >= thisMonth && a.EntryDate < nextMonth)
                 .Count();
             txtThisMonthBookings.Text = thisMonthBookings.ToString();
 

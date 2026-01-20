@@ -546,10 +546,9 @@ public class JsonImportService
                 BusinessPhone = GetString(el, "bsphone", "busphone", "BusinessPhone"),
                 FaxNumber = GetString(el, "faxnum", "fax", "FaxNumber"),
                 Email = GetString(el, "email", "Email"),
-                DateBooked = GetDateTime(el, "datebkd", "datebooked", "DateBooked"),
                 BookedBy = GetString(el, "bookedby", "BookedBy"),
                 Referral = GetString(el, "referral", "Referral")?.Truncate(100),
-                ReservationFee = GetNullableDecimal(el, "resfee", "ReservationFee"),
+                // ReservationFee moved to Accommodation
                 TravelingWith = GetString(el, "travwith", "travelingwith", "TravelingWith")?.Truncate(200),
                 Comments = GetString(el, "cmmnts", "comments", "Comments")?.Truncate(2000),
                 LabelFlag = GetBool(el, "lbl_flag", "LabelFlag"),

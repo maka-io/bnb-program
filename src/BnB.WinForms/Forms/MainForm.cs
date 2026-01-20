@@ -1007,8 +1007,8 @@ public partial class MainForm : Form
             var bookings = dbContext.Accommodations
                 .Include(a => a.Guest)
                 .Include(a => a.Property)
-                .Where(a => a.Guest.DateBooked >= startDate && a.Guest.DateBooked <= endDate)
-                .OrderBy(a => a.Guest.DateBooked)
+                .Where(a => a.EntryDate >= startDate && a.EntryDate <= endDate)
+                .OrderBy(a => a.EntryDate)
                 .ToList();
 
             var companyInfo = dbContext.CompanyInfo.FirstOrDefault();

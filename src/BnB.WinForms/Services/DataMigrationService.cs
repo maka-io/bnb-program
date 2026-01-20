@@ -463,10 +463,9 @@ public class DataMigrationService
                 BusinessPhone = AccessDataReader.GetString(row, "bsphone") ?? AccessDataReader.GetString(row, "busphone"),
                 FaxNumber = AccessDataReader.GetString(row, "faxnum") ?? AccessDataReader.GetString(row, "fax"),
                 Email = AccessDataReader.GetString(row, "email"),
-                DateBooked = AccessDataReader.GetDateTime(row, "datebkd") ?? AccessDataReader.GetDateTime(row, "datebooked"),
                 BookedBy = AccessDataReader.GetString(row, "bookedby"),
                 Referral = (AccessDataReader.GetString(row, "referral")).Truncate(100),
-                ReservationFee = AccessDataReader.GetNullableDecimal(row, "resfee"),
+                // ReservationFee moved to Accommodation
                 TravelingWith = (AccessDataReader.GetString(row, "travwith") ?? AccessDataReader.GetString(row, "travelingwith")).Truncate(200),
                 Comments = (AccessDataReader.GetString(row, "cmmnts") ?? AccessDataReader.GetString(row, "comments")).Truncate(2000),
                 LabelFlag = AccessDataReader.GetBool(row, "lbl_flag"),

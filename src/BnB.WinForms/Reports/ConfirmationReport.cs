@@ -21,6 +21,8 @@ public class ConfirmationReport : BaseReport
     private readonly decimal _totalPrepayment;
     private readonly string? _depositCheckNum;
     private readonly string? _prepayCheckNum;
+    private readonly DateTime? _depositDate;
+    private readonly DateTime? _prepayDate;
     private readonly long _confirmationNumber;
 
     public override string Title => $"Confirmation #{_confirmationNumber}";
@@ -35,6 +37,8 @@ public class ConfirmationReport : BaseReport
         decimal totalPrepayment = 0,
         string? depositCheckNum = null,
         string? prepayCheckNum = null,
+        DateTime? depositDate = null,
+        DateTime? prepayDate = null,
         CompanyInfo? companyInfo = null,
         Property? property = null)
     {
@@ -49,6 +53,8 @@ public class ConfirmationReport : BaseReport
         _totalPrepayment = totalPrepayment;
         _depositCheckNum = depositCheckNum;
         _prepayCheckNum = prepayCheckNum;
+        _depositDate = depositDate;
+        _prepayDate = prepayDate;
         // Get confirmation number from first accommodation (guests no longer have conf#)
         _confirmationNumber = _accommodations.FirstOrDefault()?.ConfirmationNumber ?? 0;
     }
@@ -272,13 +278,14 @@ public class ConfirmationReport : BaseReport
                 table.Cell().TotalsRow().AlignRight().Text(FormatCurrency(grandTotal)).Bold();
             });
 
-            // Add reservation fee if applicable
-            if (_guest.ReservationFee.HasValue && _guest.ReservationFee > 0)
+            // Add reservation fee if applicable (sum from all accommodations)
+            var totalReservationFee = _accommodations.Sum(a => a.ReservationFee ?? 0);
+            if (totalReservationFee > 0)
             {
                 column.Item().PaddingTop(5).Row(row =>
                 {
                     row.RelativeItem();
-                    row.ConstantItem(200).AlignRight().Text($"Reservation Fee: {FormatCurrency(_guest.ReservationFee)}");
+                    row.ConstantItem(200).AlignRight().Text($"Reservation Fee: {FormatCurrency(totalReservationFee)}");
                 });
             }
 
@@ -295,8 +302,8 @@ public class ConfirmationReport : BaseReport
             column.Item().Border(1).BorderColor(ReportStyles.BorderColor).Padding(10).Column(innerCol =>
             {
                 var grandTotal = _accommodations.Sum(a => a.TotalGrossWithTax);
-                if (_guest.ReservationFee.HasValue)
-                    grandTotal += _guest.ReservationFee.Value;
+                var reservationFeeTotal = _accommodations.Sum(a => a.ReservationFee ?? 0);
+                grandTotal += reservationFeeTotal;
 
                 // Payment Due section - show what the guest owes and when
                 bool hasDues = false;
@@ -352,7 +359,13 @@ public class ConfirmationReport : BaseReport
                 {
                     innerCol.Item().Row(row =>
                     {
-                        row.RelativeItem().Text($"Deposit Received{(!string.IsNullOrEmpty(_depositCheckNum) ? $" (Check #{_depositCheckNum})" : "")}:");
+                        var depositText = "Deposit Received";
+                        if (_depositDate.HasValue)
+                            depositText += $" on {_depositDate.Value:MM/dd/yyyy}";
+                        if (!string.IsNullOrEmpty(_depositCheckNum))
+                            depositText += $" (Check #{_depositCheckNum})";
+                        depositText += ":";
+                        row.RelativeItem().Text(depositText);
                         row.ConstantItem(100).AlignRight().Text(FormatCurrency(_totalDeposit));
                     });
                     totalCredits += _totalDeposit;
@@ -362,7 +375,13 @@ public class ConfirmationReport : BaseReport
                 {
                     innerCol.Item().Row(row =>
                     {
-                        row.RelativeItem().Text($"Prepayment Received{(!string.IsNullOrEmpty(_prepayCheckNum) ? $" (Check #{_prepayCheckNum})" : "")}:");
+                        var prepayText = "Prepayment Received";
+                        if (_prepayDate.HasValue)
+                            prepayText += $" on {_prepayDate.Value:MM/dd/yyyy}";
+                        if (!string.IsNullOrEmpty(_prepayCheckNum))
+                            prepayText += $" (Check #{_prepayCheckNum})";
+                        prepayText += ":";
+                        row.RelativeItem().Text(prepayText);
                         row.ConstantItem(100).AlignRight().Text(FormatCurrency(_totalPrepayment));
                     });
                     totalCredits += _totalPrepayment;

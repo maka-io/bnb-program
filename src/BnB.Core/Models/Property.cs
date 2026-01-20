@@ -66,6 +66,9 @@ public class Property
     /// <summary>Flat processing fee deducted from refund for any cancellation (e.g., $25)</summary>
     public decimal? CancellationProcessingFee { get; set; }
 
+    /// <summary>Default reservation fee charged to guest when booking (e.g., $25)</summary>
+    public decimal? DefaultReservationFee { get; set; }
+
     // Payment Policy - Peak Period Override Settings (e.g., Christmas/Holiday period)
     /// <summary>Whether this property has peak period payment overrides</summary>
     public bool HasPeakPeriodPolicy { get; set; }
