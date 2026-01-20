@@ -471,12 +471,18 @@ public partial class PaymentForm : Form
 
     private void UpdateGridTotals()
     {
-        if (_bindingSource.DataSource is List<Payment> payments && payments.Count > 0)
+        if (_bindingSource.DataSource is IList<Payment> payments && payments.Count > 0)
         {
+            // Sum all payments received
             var totalReceived = payments.Sum(p => p.Amount);
-            var totalDue = payments.Sum(p => (p.DepositDue ?? 0) + (p.PrepaymentDue ?? 0));
-            var totalBalance = payments.Sum(p => p.Balance);
-            var paymentCount = payments.Count;
+
+            // Sum dues only once per confirmation number (they're duplicated on each payment record)
+            var totalDue = payments
+                .GroupBy(p => p.ConfirmationNumber)
+                .Select(g => (g.First().DepositDue ?? 0) + (g.First().PrepaymentDue ?? 0))
+                .Sum();
+
+            var totalBalance = totalDue - totalReceived;
 
             lblTotalReceived.Text = $"Total Received: {totalReceived:C2}";
             lblTotalDue.Text = $"Total Due: {totalDue:C2}";
@@ -551,11 +557,14 @@ public partial class PaymentForm : Form
                 // Use the tracked instance and copy values from the displayed one
                 _currentPayment = trackedEntity.Entity;
                 // Update position to point to the tracked entity in the binding source
-                var index = ((List<Payment>)_bindingSource.DataSource!).FindIndex(p => p.Id == payment.Id);
-                if (index >= 0)
+                if (_bindingSource.DataSource is IList<Payment> paymentList)
                 {
-                    ((List<Payment>)_bindingSource.DataSource!)[index] = _currentPayment;
-                    _bindingSource.ResetItem(index);
+                    var index = paymentList.IndexOf(paymentList.FirstOrDefault(p => p.Id == payment.Id)!);
+                    if (index >= 0)
+                    {
+                        paymentList[index] = _currentPayment;
+                        _bindingSource.ResetItem(index);
+                    }
                 }
             }
             else
@@ -828,7 +837,7 @@ public partial class PaymentForm : Form
         var prepaymentDue = currentPayment.PrepaymentDue;
 
         // Calculate total previously paid for this confirmation
-        var payments = _bindingSource.DataSource as List<Payment>;
+        var payments = _bindingSource.DataSource as IList<Payment>;
         var totalPreviouslyPaid = payments?
             .Where(p => p.ConfirmationNumber == confirmationNumber)
             .Sum(p => p.Amount) ?? 0m;
