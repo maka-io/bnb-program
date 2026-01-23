@@ -120,24 +120,6 @@ public partial class MainForm : Form
         });
     }
 
-    private void mnuTravelAgent_Click(object sender, EventArgs e)
-    {
-        OpenOrActivateForm<TravelAgentBookingForm>(() =>
-        {
-            var dbContext = _serviceProvider.GetRequiredService<BnBDbContext>();
-            return new TravelAgentBookingForm(dbContext);
-        });
-    }
-
-    private void mnuCarReservations_Click(object sender, EventArgs e)
-    {
-        OpenOrActivateForm<CarRentalBookingForm>(() =>
-        {
-            var dbContext = _serviceProvider.GetRequiredService<BnBDbContext>();
-            return new CarRentalBookingForm(dbContext);
-        });
-    }
-
     private void mnuPayments_Click(object sender, EventArgs e)
     {
         OpenOrActivateForm<PaymentForm>(() =>
@@ -157,24 +139,6 @@ public partial class MainForm : Form
         {
             var dbContext = _serviceProvider.GetRequiredService<BnBDbContext>();
             return new PropertyForm(dbContext);
-        });
-    }
-
-    private void mnuTravelAgencies_Click(object sender, EventArgs e)
-    {
-        OpenOrActivateForm<TravelAgencyForm>(() =>
-        {
-            var dbContext = _serviceProvider.GetRequiredService<BnBDbContext>();
-            return new TravelAgencyForm(dbContext);
-        });
-    }
-
-    private void mnuCarRentalAgencies_Click(object sender, EventArgs e)
-    {
-        OpenOrActivateForm<CarAgencyForm>(() =>
-        {
-            var dbContext = _serviceProvider.GetRequiredService<BnBDbContext>();
-            return new CarAgencyForm(dbContext);
         });
     }
 
@@ -527,16 +491,12 @@ public partial class MainForm : Form
                 Log("=== Import Summary ===");
                 Log($"Tax Rates: {importResult.TaxRates}");
                 Log($"Tax Plans: {importResult.TaxPlans}");
-                Log($"Travel Agencies: {importResult.TravelAgencies}");
-                Log($"Car Agencies: {importResult.CarAgencies}");
                 Log($"Properties: {importResult.Properties}");
                 Log($"Room Types: {importResult.RoomTypes}");
                 Log($"Guests: {importResult.Guests}");
                 Log($"Accommodations: {importResult.Accommodations}");
                 Log($"Payments: {importResult.Payments}");
                 Log($"Checks: {importResult.Checks}");
-                Log($"Travel Agent Bookings: {importResult.TravelAgentBookings}");
-                Log($"Car Rentals: {importResult.CarRentals}");
                 Log("");
                 Log($"Total: {importResult.TotalRecords} records imported");
 
@@ -1146,25 +1106,6 @@ public partial class MainForm : Form
         var report = new HostAccountInfoReport(properties, companyInfo);
         using var viewer = new ReportViewerForm(report);
         viewer.ShowDialog(this);
-    }
-
-    private void mnuCarRentalActivity_Click(object sender, EventArgs e)
-    {
-        ShowDateRangeReport("Car Rental Activity Report", (startDate, endDate) =>
-        {
-            var dbContext = _serviceProvider.GetRequiredService<BnBDbContext>();
-            var rentals = dbContext.Set<CarRental>()
-                .Include(r => r.Guest)
-                .Include(r => r.CarAgency)
-                .Where(r => r.PickupDate >= startDate && r.PickupDate <= endDate)
-                .OrderBy(r => r.PickupDate)
-                .ToList();
-
-            var companyInfo = dbContext.CompanyInfo.FirstOrDefault();
-            var report = new CarRentalActivityReport(startDate, endDate, rentals, companyInfo);
-            using var viewer = new ReportViewerForm(report);
-            viewer.ShowDialog(this);
-        });
     }
 
     /// <summary>

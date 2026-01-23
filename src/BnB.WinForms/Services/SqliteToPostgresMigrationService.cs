@@ -50,15 +50,11 @@ public class SqliteToPostgresMigrationService
         MigrateTableSafe("Facts", () => MigrateFacts(sqliteContext, postgresContext), progress);
         MigrateTableSafe("Guests", () => MigrateGuests(sqliteContext, postgresContext), progress);
         MigrateTableSafe("Properties", () => MigrateProperties(sqliteContext, postgresContext), progress);
-        MigrateTableSafe("Travel Agencies", () => MigrateTravelAgencies(sqliteContext, postgresContext), progress);
-        MigrateTableSafe("Car Agencies", () => MigrateCarAgencies(sqliteContext, postgresContext), progress);
         MigrateTableSafe("Room Types", () => MigrateRoomTypes(sqliteContext, postgresContext), progress);
         MigrateTableSafe("Accommodations", () => MigrateAccommodations(sqliteContext, postgresContext), progress);
         MigrateTableSafe("Payments", () => MigratePayments(sqliteContext, postgresContext), progress);
         MigrateTableSafe("Checks", () => MigrateChecks(sqliteContext, postgresContext), progress);
         MigrateTableSafe("Property Facts", () => MigratePropertyFacts(sqliteContext, postgresContext), progress);
-        MigrateTableSafe("Travel Agent Bookings", () => MigrateTravelAgentBookings(sqliteContext, postgresContext), progress);
-        MigrateTableSafe("Car Rentals", () => MigrateCarRentals(sqliteContext, postgresContext), progress);
 
         progress?.Report("Resetting PostgreSQL sequences...");
         ResetSequences(postgresContext);
@@ -389,36 +385,6 @@ public class SqliteToPostgresMigrationService
         target.SaveChanges();
     }
 
-    private void MigrateTravelAgencies(BnBDbContext source, BnBDbContext target)
-    {
-        var items = FixDateTimeKinds(source.TravelAgencies.AsNoTracking().ToList());
-        if (items.Count == 0) return;
-
-        foreach (var item in items)
-        {
-            if (!target.TravelAgencies.Any(x => x.Id == item.Id))
-            {
-                target.TravelAgencies.Add(item);
-            }
-        }
-        target.SaveChanges();
-    }
-
-    private void MigrateCarAgencies(BnBDbContext source, BnBDbContext target)
-    {
-        var items = FixDateTimeKinds(source.CarAgencies.AsNoTracking().ToList());
-        if (items.Count == 0) return;
-
-        foreach (var item in items)
-        {
-            if (!target.CarAgencies.Any(x => x.Id == item.Id))
-            {
-                target.CarAgencies.Add(item);
-            }
-        }
-        target.SaveChanges();
-    }
-
     private void MigrateRoomTypes(BnBDbContext source, BnBDbContext target)
     {
         var items = FixDateTimeKinds(source.RoomTypes.AsNoTracking().ToList());
@@ -529,36 +495,6 @@ public class SqliteToPostgresMigrationService
         target.SaveChanges();
     }
 
-    private void MigrateTravelAgentBookings(BnBDbContext source, BnBDbContext target)
-    {
-        var items = FixDateTimeKinds(source.TravelAgentBookings.AsNoTracking().ToList());
-        if (items.Count == 0) return;
-
-        foreach (var item in items)
-        {
-            if (!target.TravelAgentBookings.Any(x => x.Id == item.Id))
-            {
-                target.TravelAgentBookings.Add(item);
-            }
-        }
-        target.SaveChanges();
-    }
-
-    private void MigrateCarRentals(BnBDbContext source, BnBDbContext target)
-    {
-        var items = FixDateTimeKinds(source.CarRentals.AsNoTracking().ToList());
-        if (items.Count == 0) return;
-
-        foreach (var item in items)
-        {
-            if (!target.CarRentals.Any(x => x.Id == item.Id))
-            {
-                target.CarRentals.Add(item);
-            }
-        }
-        target.SaveChanges();
-    }
-
     private void ResetSequences(BnBDbContext context)
     {
         // PostgreSQL uses sequences for auto-increment columns
@@ -573,15 +509,11 @@ public class SqliteToPostgresMigrationService
             ("Facts", "FactId"),
             ("Guests", "Id"),
             ("Properties", "AccountNumber"),
-            ("TravelAgencies", "Id"),
-            ("CarAgencies", "Id"),
             ("RoomTypes", "Id"),
             ("Accommodations", "Id"),
             ("Payments", "Id"),
             ("Checks", "Id"),
-            ("PropertyFacts", "PropertyFactId"),
-            ("TravelAgentBookings", "Id"),
-            ("CarRentals", "Id")
+            ("PropertyFacts", "PropertyFactId")
         };
 
         foreach (var (table, column) in sequences)

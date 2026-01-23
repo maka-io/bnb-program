@@ -175,121 +175,6 @@ namespace BnB.Data.Migrations
                     b.ToTable("Accommodations");
                 });
 
-            modelBuilder.Entity("BnB.Core.Models.CarAgency", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Address")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("City")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Comments")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CommissionPercent")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ContactName")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Fax")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("State")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ZipCode")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CarAgencies");
-                });
-
-            modelBuilder.Entity("BnB.Core.Models.CarRental", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("CarAgencyId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("CarType")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CheckNumber")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Comments")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CommissionAmount")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CommissionPaid")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("CommissionPaidDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<long>("ConfirmationNumber")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal?>("DailyRate")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("GuestId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("PickupDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("ReturnDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("TotalAmount")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CarAgencyId");
-
-                    b.HasIndex("GuestId");
-
-                    b.ToTable("CarRentals");
-                });
-
             modelBuilder.Entity("BnB.Core.Models.Check", b =>
                 {
                     b.Property<int>("Id")
@@ -1041,106 +926,6 @@ namespace BnB.Data.Migrations
                     b.ToTable("TaxRates");
                 });
 
-            modelBuilder.Entity("BnB.Core.Models.TravelAgency", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("AccountNumber")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Address")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("City")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Comments")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CommissionPercent")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ContactName")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Fax")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("State")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ZipCode")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TravelAgencies");
-                });
-
-            modelBuilder.Entity("BnB.Core.Models.TravelAgentBooking", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("CheckNumber")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Comments")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CommissionAmount")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CommissionPaid")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("CommissionPaidDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<long>("ConfirmationNumber")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("GuestId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("TravelAgencyId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GuestId");
-
-                    b.HasIndex("TravelAgencyId");
-
-                    b.ToTable("TravelAgentBookings");
-                });
-
             modelBuilder.Entity("BnB.Core.Models.Accommodation", b =>
                 {
                     b.HasOne("BnB.Core.Models.Guest", "Guest")
@@ -1156,23 +941,6 @@ namespace BnB.Data.Migrations
                     b.Navigation("Guest");
 
                     b.Navigation("Property");
-                });
-
-            modelBuilder.Entity("BnB.Core.Models.CarRental", b =>
-                {
-                    b.HasOne("BnB.Core.Models.CarAgency", "CarAgency")
-                        .WithMany("Rentals")
-                        .HasForeignKey("CarAgencyId");
-
-                    b.HasOne("BnB.Core.Models.Guest", "Guest")
-                        .WithMany()
-                        .HasForeignKey("GuestId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CarAgency");
-
-                    b.Navigation("Guest");
                 });
 
             modelBuilder.Entity("BnB.Core.Models.Check", b =>
@@ -1236,28 +1004,6 @@ namespace BnB.Data.Migrations
                     b.Navigation("Property");
                 });
 
-            modelBuilder.Entity("BnB.Core.Models.TravelAgentBooking", b =>
-                {
-                    b.HasOne("BnB.Core.Models.Guest", "Guest")
-                        .WithMany()
-                        .HasForeignKey("GuestId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BnB.Core.Models.TravelAgency", "TravelAgency")
-                        .WithMany("Bookings")
-                        .HasForeignKey("TravelAgencyId");
-
-                    b.Navigation("Guest");
-
-                    b.Navigation("TravelAgency");
-                });
-
-            modelBuilder.Entity("BnB.Core.Models.CarAgency", b =>
-                {
-                    b.Navigation("Rentals");
-                });
-
             modelBuilder.Entity("BnB.Core.Models.Fact", b =>
                 {
                     b.Navigation("PropertyFacts");
@@ -1280,11 +1026,6 @@ namespace BnB.Data.Migrations
             modelBuilder.Entity("BnB.Core.Models.RoomType", b =>
                 {
                     b.Navigation("Blackouts");
-                });
-
-            modelBuilder.Entity("BnB.Core.Models.TravelAgency", b =>
-                {
-                    b.Navigation("Bookings");
                 });
 #pragma warning restore 612, 618
         }

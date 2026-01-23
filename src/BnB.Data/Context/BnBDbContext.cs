@@ -26,14 +26,6 @@ public class BnBDbContext : DbContext
     public DbSet<RoomType> RoomTypes => Set<RoomType>();
     public DbSet<RoomBlackout> RoomBlackouts => Set<RoomBlackout>();
 
-    // Travel agency entities
-    public DbSet<TravelAgency> TravelAgencies => Set<TravelAgency>();
-    public DbSet<TravelAgentBooking> TravelAgentBookings => Set<TravelAgentBooking>();
-
-    // Car rental entities
-    public DbSet<CarAgency> CarAgencies => Set<CarAgency>();
-    public DbSet<CarRental> CarRentals => Set<CarRental>();
-
     // Property facts
     public DbSet<Fact> Facts => Set<Fact>();
     public DbSet<PropertyFact> PropertyFacts => Set<PropertyFact>();
@@ -251,77 +243,6 @@ public class BnBDbContext : DbContext
 
             // Index for efficient date range queries
             entity.HasIndex(e => new { e.RoomTypeId, e.StartDate, e.EndDate });
-        });
-
-        // TravelAgency configuration (tamaster)
-        modelBuilder.Entity<TravelAgency>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
-            entity.Property(e => e.ContactName).HasMaxLength(100);
-            entity.Property(e => e.Address).HasMaxLength(100);
-            entity.Property(e => e.City).HasMaxLength(50);
-            entity.Property(e => e.State).HasMaxLength(50);
-            entity.Property(e => e.ZipCode).HasMaxLength(50);
-            entity.Property(e => e.Phone).HasMaxLength(50);
-            entity.Property(e => e.Fax).HasMaxLength(50);
-            entity.Property(e => e.Email).HasMaxLength(100);
-            entity.Property(e => e.CommissionPercent).HasPrecision(5, 2);
-        });
-
-        // TravelAgentBooking configuration (tagentbl)
-        modelBuilder.Entity<TravelAgentBooking>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.CommissionAmount).HasPrecision(10, 2);
-            entity.Property(e => e.CommissionPaid).HasPrecision(10, 2);
-            entity.Property(e => e.CheckNumber).HasMaxLength(50);
-
-            entity.HasOne(e => e.Guest)
-                .WithMany()
-                .HasForeignKey(e => e.GuestId)
-                .IsRequired();
-
-            entity.HasOne(e => e.TravelAgency)
-                .WithMany(ta => ta.Bookings)
-                .HasForeignKey(e => e.TravelAgencyId);
-        });
-
-        // CarAgency configuration (carmaster)
-        modelBuilder.Entity<CarAgency>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
-            entity.Property(e => e.ContactName).HasMaxLength(100);
-            entity.Property(e => e.Address).HasMaxLength(100);
-            entity.Property(e => e.City).HasMaxLength(50);
-            entity.Property(e => e.State).HasMaxLength(50);
-            entity.Property(e => e.ZipCode).HasMaxLength(50);
-            entity.Property(e => e.Phone).HasMaxLength(50);
-            entity.Property(e => e.Fax).HasMaxLength(50);
-            entity.Property(e => e.Email).HasMaxLength(100);
-            entity.Property(e => e.CommissionPercent).HasPrecision(5, 2);
-        });
-
-        // CarRental configuration (cartbl)
-        modelBuilder.Entity<CarRental>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.CarType).HasMaxLength(50);
-            entity.Property(e => e.DailyRate).HasPrecision(10, 2);
-            entity.Property(e => e.TotalAmount).HasPrecision(10, 2);
-            entity.Property(e => e.CommissionAmount).HasPrecision(10, 2);
-            entity.Property(e => e.CommissionPaid).HasPrecision(10, 2);
-            entity.Property(e => e.CheckNumber).HasMaxLength(50);
-
-            entity.HasOne(e => e.Guest)
-                .WithMany()
-                .HasForeignKey(e => e.GuestId)
-                .IsRequired();
-
-            entity.HasOne(e => e.CarAgency)
-                .WithMany(ca => ca.Rentals)
-                .HasForeignKey(e => e.CarAgencyId);
         });
 
         // CompanyInfo configuration (usercompanyinfo)

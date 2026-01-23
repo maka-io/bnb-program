@@ -32,15 +32,11 @@ partial class MainForm
         this.mnuGuests = new ToolStripMenuItem();
         this.mnuGeneralInfo = new ToolStripMenuItem();
         this.mnuAccommodations = new ToolStripMenuItem();
-        this.mnuTravelAgent = new ToolStripMenuItem();
-        this.mnuCarReservations = new ToolStripMenuItem();
         this.mnuPayments = new ToolStripMenuItem();
 
         // Accounts Menu
         this.mnuAccounts = new ToolStripMenuItem();
         this.mnuHostProperties = new ToolStripMenuItem();
-        this.mnuTravelAgencies = new ToolStripMenuItem();
-        this.mnuCarRentalAgencies = new ToolStripMenuItem();
 
         // Availability Menu
         this.mnuAvailability = new ToolStripMenuItem();
@@ -66,7 +62,6 @@ partial class MainForm
         this.mnuOverpayments = new ToolStripMenuItem();
         this.mnuHost1099 = new ToolStripMenuItem();
         this.mnuHostAcctInfo = new ToolStripMenuItem();
-        this.mnuCarRentalActivity = new ToolStripMenuItem();
         this.mnuTrends = new ToolStripMenuItem();
         this.mnuMailingLabels = new ToolStripMenuItem();
         this.mnuAccountList = new ToolStripMenuItem();
@@ -141,8 +136,7 @@ partial class MainForm
 
         // === Guests Menu ===
         this.mnuGuests.DropDownItems.AddRange(new ToolStripItem[] {
-            this.mnuGeneralInfo, this.mnuAccommodations, this.mnuTravelAgent,
-            this.mnuCarReservations, this.mnuPayments
+            this.mnuGeneralInfo, this.mnuAccommodations, this.mnuPayments
         });
         this.mnuGuests.Text = "&Guests";
 
@@ -152,29 +146,17 @@ partial class MainForm
         this.mnuAccommodations.Text = "&Accommodations";
         this.mnuAccommodations.Click += mnuAccommodations_Click;
 
-        this.mnuTravelAgent.Text = "&Travel Agency";
-        this.mnuTravelAgent.Click += mnuTravelAgent_Click;
-
-        this.mnuCarReservations.Text = "&Car Reservations";
-        this.mnuCarReservations.Click += mnuCarReservations_Click;
-
         this.mnuPayments.Text = "&Payments";
         this.mnuPayments.Click += mnuPayments_Click;
 
         // === Accounts Menu ===
         this.mnuAccounts.DropDownItems.AddRange(new ToolStripItem[] {
-            this.mnuHostProperties, this.mnuTravelAgencies, this.mnuCarRentalAgencies
+            this.mnuHostProperties
         });
         this.mnuAccounts.Text = "&Accounts";
 
         this.mnuHostProperties.Text = "&Host Properties";
         this.mnuHostProperties.Click += mnuHostProperties_Click;
-
-        this.mnuTravelAgencies.Text = "&Travel Agencies";
-        this.mnuTravelAgencies.Click += mnuTravelAgencies_Click;
-
-        this.mnuCarRentalAgencies.Text = "&Car Rental Agencies";
-        this.mnuCarRentalAgencies.Click += mnuCarRentalAgencies_Click;
 
         // === Availability Menu ===
         this.mnuRoomAvailability = new ToolStripMenuItem();
@@ -191,7 +173,7 @@ partial class MainForm
             this.mnuCheckLedger, this.mnuNetSummary, this.mnuServiceFeeSummary,
             this.mnuCommission, this.mnuPaymentsReceived, this.mnuPayReceivable,
             this.mnuRefunds, this.mnuOverpayments, this.mnuHost1099,
-            this.mnuHostAcctInfo, this.mnuCarRentalActivity, this.mnuTrends,
+            this.mnuHostAcctInfo, this.mnuTrends,
             this.mnuMailingLabels, this.mnuAccountList
         });
         this.mnuReports.Text = "&Reports";
@@ -243,8 +225,6 @@ partial class MainForm
         this.mnuHost1099.Click += mnuHost1099_Click;
         this.mnuHostAcctInfo.Text = "Host Account &Information";
         this.mnuHostAcctInfo.Click += mnuHostAcctInfo_Click;
-        this.mnuCarRentalActivity.Text = "Car R&ental Activity";
-        this.mnuCarRentalActivity.Click += mnuCarRentalActivity_Click;
         this.mnuTrends.Text = "&Trends";
         this.mnuTrends.Click += mnuTrends_Click;
 
@@ -377,15 +357,11 @@ partial class MainForm
     private ToolStripMenuItem mnuGuests;
     private ToolStripMenuItem mnuGeneralInfo;
     private ToolStripMenuItem mnuAccommodations;
-    private ToolStripMenuItem mnuTravelAgent;
-    private ToolStripMenuItem mnuCarReservations;
     private ToolStripMenuItem mnuPayments;
 
     // Accounts Menu
     private ToolStripMenuItem mnuAccounts;
     private ToolStripMenuItem mnuHostProperties;
-    private ToolStripMenuItem mnuTravelAgencies;
-    private ToolStripMenuItem mnuCarRentalAgencies;
 
     // Availability Menu
     private ToolStripMenuItem mnuAvailability;
@@ -412,7 +388,6 @@ partial class MainForm
     private ToolStripMenuItem mnuOverpayments;
     private ToolStripMenuItem mnuHost1099;
     private ToolStripMenuItem mnuHostAcctInfo;
-    private ToolStripMenuItem mnuCarRentalActivity;
     private ToolStripMenuItem mnuTrends;
     private ToolStripMenuItem mnuMailingLabels;
     private ToolStripMenuItem mnuAccountList;

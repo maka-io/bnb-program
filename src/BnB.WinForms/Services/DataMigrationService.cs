@@ -33,16 +33,12 @@ public class DataMigrationService
             // Migration order respects foreign key dependencies
             result.TaxRates = await MigrateTaxRatesAsync(reader);
             result.TaxPlans = await MigrateTaxPlansAsync(reader);
-            result.TravelAgencies = await MigrateTravelAgenciesAsync(reader);
-            result.CarAgencies = await MigrateCarAgenciesAsync(reader);
             result.Properties = await MigratePropertiesAsync(reader);
             result.RoomTypes = await MigrateRoomTypesAsync(reader);
             result.Guests = await MigrateGuestsAsync(reader);
             result.Accommodations = await MigrateAccommodationsAsync(reader);
             result.Payments = await MigratePaymentsAsync(reader);
             result.Checks = await MigrateChecksAsync(reader);
-            result.TravelAgentBookings = await MigrateTravelAgentBookingsAsync(reader);
-            result.CarRentals = await MigrateCarRentalsAsync(reader);
 
             result.Success = true;
         }
@@ -166,99 +162,6 @@ public class DataMigrationService
         await _context.SaveChangesAsync();
         ReportProgress("Tax Plans", count, count);
 
-        return count;
-    }
-
-    private async Task<int> MigrateTravelAgenciesAsync(AccessDataReader reader)
-    {
-        ReportProgress("Travel Agencies", 0, 0);
-
-        await _context.TravelAgentBookings.ExecuteDeleteAsync();
-        await _context.TravelAgencies.ExecuteDeleteAsync();
-
-        // Try tamaster first, fall back to tagentbl for agency info
-        DataTable table;
-        try
-        {
-            table = reader.ReadTable("tamaster");
-        }
-        catch
-        {
-            // tamaster might not exist, agencies might be embedded in tagentbl
-            return 0;
-        }
-
-        var count = 0;
-
-        foreach (DataRow row in table.Rows)
-        {
-            var agency = new TravelAgency
-            {
-                AccountNumber = AccessDataReader.GetInt(row, "accountnum"),
-                Name = AccessDataReader.GetString(row, "agencyname") ?? AccessDataReader.GetString(row, "name") ?? "Unknown",
-                ContactName = AccessDataReader.GetString(row, "contactname") ?? AccessDataReader.GetString(row, "contact"),
-                Address = AccessDataReader.GetString(row, "address"),
-                City = AccessDataReader.GetString(row, "city"),
-                State = AccessDataReader.GetString(row, "state"),
-                ZipCode = AccessDataReader.GetString(row, "zipcode") ?? AccessDataReader.GetString(row, "zip"),
-                Phone = AccessDataReader.GetString(row, "phone"),
-                Fax = AccessDataReader.GetString(row, "fax"),
-                Email = AccessDataReader.GetString(row, "email"),
-                CommissionPercent = AccessDataReader.GetNullableDecimal(row, "commpercent") ?? AccessDataReader.GetNullableDecimal(row, "commission"),
-                Comments = AccessDataReader.GetString(row, "comments")
-            };
-
-            _context.TravelAgencies.Add(agency);
-            count++;
-        }
-
-        await _context.SaveChangesAsync();
-        ReportProgress("Travel Agencies", count, count);
-        return count;
-    }
-
-    private async Task<int> MigrateCarAgenciesAsync(AccessDataReader reader)
-    {
-        ReportProgress("Car Agencies", 0, 0);
-
-        await _context.CarRentals.ExecuteDeleteAsync();
-        await _context.CarAgencies.ExecuteDeleteAsync();
-
-        DataTable table;
-        try
-        {
-            table = reader.ReadTable("carmaster");
-        }
-        catch
-        {
-            return 0;
-        }
-
-        var count = 0;
-
-        foreach (DataRow row in table.Rows)
-        {
-            var agency = new CarAgency
-            {
-                Name = AccessDataReader.GetString(row, "agencyname") ?? AccessDataReader.GetString(row, "name") ?? "Unknown",
-                ContactName = AccessDataReader.GetString(row, "contactname") ?? AccessDataReader.GetString(row, "contact"),
-                Address = AccessDataReader.GetString(row, "address"),
-                City = AccessDataReader.GetString(row, "city"),
-                State = AccessDataReader.GetString(row, "state"),
-                ZipCode = AccessDataReader.GetString(row, "zipcode") ?? AccessDataReader.GetString(row, "zip"),
-                Phone = AccessDataReader.GetString(row, "phone"),
-                Fax = AccessDataReader.GetString(row, "fax"),
-                Email = AccessDataReader.GetString(row, "email"),
-                CommissionPercent = AccessDataReader.GetNullableDecimal(row, "commpercent") ?? AccessDataReader.GetNullableDecimal(row, "commission"),
-                Comments = AccessDataReader.GetString(row, "comments")
-            };
-
-            _context.CarAgencies.Add(agency);
-            count++;
-        }
-
-        await _context.SaveChangesAsync();
-        ReportProgress("Car Agencies", count, count);
         return count;
     }
 
@@ -433,8 +336,6 @@ public class DataMigrationService
         ReportProgress("Guests", 0, 0);
         _legacyConfToGuestId.Clear();
 
-        await _context.Database.ExecuteSqlRawAsync("DELETE FROM TravelAgentBookings");
-        await _context.Database.ExecuteSqlRawAsync("DELETE FROM CarRentals");
         await _context.Database.ExecuteSqlRawAsync("DELETE FROM Payments");
         await _context.Database.ExecuteSqlRawAsync("DELETE FROM Checks");
         await _context.Database.ExecuteSqlRawAsync("DELETE FROM Accommodations");
@@ -706,109 +607,6 @@ public class DataMigrationService
         return count;
     }
 
-    private async Task<int> MigrateTravelAgentBookingsAsync(AccessDataReader reader)
-    {
-        ReportProgress("Travel Agent Bookings", 0, 0);
-
-        var agencies = await _context.TravelAgencies.ToDictionaryAsync(a => a.AccountNumber, a => a.Id);
-
-        DataTable table;
-        try
-        {
-            table = reader.ReadTable("tagentbl");
-        }
-        catch
-        {
-            return 0;
-        }
-
-        var count = 0;
-
-        foreach (DataRow row in table.Rows)
-        {
-            var conf = AccessDataReader.GetLong(row, "conf");
-            // Skip if no matching guest exists
-            if (!_legacyConfToGuestId.TryGetValue(conf, out var guestId)) continue;
-
-            var agencyAccountNum = AccessDataReader.GetInt(row, "agencyaccountnum") + AccessDataReader.GetInt(row, "accountnum");
-            int? agencyId = agencies.TryGetValue(agencyAccountNum, out var id) ? id : null;
-
-            var booking = new TravelAgentBooking
-            {
-                GuestId = guestId,  // FK to Guest.Id
-                ConfirmationNumber = conf,  // The booking/reservation number
-                TravelAgencyId = agencyId,
-                CommissionAmount = AccessDataReader.GetNullableDecimal(row, "commamount") ?? AccessDataReader.GetNullableDecimal(row, "commission"),
-                CommissionPaid = AccessDataReader.GetNullableDecimal(row, "commpaid"),
-                CommissionPaidDate = AccessDataReader.GetDateTime(row, "commpaiddate"),
-                CheckNumber = AccessDataReader.GetString(row, "checknum"),
-                Comments = AccessDataReader.GetString(row, "comments")
-            };
-
-            _context.TravelAgentBookings.Add(booking);
-            count++;
-        }
-
-        await _context.SaveChangesAsync();
-        ReportProgress("Travel Agent Bookings", count, count);
-        return count;
-    }
-
-    private async Task<int> MigrateCarRentalsAsync(AccessDataReader reader)
-    {
-        ReportProgress("Car Rentals", 0, 0);
-
-        var agencies = await _context.CarAgencies.ToListAsync();
-
-        DataTable table;
-        try
-        {
-            table = reader.ReadTable("cartbl");
-        }
-        catch
-        {
-            return 0;
-        }
-
-        var count = 0;
-
-        foreach (DataRow row in table.Rows)
-        {
-            var conf = AccessDataReader.GetLong(row, "conf");
-            // Skip if no matching guest exists
-            if (!_legacyConfToGuestId.TryGetValue(conf, out var guestId)) continue;
-
-            // Try to match car agency by name
-            var agencyName = AccessDataReader.GetString(row, "carcompany") ?? AccessDataReader.GetString(row, "agency");
-            var agency = agencies.FirstOrDefault(a =>
-                a.Name.Equals(agencyName, StringComparison.OrdinalIgnoreCase));
-
-            var rental = new CarRental
-            {
-                GuestId = guestId,  // FK to Guest.Id
-                ConfirmationNumber = conf,  // The booking/reservation number
-                CarAgencyId = agency?.Id,
-                PickupDate = AccessDataReader.GetDateTime(row, "pudate") ?? AccessDataReader.GetDateTime(row, "pickupdate"),
-                ReturnDate = AccessDataReader.GetDateTime(row, "dropdate") ?? AccessDataReader.GetDateTime(row, "returndate"),
-                CarType = AccessDataReader.GetString(row, "cartype") ?? AccessDataReader.GetString(row, "carclass"),
-                DailyRate = AccessDataReader.GetNullableDecimal(row, "dailyrate"),
-                TotalAmount = AccessDataReader.GetNullableDecimal(row, "totalamount") ?? AccessDataReader.GetNullableDecimal(row, "total"),
-                CommissionAmount = AccessDataReader.GetNullableDecimal(row, "commamount") ?? AccessDataReader.GetNullableDecimal(row, "commission"),
-                CommissionPaid = AccessDataReader.GetNullableDecimal(row, "commpaid"),
-                CommissionPaidDate = AccessDataReader.GetDateTime(row, "commpaiddate"),
-                CheckNumber = AccessDataReader.GetString(row, "checknum"),
-                Comments = AccessDataReader.GetString(row, "comments")
-            };
-
-            _context.CarRentals.Add(rental);
-            count++;
-        }
-
-        await _context.SaveChangesAsync();
-        ReportProgress("Car Rentals", count, count);
-        return count;
-    }
-
     /// <summary>
     /// Helper method to get an integer value with fallback column names
     /// </summary>
@@ -856,18 +654,14 @@ public class MigrationResult
 
     public int TaxRates { get; set; }
     public int TaxPlans { get; set; }
-    public int TravelAgencies { get; set; }
-    public int CarAgencies { get; set; }
     public int Properties { get; set; }
     public int RoomTypes { get; set; }
     public int Guests { get; set; }
     public int Accommodations { get; set; }
     public int Payments { get; set; }
     public int Checks { get; set; }
-    public int TravelAgentBookings { get; set; }
-    public int CarRentals { get; set; }
 
-    public int TotalRecords => TaxRates + TaxPlans + TravelAgencies + CarAgencies +
+    public int TotalRecords => TaxRates + TaxPlans +
                                Properties + RoomTypes + Guests + Accommodations +
-                               Payments + Checks + TravelAgentBookings + CarRentals;
+                               Payments + Checks;
 }

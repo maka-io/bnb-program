@@ -153,16 +153,12 @@ public partial class DataMigrationForm : Form
                 Log($"Records imported:");
                 Log($"  Tax Rates:           {result.TaxRates,6:N0}");
                 Log($"  Tax Plans:           {result.TaxPlans,6:N0}");
-                Log($"  Travel Agencies:     {result.TravelAgencies,6:N0}");
-                Log($"  Car Agencies:        {result.CarAgencies,6:N0}");
                 Log($"  Properties:          {result.Properties,6:N0}");
                 Log($"  Room Types:          {result.RoomTypes,6:N0}");
                 Log($"  Guests:              {result.Guests,6:N0}");
                 Log($"  Accommodations:      {result.Accommodations,6:N0}");
                 Log($"  Payments:            {result.Payments,6:N0}");
                 Log($"  Checks:              {result.Checks,6:N0}");
-                Log($"  Travel Agent Books:  {result.TravelAgentBookings,6:N0}");
-                Log($"  Car Rentals:         {result.CarRentals,6:N0}");
                 Log($"  ──────────────────────────");
                 Log($"  TOTAL:               {result.TotalRecords,6:N0}");
 

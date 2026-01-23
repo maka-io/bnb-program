@@ -39,16 +39,12 @@ public class JsonImportService
             // Import in order respecting foreign key dependencies
             result.TaxRates = await ImportTaxRatesAsync();
             result.TaxPlans = await ImportTaxPlansAsync();
-            result.TravelAgencies = await ImportTravelAgenciesAsync();
-            result.CarAgencies = await ImportCarAgenciesAsync();
             result.Properties = await ImportPropertiesAsync();
             result.RoomTypes = await ImportRoomTypesAsync();
             result.Guests = await ImportGuestsAsync();
             result.Accommodations = await ImportAccommodationsAsync();
             result.Payments = await ImportPaymentsAsync();
             result.Checks = await ImportChecksAsync();
-            result.TravelAgentBookings = await ImportTravelAgentBookingsAsync();
-            result.CarRentals = await ImportCarRentalsAsync();
 
             result.Success = true;
         }
@@ -281,69 +277,6 @@ public class JsonImportService
         return items.Count;
     }
 
-    private async Task<int> ImportTravelAgenciesAsync()
-    {
-        Report("Importing Travel Agencies...");
-        await _context.TravelAgentBookings.ExecuteDeleteAsync();
-        await _context.TravelAgencies.ExecuteDeleteAsync();
-
-        var items = await ReadJsonFileAsync("tamaster");
-        foreach (var el in items)
-        {
-            var agency = new TravelAgency
-            {
-                AccountNumber = GetInt(el, "accountnum", "AccountNumber"),
-                Name = GetString(el, "agencyname", "name", "Name") ?? "Unknown",
-                ContactName = GetString(el, "contactname", "contact", "ContactName"),
-                Address = GetString(el, "address", "Address"),
-                City = GetString(el, "city", "City"),
-                State = GetString(el, "state", "State"),
-                ZipCode = GetString(el, "zipcode", "zip", "ZipCode"),
-                Phone = GetString(el, "phone", "Phone"),
-                Fax = GetString(el, "fax", "Fax"),
-                Email = GetString(el, "email", "Email"),
-                CommissionPercent = GetNullableDecimal(el, "commpercent", "commission", "CommissionPercent"),
-                Comments = GetString(el, "comments", "Comments")
-            };
-            _context.TravelAgencies.Add(agency);
-        }
-
-        await _context.SaveChangesAsync();
-        Report($"  Travel Agencies: {items.Count} imported");
-        return items.Count;
-    }
-
-    private async Task<int> ImportCarAgenciesAsync()
-    {
-        Report("Importing Car Agencies...");
-        await _context.CarRentals.ExecuteDeleteAsync();
-        await _context.CarAgencies.ExecuteDeleteAsync();
-
-        var items = await ReadJsonFileAsync("carmaster");
-        foreach (var el in items)
-        {
-            var agency = new CarAgency
-            {
-                Name = GetString(el, "agencyname", "name", "Name") ?? "Unknown",
-                ContactName = GetString(el, "contactname", "contact", "ContactName"),
-                Address = GetString(el, "address", "Address"),
-                City = GetString(el, "city", "City"),
-                State = GetString(el, "state", "State"),
-                ZipCode = GetString(el, "zipcode", "zip", "ZipCode"),
-                Phone = GetString(el, "phone", "Phone"),
-                Fax = GetString(el, "fax", "Fax"),
-                Email = GetString(el, "email", "Email"),
-                CommissionPercent = GetNullableDecimal(el, "commpercent", "commission", "CommissionPercent"),
-                Comments = GetString(el, "comments", "Comments")
-            };
-            _context.CarAgencies.Add(agency);
-        }
-
-        await _context.SaveChangesAsync();
-        Report($"  Car Agencies: {items.Count} imported");
-        return items.Count;
-    }
-
     private async Task<int> ImportPropertiesAsync()
     {
         Report("Importing Properties...");
@@ -517,8 +450,6 @@ public class JsonImportService
         _legacyConfToGuestId.Clear();
 
         // Delete in order to respect foreign key constraints
-        await _context.TravelAgentBookings.ExecuteDeleteAsync();
-        await _context.CarRentals.ExecuteDeleteAsync();
         await _context.Payments.ExecuteDeleteAsync();
         await _context.Checks.ExecuteDeleteAsync();
         await _context.Accommodations.ExecuteDeleteAsync();
@@ -794,86 +725,6 @@ public class JsonImportService
 
         await _context.SaveChangesAsync();
         Report($"  Checks: {count} imported");
-        return count;
-    }
-
-    private async Task<int> ImportTravelAgentBookingsAsync()
-    {
-        Report("Importing Travel Agent Bookings...");
-        var agencies = await _context.TravelAgencies.ToDictionaryAsync(a => a.AccountNumber, a => a.Id);
-
-        var items = await ReadJsonFileAsync("tagentbl");
-        var count = 0;
-
-        foreach (var el in items)
-        {
-            var conf = GetLong(el, "conf", "ConfirmationNumber");
-            // Skip if no matching guest exists
-            if (!_legacyConfToGuestId.TryGetValue(conf, out var guestId)) continue;
-
-            var agencyAccountNum = GetInt(el, "agencyaccountnum", "accountnum", "AccountNumber");
-            int? agencyId = agencies.TryGetValue(agencyAccountNum, out var id) ? id : null;
-
-            var booking = new TravelAgentBooking
-            {
-                GuestId = guestId,  // FK to Guest.Id
-                ConfirmationNumber = conf,  // The booking/reservation number
-                TravelAgencyId = agencyId,
-                CommissionAmount = GetNullableDecimal(el, "commamount", "commission", "CommissionAmount"),
-                CommissionPaid = GetNullableDecimal(el, "commpaid", "CommissionPaid"),
-                CommissionPaidDate = GetDateTime(el, "commpaiddate", "CommissionPaidDate"),
-                CheckNumber = GetString(el, "checknum", "CheckNumber"),
-                Comments = GetString(el, "comments", "Comments")
-            };
-            _context.TravelAgentBookings.Add(booking);
-            count++;
-        }
-
-        await _context.SaveChangesAsync();
-        Report($"  Travel Agent Bookings: {count} imported");
-        return count;
-    }
-
-    private async Task<int> ImportCarRentalsAsync()
-    {
-        Report("Importing Car Rentals...");
-        var agencies = await _context.CarAgencies.ToListAsync();
-
-        var items = await ReadJsonFileAsync("cartbl");
-        var count = 0;
-
-        foreach (var el in items)
-        {
-            var conf = GetLong(el, "conf", "ConfirmationNumber");
-            // Skip if no matching guest exists
-            if (!_legacyConfToGuestId.TryGetValue(conf, out var guestId)) continue;
-
-            var agencyName = GetString(el, "carcompany", "agency", "CarAgency");
-            var agency = agencies.FirstOrDefault(a =>
-                a.Name.Equals(agencyName, StringComparison.OrdinalIgnoreCase));
-
-            var rental = new CarRental
-            {
-                GuestId = guestId,  // FK to Guest.Id
-                ConfirmationNumber = conf,  // The booking/reservation number
-                CarAgencyId = agency?.Id,
-                PickupDate = GetDateTime(el, "pudate", "pickupdate", "PickupDate"),
-                ReturnDate = GetDateTime(el, "dropdate", "returndate", "ReturnDate"),
-                CarType = GetString(el, "cartype", "carclass", "CarType"),
-                DailyRate = GetNullableDecimal(el, "dailyrate", "DailyRate"),
-                TotalAmount = GetNullableDecimal(el, "totalamount", "total", "TotalAmount"),
-                CommissionAmount = GetNullableDecimal(el, "commamount", "commission", "CommissionAmount"),
-                CommissionPaid = GetNullableDecimal(el, "commpaid", "CommissionPaid"),
-                CommissionPaidDate = GetDateTime(el, "commpaiddate", "CommissionPaidDate"),
-                CheckNumber = GetString(el, "checknum", "CheckNumber"),
-                Comments = GetString(el, "comments", "Comments")
-            };
-            _context.CarRentals.Add(rental);
-            count++;
-        }
-
-        await _context.SaveChangesAsync();
-        Report($"  Car Rentals: {count} imported");
         return count;
     }
 }

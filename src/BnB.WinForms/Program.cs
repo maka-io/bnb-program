@@ -463,26 +463,6 @@ static class Program
                         UPDATE ""Payments"" p SET ""GuestId"" = g.""Id""
                         FROM ""Guests"" g WHERE g.""ConfirmationNumber"" = p.""ConfirmationNumber"";
                     END IF;
-
-                    -- Add GuestId to TravelAgentBookings if it doesn't exist
-                    IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name = 'TravelAgentBookings' AND column_name = 'GuestId'
-                    ) THEN
-                        ALTER TABLE ""TravelAgentBookings"" ADD COLUMN ""GuestId"" INTEGER NOT NULL DEFAULT 0;
-                        UPDATE ""TravelAgentBookings"" t SET ""GuestId"" = g.""Id""
-                        FROM ""Guests"" g WHERE g.""ConfirmationNumber"" = t.""ConfirmationNumber"";
-                    END IF;
-
-                    -- Add GuestId to CarRentals if it doesn't exist
-                    IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name = 'CarRentals' AND column_name = 'GuestId'
-                    ) THEN
-                        ALTER TABLE ""CarRentals"" ADD COLUMN ""GuestId"" INTEGER NOT NULL DEFAULT 0;
-                        UPDATE ""CarRentals"" c SET ""GuestId"" = g.""Id""
-                        FROM ""Guests"" g WHERE g.""ConfirmationNumber"" = c.""ConfirmationNumber"";
-                    END IF;
                 END $$;
             ");
         }
@@ -752,7 +732,13 @@ static class Program
             // 1. If table has ConfirmationNumber column, we need to remove it
             // 2. If table doesn't have Id as primary key, we need to add it
             bool hasConfirmationNumber = guestCreateSql.Contains("ConfirmationNumber");
-            bool hasIdAsPrimaryKey = guestCreateSql.Contains("\"Id\" INTEGER") && guestCreateSql.Contains("PRIMARY KEY");
+
+            // Check for Id column - handle both quoted ("Id") and unquoted (Id) names
+            // SQLite stores the CREATE statement differently depending on how the table was created
+            bool hasIdColumn = guestCreateSql.Contains("\"Id\" INTEGER", StringComparison.OrdinalIgnoreCase)
+                            || guestCreateSql.Contains("Id INTEGER PRIMARY KEY", StringComparison.OrdinalIgnoreCase);
+            bool hasPrimaryKey = guestCreateSql.Contains("PRIMARY KEY", StringComparison.OrdinalIgnoreCase);
+            bool hasIdAsPrimaryKey = hasIdColumn && hasPrimaryKey;
 
             if (!hasConfirmationNumber && hasIdAsPrimaryKey)
             {
@@ -850,20 +836,6 @@ static class Program
                     UPDATE Payments
                     SET GuestId = (SELECT NewGuestId FROM _ConfToIdMapping WHERE _ConfToIdMapping.ConfirmationNumber = Payments.ConfirmationNumber)
                     WHERE EXISTS (SELECT 1 FROM _ConfToIdMapping WHERE _ConfToIdMapping.ConfirmationNumber = Payments.ConfirmationNumber)");
-
-                // Step 6: Update TravelAgentBookings.GuestId
-                try { dbContext.Database.ExecuteSqlRaw("ALTER TABLE TravelAgentBookings ADD COLUMN GuestId INTEGER NOT NULL DEFAULT 0"); } catch { }
-                dbContext.Database.ExecuteSqlRaw(@"
-                    UPDATE TravelAgentBookings
-                    SET GuestId = (SELECT NewGuestId FROM _ConfToIdMapping WHERE _ConfToIdMapping.ConfirmationNumber = TravelAgentBookings.ConfirmationNumber)
-                    WHERE EXISTS (SELECT 1 FROM _ConfToIdMapping WHERE _ConfToIdMapping.ConfirmationNumber = TravelAgentBookings.ConfirmationNumber)");
-
-                // Step 7: Update CarRentals.GuestId
-                try { dbContext.Database.ExecuteSqlRaw("ALTER TABLE CarRentals ADD COLUMN GuestId INTEGER NOT NULL DEFAULT 0"); } catch { }
-                dbContext.Database.ExecuteSqlRaw(@"
-                    UPDATE CarRentals
-                    SET GuestId = (SELECT NewGuestId FROM _ConfToIdMapping WHERE _ConfToIdMapping.ConfirmationNumber = CarRentals.ConfirmationNumber)
-                    WHERE EXISTS (SELECT 1 FROM _ConfToIdMapping WHERE _ConfToIdMapping.ConfirmationNumber = CarRentals.ConfirmationNumber)");
 
                 // Clean up mapping table
                 dbContext.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS _ConfToIdMapping");
